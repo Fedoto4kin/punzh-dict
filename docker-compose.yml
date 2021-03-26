@@ -1,4 +1,5 @@
-version: '2.2'
+version: '3'
+
 services:
 
   nginx:
@@ -12,15 +13,15 @@ services:
       - ./logs:/var/log/nginx
       - ./app:/app/
     environment:
-      - DOMAIN=punzh.local
+      - DOMAIN=${DOMAIN}
     depends_on:
       - django
     networks:
       - punzh-net
 
   django:
-    tty: true
-    restart: always
+    #tty: true
+    restart: "on-failure"
     container_name: punzh_django
     volumes:
       - ./app:/app
@@ -39,7 +40,7 @@ services:
   db:
     container_name: punzh_db
     image: postgres
-    restart: always
+    restart: "on-failure"
     ports:
       - ${POSTGRES_PORT:-5432}:5432
     volumes:
