@@ -5,18 +5,19 @@ KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVÜÄÖ'
 
 class Article(models.Model):
 
-    word = models.CharField(max_length=255)
+    word = models.CharField(unique=True, max_length=255, db_index=True)
     word_slug = models.CharField(max_length=255)
     first_letter = models.CharField(max_length=1)
     first_trigram = models.CharField(max_length=3)
     article_html = models.TextField(default='')
+
 
     @staticmethod
     def get_krl_abc():
         abc = ''
         for l in KRL_ABC:
             abc += l + l.lower()
-        return abc
+        return abc + 'w'
 
     def __str__(self):
         return self.word
@@ -28,7 +29,7 @@ class Article(models.Model):
         self.first_trigram = ''.join(
             list(
                 filter( 
-                        lambda x: x in self.get_krl_abc(), 
+                        lambda x: x in self.get_krl_abc(),
                         self.word #todo: splite by whitespace
                     )
             )
