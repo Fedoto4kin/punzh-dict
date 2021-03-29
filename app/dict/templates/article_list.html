@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{letter|upper}}
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-10">
+    <div class="btn-toolbar mb-4" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mt-5" role="group" aria-label="First group">
+            {% for l in ABC %}
+            <a href="/{{l|lower}}" class="btn {% if l != letter %}btn-secondary{% else %}btn-light{% endif %}">{{l}}</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class="row">
+    {% for a in articles %}
+    <div class="col-sm-6">
+        <div class="card bg-light mb-3">
+            <div class="card-body">
+                {{a.article_html|safe}}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
