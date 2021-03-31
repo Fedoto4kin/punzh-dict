@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load dict_extras %}
+
 {% block title %}
     {{letter|upper}}
 {% endblock %}
@@ -20,7 +22,7 @@
     <div class="col-sm-6">
         <div class="card bg-light mb-3">
             <div class="card-body">
-                {{a.article_html|safe}}
+                {{a.article_html|nice|safe}}
             </div>
         </div>
     </div>
