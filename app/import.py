@@ -42,7 +42,6 @@ def create_list(text):
         text += '<ol>'
         text += ''.join(['<li>' + _ + "</li>" for _ in s[1:]])
         text += '</ol>'
-        print(text)
     return text
 
 def create_article(content):
@@ -77,7 +76,7 @@ def get_content(content):
 if __name__ == '__main__':
 
     # TODO: variable
-    with open("data/Dv3.html") as file:
+    with open("data/Gv3.html") as file:
         data = file.read()
 
     content = bs(data,  "html.parser")
