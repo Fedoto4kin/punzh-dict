@@ -30,7 +30,7 @@ class Article(models.Model):
             list(
                 filter( 
                         lambda x: x in self.get_krl_abc(),
-                        self.word #todo: splite by whitespace
+                        self.word
                     )
                 )
             )[:3].lower()
