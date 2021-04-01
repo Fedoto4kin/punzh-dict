@@ -1,6 +1,8 @@
 from django import template
+import re
 
 register = template.Library()
+
 
 @register.filter(name='nice')
 def nice(text):
@@ -8,4 +10,10 @@ def nice(text):
     return text.replace('||', '<span class="text-muted font-weight-normal">||</span>') \
                .replace('|', '<span class="text-muted font-weight-normal">|</span>')
 
-# TODO: replace ~ with word
+
+@register.filter(name='clear')
+def clear(text):
+    base = re.split(r'\|+', text.split(',')[0])[0]
+    return text.replace('~', base.strip()) \
+                .replace('|', '') \
+                .replace('’', '')
