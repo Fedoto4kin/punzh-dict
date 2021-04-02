@@ -11,19 +11,10 @@ from dict.models import Article
 def filter(art):
 
     # remove wrong tags
-    invalid_tags = ['font', 'a', 'p', 'img', 'br']
+    invalid_tags = ['font', 'a', 'p', 'img', 'br', 'span']
     for tag in art.findAll():
         if tag.name in invalid_tags:
             tag.replaceWithChildren()
-
-    for tag in art.find_all('span', attrs={"lang": "et-EE"}):
-        tag.replaceWithChildren()
-
-    for tag in art.find_all('span', attrs={"lang": "fi-FI"}):
-        tag.replaceWithChildren()
-
-    for tag in art.find_all('span', attrs={"lang": "en-US"}):
-        tag.replaceWithChildren()
 
     # remove empty tags
     for x in art.find_all():
@@ -48,7 +39,7 @@ def filter(art):
 
 
 def create_list(text):
-    s = re.split("[1-9]+\.\s{1}", text)
+    s = re.split("[1-9]+\.{1}", text)
     if len(s) > 1:
         text = s[0]
         text += '<ol>'
