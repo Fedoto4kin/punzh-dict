@@ -8,28 +8,21 @@
 
 {% block content %}
 
-<div class="container mt-10">
-    <div class="btn-toolbar mb-4" role="toolbar" aria-label="Toolbar with button groups">
-        <div class="btn-group mt-5 mx-auto" role="group" >
-            {% for l in ABC %}
-            <a href="/{{l|lower}}" class="btn {% if l != letter %}btn-secondary{% else %}btn-light{% endif %}">{{l}}</a>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="card-columns">
-        {% for a in articles %}
+    <div class="row">
+        <div class="card-columns">
+            {% for a in page_obj %}
                 <div class="card bg-light mb-3">
-                 <div class="card-header">
-                     <h5 class="mb-0">{{a.word|clear}}</h5>
-                  </div>
+                    <div class="card-header">
+                        <h5 class="mb-0">{{a.word|clear}}</h5>
+                    </div>
                     <div class="card-body">
                         {{a.article_html|nice|safe}}
                     </div>
                 </div>
 
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
-</div>
+
+
 {% endblock %}
