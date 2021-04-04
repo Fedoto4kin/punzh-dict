@@ -1,7 +1,8 @@
 from django.db import models
 from slugify import slugify
 
-KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVÜÄÖ'
+
+KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVWÜÄÖ'
 
 class Article(models.Model):
 
@@ -16,7 +17,7 @@ class Article(models.Model):
         abc = ''
         for l in KRL_ABC:
             abc += l + l.lower()
-        return abc + 'w'
+        return abc
 
     def __str__(self):
         return self.word
