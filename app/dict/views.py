@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 
 def index(request, letter='A', page=1):
 
+    num_by_page = 18
     articles = Article.objects.all().filter(first_letter=letter.upper())
 
     if len(articles):
@@ -18,10 +19,10 @@ def index(request, letter='A', page=1):
                               ]
                           )
 
-    paginator = Paginator(articles, 20)
+    paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
 
-    trigrams = [a.first_trigram for a in articles[0::20]]
+    trigrams = [a.first_trigram for a in articles[0::num_by_page]]
     trigrams_dict = dict(zip(range(1, len(trigrams)+1), trigrams))
 
     context = {
@@ -32,3 +33,14 @@ def index(request, letter='A', page=1):
     }
 
     return render(request, 'article_list.html', context)
+
+
+def search(request):
+    search = request.GET.get('query')
+    articles = Article.objects.filter(article_html__contains=search.strip())
+    context = {
+        "search": search,
+        "articles": articles
+    }
+
+    return render(request, 'search.html', context)

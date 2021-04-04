@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% load dict_extras %}
+
+{% block title %}
+    Поиск: {{search}}
+{% endblock %}
+
+
+{% block content %}
+
+
+    <div class="row mt-5">
+        <div class="card-columns">
+            {% for a in articles %}
+                <div class="card bg-light mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{a.word|clear}}</h5>
+                    </div>
+                    <div class="card-body">
+                        {{a.article_html|nice|safe}}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{%  endblock %}
