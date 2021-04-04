@@ -16,8 +16,7 @@ def clear(text):
     base = re.split(r'\|+', text.split(',')[0])[0]
     return text.replace('~', base.strip()) \
                .replace('|', '') \
-               .replace('’', '') \
-               .replace('ʼ', '')
+               .replace('’', '')
 
 @register.filter
 def get_item(dictionary, key):

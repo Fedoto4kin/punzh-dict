@@ -6,6 +6,9 @@
 <head>
     <meta charset="utf-8">
     <title>{% block title %}{% endblock %}</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
     {% bootstrap_javascript %}
     {% bootstrap_css %}
 </head>
@@ -15,79 +18,18 @@
         <a class="navbar-brand" href="/">
             <h3>Словарь карельского языка <span class="text-muted">(Тверские говоры)</span></h3>
         </a>
-        <button class="navbar-toggler"
-                type="button"
-                data-toggle="collapse"
-                data-target="#navbarsExampleDefault"
-                aria-controls="navbarsExampleDefault"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav mr-auto">
-                <!--    <li class="nav-item active">
-                      <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-                    </li>-->
-            </ul>
-            <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="text" placeholder="" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Поиск</button>
+        <div class="collapse navbar-collapse">
+            <form class="form-inline my-2 my-lg-0 ml-auto" action="/search">
+                <div class="input-group">
+                    <input class="form-control" name="query" type="text" value="{{ search }}" placeholder="" aria-label="Search">
+                     <div class="input-group-append">
+                        <button class="btn btn-outline-light my-sm-0" type="submit">Поиск</button>
+                     </div>
+                </div>
             </form>
         </div>
     </div>
-
 </nav>
-<hav  class="navbar navbar-expand-md navbar-light bg-light">
-    <div class="container">
-        <div class="btn-toolbar mb-1 w-100" role="toolbar" aria-label="Toolbar with button groups">
-            <div class="btn-group mt-2 mx-auto" role="group" >
-                {% for l in ABC %}
-                    {% if l != 'W' %}
-                        <a href="/{{l|lower}}" class="btn {% if l != letter %}btn-secondary{% else %}btn-light{% endif %}">{{l}}</a>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</hav>
-<hav  class="navbar navbar-expand-md navbar-light bg-light mb-4 nav d-flex justify-content-center">
-    <div class="container">
-    {% if page_obj.has_other_pages %}
-        <ul class="pagination pagination-sm flex-sm-wrap mx-auto">
-
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="/{{ letter }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-            {% else %}
-                <li class="page-item disabled">
-                     <a class="page-link" >&laquo;</a>
-                </li>
-            {% endif %}
-
-            {% for i in page_obj.paginator.page_range %}
-                {% ifequal i page_obj.number %}
-                    <li class="active page-item">
-                        <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
-                    </li>
-                {% else %}
-                    <li class="page-item">
-                        <a class="page-link" href="/{{ letter }}/{{ i }}">{{ trigrams|get_item:i }}</a>
-                    </li>
-                {% endifequal %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link" href="/{{ letter }}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-            {% else %}
-                 <li class="page-item disabled">
-                     <a class="page-link" >&raquo;</a>
-                </li>
-            {% endif %}
-        </ul>
-      {% endif %}
-    </div>
-</hav>
 
 <main role="main" class="container">
     {% block content %}

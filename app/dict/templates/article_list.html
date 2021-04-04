@@ -6,23 +6,96 @@
     {{letter|upper}}
 {% endblock %}
 
+
 {% block content %}
 
-    <div class="row">
-        <div class="card-columns">
-            {% for a in page_obj %}
-                <div class="card bg-light mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">{{a.word|clear}}</h5>
-                    </div>
-                    <div class="card-body">
-                        {{a.article_html|nice|safe}}
-                    </div>
-                </div>
 
+<hav  class="navbar navbar-expand-md navbar-light bg-light">
+    <div class="container">
+        <button class="navbar-toggler" type="button"
+                data-toggle="collapse"
+                data-target="#ABC"
+                aria-controls="ABC"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            {{ letter }}
+        </button>
+        <ul class="collapse navbar-collapse navbar-nav mt-2 mx-auto justify-content-center" role="group" id="ABC">
+            {% for l in ABC %}
+                {% if l != 'W' %}
+                    <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
+                        <a class="nav-link" href="/{{l|lower}}" >{{ l }}</a>
+                    </li>
+                {% endif %}
             {% endfor %}
-        </div>
+        </ul>
     </div>
+</hav>
+<hav  class="navbar navbar-expand-md navbar-light bg-light mb-4 ">
+    <div class="container">
+        {% if page_obj.has_other_pages %}
+        <button class="btn-sm navbar-toggler" type="button"
+                data-toggle="collapse"
+                data-target="#trigram"
+                aria-controls="trigram"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            {{ trigrams|get_item:page_obj.number }}
+        </button>
+        <ul class="pagination
+                   navbar-collapse
+                   collapse
+                   pagination-sm
+                   flex-sm-wrap
+                   mx-auto
+                   mt-1
+                   justify-content-center" id="trigram">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="/{{ letter }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" >&laquo;</a>
+                </li>
+            {% endif %}
+            {% for i in page_obj.paginator.page_range %}
+            {% ifequal i page_obj.number %}
+            <li class="active page-item">
+                <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="/{{ letter }}/{{ i }}">{{ trigrams|get_item:i }}</a>
+            </li>
+            {% endifequal %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="/{{ letter }}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" >&raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+        {% endif %}
+    </div>
+</hav>
+
+<div class="row">
+    <div class="card-columns">
+        {% for a in page_obj %}
+            <div class="card bg-light mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">{{a.word|clear}}</h5>
+                </div>
+                <div class="card-body">
+                    {{a.article_html|nice|safe}}
+                </div>
+            </div>
+
+        {% endfor %}
+    </div>
+</div>
 
 
 {% endblock %}
