@@ -8,8 +8,8 @@ class ArticleAdm(admin.ModelAdmin):
 
     list_display = ('word', '_article_html')
     search_fields = ('word',)
-    readonly_fields = ('word_slug',)
-    exclude = ("first_letter", "first_trigram")
+    exclude = ("first_letter", "text_search")
+    readonly_fields = ("first_trigram",)
 
     @staticmethod
     def _article_html(self):
