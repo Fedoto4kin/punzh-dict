@@ -3,22 +3,57 @@
 {% load dict_extras %}
 
 {% block title %}
-    Поиск: {{search}}
+    Поиск: {{ query }}
 {% endblock %}
 
-
 {% block content %}
-
-
     <div class="row mt-5">
+        <form  action="/search">
+            <div class="input-group  my-4 mx-4">
+                <input class="form-control " name="query" type="text" value="{{ query }}"  placeholder="" aria-label="Search">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary my-sm-0" type="submit">Поиск</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <hav  class="navbar navbar-expand-md mb-4 navbar-light">
+        {% if page_obj.has_other_pages %}
+            <ul class="pagination
+                       pagination-sm
+                       flex-sm-wrap
+                       mt-1">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="/search/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% else %}
+                    <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+                {% endif %}
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="/search/{{ query }}/{{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="/search/{{ query }}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
+    </hav>
+
+    <div class="row mt-4">
         <div class="card-columns">
-            {% for a in articles %}
+            {% for a in page_obj %}
                 <div class="card bg-light mb-3">
                     <div class="card-header">
-                        <h5 class="mb-0">{{a.word|clear}}</h5>
+                        <h5 class="mb-0">{{ a.word|clear|safe }}</h5>
                     </div>
                     <div class="card-body">
-                        {{a.article_html|nice|safe}}
+                        {{ a.article_html|nice|safe }}
                     </div>
                 </div>
             {% endfor %}

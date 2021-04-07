@@ -9,8 +9,7 @@
 
 {% block content %}
 
-
-<hav  class="navbar navbar-expand-md navbar-light bg-light">
+<hav  class="navbar navbar-expand-md navbar-light">
     <div class="container">
         <button class="navbar-toggler" type="button"
                 data-toggle="collapse"
@@ -31,7 +30,7 @@
         </ul>
     </div>
 </hav>
-<hav  class="navbar navbar-expand-md navbar-light bg-light mb-4 ">
+<hav  class="navbar navbar-expand-md mb-2 navbar-light">
     <div class="container">
         {% if page_obj.has_other_pages %}
         <button class="btn-sm navbar-toggler" type="button"
@@ -80,6 +79,10 @@
         {% endif %}
     </div>
 </hav>
+<div class="row mb-4">
+        <div class="badge badge-pill badge-secondary mr-auto">{{ first_page_trigram }}</div>
+        <div class="badge badge-pill badge-secondary ml-auto">{{ last_page_trigram }}</div>
+</div>
 
 <div class="row">
     <div class="card-columns">
