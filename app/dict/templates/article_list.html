@@ -23,7 +23,7 @@
             {% for l in ABC %}
                 {% if l != 'W' %}
                     <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
-                        <a class="nav-link" href="/{{l|lower}}" >{{ l }}</a>
+                        <a class="nav-link" href="/{{l}}" >{{ l }}</a>
                     </li>
                 {% endif %}
             {% endfor %}

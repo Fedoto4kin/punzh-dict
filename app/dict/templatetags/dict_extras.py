@@ -1,5 +1,5 @@
-from django import template
 import re
+from django import template
 
 register = template.Library()
 
@@ -9,6 +9,7 @@ def nice(text):
     # TODO: only in <b> tag and remove ||
     return text.replace('||', '<span class="text-muted font-weight-normal">||</span>') \
                .replace('|', '<span class="text-muted font-weight-normal">|</span>')
+
 
 
 @register.filter

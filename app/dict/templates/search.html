@@ -8,9 +8,14 @@
 
 {% block content %}
     <div class="row mt-5">
-        <form  action="/search">
+        <form  action="/search/">
             <div class="input-group  my-4 mx-4">
-                <input class="form-control " name="query" type="text" value="{{ query }}"  placeholder="" aria-label="Search">
+                <input class="form-control"
+                       name="query"
+                       type="text"
+                       value="{{ query }}"
+                       placeholder=""
+                       aria-label="Search" autofocus>
                 <div class="input-group-append">
                     <button class="btn btn-outline-secondary my-sm-0" type="submit">Поиск</button>
                 </div>
