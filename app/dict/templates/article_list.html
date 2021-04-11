@@ -3,7 +3,7 @@
 {% load dict_extras %}
 
 {% block title %}
-    {{letter|upper}}
+    {{letter|upper}} - Словарь Карельского Языка
 {% endblock %}
 
 
@@ -92,7 +92,7 @@
                     <h5 class="mb-0">{{a.word|clear}}</h5>
                 </div>
                 <div class="card-body">
-                    {{a.article_html|nice|safe}}
+                    {{a.article_html|nice|highlight_rus|safe}}
                 </div>
             </div>
 

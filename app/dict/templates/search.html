@@ -3,11 +3,11 @@
 {% load dict_extras %}
 
 {% block title %}
-    Поиск: {{ query }}
+     Поиск - Словарь Карельского Языка
 {% endblock %}
 
 {% block content %}
-    <div class="row mt-5">
+    <div class="row mt-4">
         <form  action="/search/">
             <div class="input-group  my-4 mx-4">
                 <input class="form-control"
@@ -58,7 +58,7 @@
                         <h5 class="mb-0">{{ a.word|clear|safe }}</h5>
                     </div>
                     <div class="card-body">
-                        {{ a.article_html|nice|safe }}
+                        {{ a.article_html|nice|highlight_rus|safe }}
                     </div>
                 </div>
             {% endfor %}
