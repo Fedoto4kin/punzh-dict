@@ -29,9 +29,16 @@ class KrlServiceTestCase(TestCase):
         )
 
     def test_new_orthography(self):
+
         self.assertEqual(1, 1)
 
     def test_get_variants(self):
+
+
+        self.assertEqual(
+            gen_word_variants('a˛i̮a'),
+            {'aia', 'ai̮a'}
+        )
 
         self.assertEqual(
             gen_word_variants('muš||ta, ~tan’e'),
