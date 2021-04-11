@@ -54,7 +54,7 @@ def search_proc(request):
 
     query = request.GET.get('query', '')
     if len(query.strip()):
-        query = re.sub('[^А-яЁё' + Article.get_krl_abc() + 'i̮\s\-]', '', query)
+        query = re.sub('[^А-яЁё' + Article.get_krl_abc() + 'Yyi̮\s\-]', '', query)
         return redirect('/search/' + query)
     else:
         return render(request, 'search.html',  {"search": "true"})
@@ -63,22 +63,27 @@ def search_proc(request):
 def search(request, query='', page=1):
 
     query = query
-    ex_pk = []
+    # ex_pk = []
 
-    pks0 = ArticleIndexWord.objects.filter(word__iexact=query).values_list('article_id', flat=True)
-    articles0 = Article.objects.filter(pk__in=pks0).all()
-    ex_pk += pks0
+    pks0 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
+    articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
+    # ex_pk += pks0
 
-    pks1 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
-    articles1 = Article.objects.filter(pk__in=pks1).exclude(pk__in=ex_pk).all()
+    # pks1 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
+    # articles1 = Article.objects.extra(select={'sort_order': "1"}).filter(pk__in=pks1).exclude(pk__in=ex_pk).all()
 
-    articles = list(chain(articles0, articles1))
+    #articles = list(chain(articles0, articles1))
 
-    # TODO: sorting
+    articles = sorted(articles,
+                      key=lambda el: (
+                              len(el.word),
+                          sorted_by_krl(el, 'word'),
+                      )
+                      )
+
+
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
-
-
 
     context = {
         "ABC": KRL_ABC,
