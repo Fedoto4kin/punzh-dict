@@ -53,6 +53,7 @@ def gen_word_variants(word) -> ():
 
     variants = []
     word = re.sub('(I+)$', '', word)
+    word = word.replace('˛', '')
 
     for w in word.split(','):
         variants += proc(w, word)
@@ -87,5 +88,8 @@ def new_orthography(word):
                 word = word.replace(part, part.replace('w', 'y'))
             else:
                 word = word.replace(part, part.replace('w', 'u'))
+
+    #word = re.sub('(’)[äyöie]', '', word)
+    #word = re.sub('(’)[bcčdfghjklmnprsšzžt][äyöie]', '', word)
 
     return word
