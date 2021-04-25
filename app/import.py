@@ -8,10 +8,12 @@ django.setup()
 
 from dict.models import Article
 
+
 def filter(art):
 
     # remove wrong tags
     invalid_tags = ['font', 'a', 'p', 'img', 'br', 'span']
+
     for tag in art.findAll():
         if tag.name in invalid_tags:
             tag.replaceWithChildren()
@@ -21,25 +23,24 @@ def filter(art):
         if len(x.get_text(strip=True)) == 0:
             x.extract()
 
-
     # remove other trash
     art = str(art) \
         .replace('\t', ' ') \
         .replace('\n', ' ') \
         .replace('</b><b>', '') \
+        .replace('</b>|<b>', '|') \
+        .replace('</b>||<b>', '||') \
         .replace('</b> <b>', ' ') \
-        .replace('</i>', '</i> ') \
-        .replace(' </i>', '</i>') \
-        .replace(' </b><i>', '</b> <i>') \
         .replace('</b><i>', '</b> <i>') \
-        .replace(' ;', ';')
+        .replace(' ;', ';') \
+        .replace('ʼ', '’')  # >>>ord('ʼ') 700 (isalpha) >>>ord('’') 8217 (is non-alpha)
 
     art = ' '.join(art.split())
     return bs(art, "html.parser")
 
 
 def create_list(text):
-    s = re.split("[1-9]+\.{1}", text)
+    s = re.split("[1-9]{1}\.\s", text)
     if len(s) > 1:
         text = s[0]
         text += '<ol>'
@@ -47,13 +48,6 @@ def create_list(text):
         text += '</ol>'
     return text
 
-
-def replace_tilde(content, word):
-
-    base = re.split(r'\|+', word.split()[0])[0]
-    return content.replace('~', base) \
-                  .replace('||', '') \
-                  .replace('|', '<span class="text-muted font-weight-normal">|</span>')
 
 
 def create_article(content):
@@ -67,6 +61,12 @@ def create_article(content):
                       .get_text() \
                       .strip()
 
+        word = word.replace(chr(1072), chr(97)) \
+                   .replace(chr(1077), chr(101)) \
+                   .replace(chr(1086), chr(111)) \
+                   .replace(chr(1089), chr(99)) \
+                   .replace(chr(1088), chr(112))
+
         html = str(content).rstrip().strip()
 
         article_html = create_list(html)
@@ -75,7 +75,7 @@ def create_article(content):
             word=word,
             article_html=article_html
         )
-        print(article_html)
+        #print(article_html)
         article.save()
         print(article, ' [OK]')
 
@@ -89,11 +89,12 @@ def get_content(content):
 if __name__ == '__main__':
 
     # TODO: variable
-    with open("data/Nv3.html") as file:
+    with open("data/Sv3.html") as file:
         data = file.read()
 
-    content = bs(data,  "html.parser")
-    get_content(content.find("div", {"id": "TextSection"}))
+    contents = bs(data,  "html.parser")
+    for content in contents.findAll("div"):
+        get_content(content)
 
 
 
