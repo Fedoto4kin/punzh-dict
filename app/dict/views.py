@@ -54,7 +54,8 @@ def search_proc(request):
 
     query = request.GET.get('query', '')
     if len(query.strip()):
-        query = re.sub('[^А-яЁё' + Article.get_krl_abc() + 'Yyi̮\s\-]', '', query)
+
+        query = re.sub(r'[^\w\s]', '', query)
         return redirect('/search/' + query)
     else:
         return render(request, 'search.html',  {"search": "true"})
