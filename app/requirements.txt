@@ -2,11 +2,8 @@ asgiref==3.3.1
 beautifulsoup4==4.9.3
 Django==3.1.7
 django-bootstrap4==2.3.1
-django-viewflow==2.0.0a0
 psycopg2==2.8.6
-python-slugify==4.0.1
 pytz==2021.1
-slugify==0.0.1
 soupsieve==2.2.1
 sqlparse==0.4.1
 text-unidecode==1.3
