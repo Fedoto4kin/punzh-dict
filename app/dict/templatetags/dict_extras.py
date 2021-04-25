@@ -25,4 +25,4 @@ def get_item(dictionary, key):
 
 @register.filter
 def highlight_rus(text):
-    return re.sub(r'([А-яЁё])', r'<span style="color: #82551e">\1</span>', text)
+    return re.sub(r'([А-яЁё]+)', r'<span class="text-rus">\1</span>', text)
