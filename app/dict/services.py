@@ -79,8 +79,6 @@ def gen_word_variants(word) -> ():
 
 def new_orthography(word):
 
-    # TODO: remove ' in cases
-
     word = word.replace('ü', 'y').replace('Ü', 'Y')
     if word.count('w'):
         for part in re.findall('(?:\w+w[^|]*)', word):
@@ -89,6 +87,7 @@ def new_orthography(word):
             else:
                 word = word.replace(part, part.replace('w', 'u'))
 
+    # TODO: remove ' in cases
     #word = re.sub('(’)[äyöie]', '', word)
     #word = re.sub('(’)[bcčdfghjklmnprsšzžt][äyöie]', '', word)
 
