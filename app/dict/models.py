@@ -49,30 +49,12 @@ class Article(models.Model):
         self.make_trigram()
         super(Article, self).save(*args, **kwargs)
 
-        # TODO(6): create method in services + generate variants
-        #ArticleSearchIndex.objects.filter(article=self).delete()
-
-        # html = bs(self.article_html, "html.parser")
-        # for tag in html.findAll('b'):
-        #     tag.extract()
-        # text = strip_tags(str(html))
-        #
-        # text = re.sub('~[\S]*', '', text)
-        # text = re.sub('[^А-яЁё' + self.get_krl_abc() + 'i̮\s\-]', '', text)
-
-        # print(self.word)
-        # print(text)
-        # print(set(text.split()))
-        # print('-----------------')
-        # for iw in set(text.split()):
-        #     ai = ArticleSearchIndex(
-        #         word=iw,
-        #         article=self
-        #     )
-
         ArticleIndexWord.objects.filter(article=self).delete()
         indx = (ArticleIndexWord(article=self, word=var) for var in self.word_index())
         ArticleIndexWord.objects.bulk_create(indx)
+
+    class Meta:
+        ordering = ['-id']
 
 
 class ArticleIndexWord(models.Model):
