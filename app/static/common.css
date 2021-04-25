@@ -1,0 +1,26 @@
+html, body {
+    height: 100%;
+}
+
+#wrap {
+    min-height: 100%;
+}
+
+#content {
+    padding-bottom: 80px;
+}
+
+footer {
+    position: relative;
+    margin-top: -50px; /* negative value of footer height */
+    height: 50px;
+    clear:both;
+}
+
+.navbar-dark {
+    background-color: #333333 !important;
+}
+
+.text-rus {
+    color: #82551e;
+}
