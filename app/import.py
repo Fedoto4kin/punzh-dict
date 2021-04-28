@@ -30,10 +30,13 @@ def filter(art):
         .replace('</b><b>', '') \
         .replace('</b>|<b>', '|') \
         .replace('</b>||<b>', '||') \
+        .replace('</b>,<b>', ',') \
         .replace('</b> <b>', ' ') \
         .replace('</b><i>', '</b> <i>') \
         .replace(' ;', ';') \
-        .replace('ʼ', '’')  # >>>ord('ʼ') 700 (isalpha) >>>ord('’') 8217 (is non-alpha)
+        .replace('ʼ', '’') \
+        .replace('</b>’<b>', '’') \
+        .replace('<b>’</b>', '’')
 
     art = ' '.join(art.split())
     return bs(art, "html.parser")
@@ -75,7 +78,6 @@ def create_article(content):
             word=word,
             article_html=article_html
         )
-        #print(article_html)
         article.save()
         print(article, ' [OK]')
 
@@ -89,12 +91,9 @@ def get_content(content):
 if __name__ == '__main__':
 
     # TODO: variable
-    with open("data/Sv3.html") as file:
+    with open("data/Rv3.html") as file:
         data = file.read()
 
     contents = bs(data,  "html.parser")
     for content in contents.findAll("div"):
         get_content(content)
-
-
-
