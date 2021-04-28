@@ -64,7 +64,6 @@ def search_proc(request):
 def search(request, query='', page=1):
 
     query = query
-    # ex_pk = []
 
     pks0 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
