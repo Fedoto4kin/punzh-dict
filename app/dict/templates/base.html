@@ -13,6 +13,7 @@
 
     {% bootstrap_css %}
     <link href="{% static 'common.css' %}" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
 
 </head>
 <body class="min-vh-100">
@@ -20,7 +21,10 @@
     <nav class="navbar navbar-expand-md navbar-dark" >
         <div class="container">
             <a class="navbar-brand" href="/">
-                <h3>Словарь карельского языка <span class="text-muted">(Тверские говоры)</span></h3>
+                <h3 class="mb-0">
+                    <img class="logo" width="46" src="{% static 'images/logo.svg' %}" >&nbsp;
+                    Словарь карельского языка <span class="text-muted">(Тверские говоры)</span>
+                </h3>
             </a>
             <div class="ml-auto">
                 <ul class="navbar-nav">
