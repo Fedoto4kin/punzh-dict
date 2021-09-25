@@ -1,6 +1,7 @@
 import re
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
+from django.views.generic import TemplateView
 from itertools import chain
 
 from .models import *
@@ -8,6 +9,11 @@ from .services import sorted_by_krl
 
 
 num_by_page = 18
+
+
+class AboutPageView(TemplateView):
+
+    template_name = 'about.html'
 
 
 def index(request, letter='A', page=1):
@@ -48,7 +54,6 @@ def index(request, letter='A', page=1):
         'page_obj': page_obj,
     }
     return render(request, 'article_list.html', context)
-
 
 def search_proc(request):
 

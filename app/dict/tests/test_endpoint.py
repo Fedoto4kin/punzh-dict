@@ -5,7 +5,8 @@ from dict.models import KRL_ABC
 
 class EndpointTestCase(TestCase):
 
-    fixtures = ['articles.json',]
+    #todo: limited fixtures
+    #fixtures = ['articles.json',]
     c = Client()
 
     def test_pointer(self):
