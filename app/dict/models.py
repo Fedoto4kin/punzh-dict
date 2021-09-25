@@ -37,11 +37,6 @@ class Article(models.Model):
     def word_index(self):
         return gen_word_variants(self.word)
 
-    def get_index(self):
-
-        print(self.word)
-        print(self.variants())
-        print('---------------------')
 
     def save(self, *args, **kwargs):
 

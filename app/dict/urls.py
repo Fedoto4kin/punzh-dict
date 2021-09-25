@@ -7,6 +7,7 @@ from .models import KRL_ABC
 urlpatterns = [
     path('', views.index, name='index'),
     # TODO: combine similar
+    path('about/', views.AboutPageView.as_view(), name='about'),
     path('search', views.search_proc, name='search_proc'),
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),
