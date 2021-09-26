@@ -2,11 +2,9 @@ import re
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.views.generic import TemplateView
-from itertools import chain
 
 from .models import *
 from .services import sorted_by_krl
-
 
 num_by_page = 18
 
@@ -14,6 +12,11 @@ num_by_page = 18
 class AboutPageView(TemplateView):
 
     template_name = 'about.html'
+
+
+class AboutElPageView(TemplateView):
+
+    template_name = 'about-el.html'
 
 
 def index(request, letter='A', page=1):
@@ -55,6 +58,7 @@ def index(request, letter='A', page=1):
     }
     return render(request, 'article_list.html', context)
 
+
 def search_proc(request):
 
     query = request.GET.get('query', '')
@@ -64,6 +68,12 @@ def search_proc(request):
         return redirect('/search/' + query)
     else:
         return render(request, 'search.html',  {"search": "true"})
+
+
+def rev_search(request, query, page=1):
+
+    return
+
 
 
 def search(request, query='', page=1):
