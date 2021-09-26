@@ -176,4 +176,4 @@ if __name__ == '__main__':
         a.article_html = fix_puncts(a.article_html)
         a.article_html = fix_whitespace_after_i(a.article_html)
         print(a.article_html)
-        # a.save()
+        a.save()
