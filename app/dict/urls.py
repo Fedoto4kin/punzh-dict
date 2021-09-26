@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     # TODO: combine similar
     path('about/', views.AboutPageView.as_view(), name='about'),
+    path('about-el/', views.AboutElPageView.as_view(), name='about-el'),
     path('search', views.search_proc, name='search_proc'),
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),

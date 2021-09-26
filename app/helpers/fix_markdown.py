@@ -1,15 +1,17 @@
 import os
+import sys
 import re
 import django
 from bs4 import BeautifulSoup as bs
 
-# todo: doctests
+sys.path.append('../')
 
+
+# todo: doctests
 os.environ["DJANGO_SETTINGS_MODULE"] = 'punzh.settings'
 django.setup()
 
 from dict.models import Article
-
 
 # todo: create class and incasulate article and functions
 
@@ -28,21 +30,17 @@ def fix_puncts(article_html):
 
     for _ in re.finditer(r'\s([,;:\!\?\.]{1})', article_html):
         if _:
-            print(_.group())
             article_html = article_html.replace(
                 _.group(),
                 _.group(1)
             )
-            print(article_html)
 
     for _ in re.finditer(r'\s([,;:\!\?\.]{1})', article_html):
         if _:
-            print(_.group())
             article_html = article_html.replace(
                 _.group(),
                 _.group(1)
             )
-            print(article_html)
     return article_html
 
 
@@ -52,7 +50,6 @@ def strip_b(article_html):
 
     content = bs(article_html, "html.parser")
     for _ in content.findAll('b'):
-        print(_)
         if _.text:
             _.string = _.text.strip()
     return str(content)
@@ -146,14 +143,11 @@ def fix_whitespace_after_i(article_html):
 
     for _ in re.finditer(r'</i>([A-zA-я]+)', article_html):
         if _:
-            print(_.group())
+
             article_html = article_html.replace(
                 _.group(),
                 '</i> {}'.format(_.group(1))
             )
-            print(article_html)
-
-
     return article_html
 
 
@@ -168,17 +162,18 @@ def hotfix(article_html):
 if __name__ == '__main__':
 
     for a in Article.objects.all():
+    #for a in Article.objects.filter(first_letter='H'):
 
-        # a.article_html = strip_b(a.article_html)
-        # a.article_html = strip_i(a.article_html) # Every first
-        # a.article_html = split_i(a.article_html)
+        a.article_html = strip_b(a.article_html)
+        a.article_html = strip_i(a.article_html) # Every first
+        a.article_html = split_i(a.article_html)
 
         a.article_html = fix_artefacts(a.article_html)
-        # a.article_html = fix_misread_abbr(a.article_html)
-        # a.article_html = cyr_to_lat_abbr(a.article_html)
-        # a.article_html = lat_to_cyr_abbr(a.article_html)
-        # a.article_html = move_dote_inside_i(a.article_html)
-        # a.article_html = fix_puncts(a.article_html)
-        #a.article_html = fix_whitespace_after_i(a.article_html)й
-        #print(a.article_html)
-        a.save()
+        a.article_html = fix_misread_abbr(a.article_html)
+        a.article_html = cyr_to_lat_abbr(a.article_html)
+        a.article_html = lat_to_cyr_abbr(a.article_html)
+        a.article_html = move_dote_inside_i(a.article_html)
+        a.article_html = fix_puncts(a.article_html)
+        a.article_html = fix_whitespace_after_i(a.article_html)
+        print(a.article_html)
+        # a.save()
