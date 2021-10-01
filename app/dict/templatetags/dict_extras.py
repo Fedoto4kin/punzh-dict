@@ -1,5 +1,6 @@
 import re
 from django import template
+from dict.services import clear_pallat
 
 register = template.Library()
 
@@ -13,9 +14,10 @@ def nice(text):
 @register.filter
 def clear(text):
     base = re.split(r'\|+', text.split(',')[0])[0] # TODO: rewrite with re.sub or re.find
-    return text.replace('~', base.strip()) \
-               .replace('|', '') \
-               .replace('’', '')
+    return clear_pallat(
+        text.replace('~', base.strip()) \
+            .replace('|', '')
+    )
 
 
 @register.filter
