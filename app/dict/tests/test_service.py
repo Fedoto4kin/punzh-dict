@@ -1,5 +1,5 @@
 from django.test import TestCase
-from dict.services import gen_word_variants
+from dict.services import gen_word_variants, clear_pallat
 from dict.models import Article
 
 
@@ -33,12 +33,19 @@ class KrlServiceTestCase(TestCase):
 
     # NEW ORTHOGRAPHY
 
-    def test_new_orthography(self):
-        # TODO: create test
-        self.assertEqual(1, 1)
+    def test_clear_pallat_1(self):
+        self.assertEqual(
+            'mal’l’an’e',
+            clear_pallat('mallane')
+        )
+
+    def test_clear_pallat_1(self):
+        self.assertEqual(
+            'mal’l’ane',
+            clear_pallat('mal’l’an’e')
+        )
 
     # VARIANTS
-
     def test_get_variants_ves1(self):
         self.assertEqual(
             gen_word_variants('a˛i̮a'),
