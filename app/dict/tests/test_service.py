@@ -39,6 +39,18 @@ class KrlServiceTestCase(TestCase):
             clear_pallat('mallane')
         )
 
+    def test_clear_pallat_2(self):
+        self.assertEqual(
+            'gos’t’a',
+            clear_pallat('gos’t’a')
+        )
+
+    def test_clear_pallat_3(self):
+        self.assertEqual(
+            'kallis’',
+            clear_pallat('kallis’')
+        )
+
     def test_clear_pallat_1(self):
         self.assertEqual(
             'mal’l’ane',
