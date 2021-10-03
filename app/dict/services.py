@@ -80,7 +80,7 @@ def gen_word_variants(word) -> ():
 def clear_pallat(word):
 
     word = re.sub(r'(’)([^aou$])', r'\2', word)
-    return re.sub(r'(\w)\1’', r'\1’\1’', word)
+    return re.sub(r'([^aouwii̮äöu])(\w)’', r'\1’\2’', word)
 
 
 def new_orthography(word):
