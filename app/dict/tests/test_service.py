@@ -35,8 +35,8 @@ class KrlServiceTestCase(TestCase):
 
     def test_clear_pallat_1(self):
         self.assertEqual(
-            'mal’l’an’e',
-            clear_pallat('mallane')
+            'mal’l’ane',
+            clear_pallat('mal’l’an’e')
         )
 
     def test_clear_pallat_2(self):
@@ -51,10 +51,10 @@ class KrlServiceTestCase(TestCase):
             clear_pallat('kallis’')
         )
 
-    def test_clear_pallat_1(self):
+    def test_clear_pallat_4(self):
         self.assertEqual(
-            'mal’l’ane',
-            clear_pallat('mal’l’an’e')
+            'petel’',
+            clear_pallat('pet’el’')
         )
 
     # VARIANTS
