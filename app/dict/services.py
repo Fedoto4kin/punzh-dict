@@ -88,13 +88,9 @@ def new_orthography(word):
     word = word.replace('ü', 'y').replace('Ü', 'Y')
     if word.count('w'):
         for part in re.findall('(?:\w+w[^|]*)', word):
-            if not any(el in part for el in ['a', 'o', 'u']):
+            if any(el in part for el in ['ä', 'ö', 'y']):
                 word = word.replace(part, part.replace('w', 'y'))
             else:
                 word = word.replace(part, part.replace('w', 'u'))
 
-    # TODO: remove ' in cases
-    #word = re.sub('(’)[äyöie]', '', word)
-    #word = re.sub('(’)[bcčdfghjklmnprsšzžt][äyöie]', '', word)
-
-    return word
+    return clear_pallat(word)
