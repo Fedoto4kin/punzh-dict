@@ -1,6 +1,6 @@
 import re
 from django import template
-from dict.services import clear_pallat
+from dict.services import new_orthography
 
 register = template.Library()
 
@@ -14,7 +14,7 @@ def nice(text):
 @register.filter
 def clear(text):
     base = re.split(r'\|+', text.split(',')[0])[0] # TODO: rewrite with re.sub or re.find
-    return clear_pallat(
+    return new_orthography(
         text.replace('~', base.strip()) \
             .replace('|', '')
     )

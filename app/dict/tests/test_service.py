@@ -1,12 +1,11 @@
 from django.test import TestCase
-from dict.services import gen_word_variants, clear_pallat
+from dict.services import gen_word_variants, clear_pallat, new_orthography
 from dict.models import Article
 
 
 class KrlServiceTestCase(TestCase):
 
     # TRIGRAMS
-
     def test_get_trigram_one(self):
         a1 = Article(word='a I', article_html='<b>Test 3</b>')
         a1.make_trigram()
@@ -31,7 +30,23 @@ class KrlServiceTestCase(TestCase):
             'abč'
         )
 
-    # NEW ORTHOGRAPHY
+    def test_new_orthography_1(self):
+        self.assertEqual(
+            'eu',
+            new_orthography('ew')
+        )
+
+    def test_new_orthography_2(self):
+        self.assertEqual(
+            'uuži',
+            new_orthography('uwži')
+        )
+
+    def test_new_orthography_2(self):
+        self.assertEqual(
+            'ägeyttiä',
+            new_orthography('ägewttiä')
+        )
 
     def test_clear_pallat_1(self):
         self.assertEqual(
