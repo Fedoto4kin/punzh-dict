@@ -1,6 +1,6 @@
 import re
 from django import template
-from dict.services import new_orthography
+from dict.services import normalization
 
 register = template.Library()
 
@@ -13,12 +13,7 @@ def nice(text):
 
 @register.filter
 def clear(text):
-    base = re.split(r'\|+', text.split(',')[0])[0] # TODO: rewrite with re.sub or re.find
-    return new_orthography(
-        text.replace('~', base.strip()) \
-            .replace('|', '')
-    )
-
+    return normalization(text)
 
 @register.filter
 def get_item(dictionary, key):

@@ -71,26 +71,64 @@ def gen_word_variants(word) -> ():
 
     return set([
         i.strip().replace('’', '')
-                 .replace('||', '')
-                 .replace('|', '')
+            .replace('||', '')
+            .replace('|', '')
         for i in variants
     ])
 
+def normalization(header):
 
-def clear_pallat(word):
+    word = header
+    var = None
+    appendix = None
 
-    word = re.sub(r'(’)([^aou$])', r'\2', word)
-    return re.sub(r'([^aeiouwi̮äöü])(\w)’', r'\1’\2’', word)
+    if ',' in header:
+        if '~' in header:
+            appendix = re.search(r'~(.*)', header).group(1)
+        else:
+            var = re.search(r',\s(.*)', header).group(1)
+        word = re.search(r'(.*),', header).group(1)
+
+    base = re.split(r'\|{2}', word)[0]
+    word = word.replace('||', '')
+    res = new_orthography(word)
+
+    if appendix:
+        var = base + appendix
+
+    if var:
+        res += ', ' + new_orthography(var)
+
+    return res
 
 
 def new_orthography(word):
 
-    word = word.replace('ü', 'y').replace('Ü', 'Y')
-    if word.count('w'):
-        for part in re.findall('(?:\w+w[^|]*)', word):
-            if any(el in part for el in ['ä', 'ö', 'y']):
-                word = word.replace(part, part.replace('w', 'y'))
-            else:
-                word = word.replace(part, part.replace('w', 'u'))
+    w = []
 
-    return clear_pallat(word)
+    def clear_pallat(word):
+        word = re.sub(r'(’)([^aou$])', r'\2', word)
+        return re.sub(r'([^aeioui̮äöü])(\w)’', r'\1’\2’', word)
+
+    def part_proc(word):
+
+        word = word.replace('ü', 'y').replace('Ü', 'Y')
+        if word.count('w'):
+            for part in re.findall('(?:\w+w[^|]*)', word):
+                if not any(el in part for el in ['a', 'o', 'u']):
+                    word = word.replace(part, part.replace('w', 'y'))
+                else:
+                    word = word.replace(part, part.replace('w', 'u'))
+
+        return word
+
+    if word.count('|'):
+        for _ in word.split('|'):
+            w.append(part_proc(_))
+    else:
+        w.append(part_proc(word))
+
+    return clear_pallat(''.join(w))
+
+
+
