@@ -19,6 +19,11 @@ class AboutElPageView(TemplateView):
     template_name = 'about-el.html'
 
 
+class PunzhView(TemplateView):
+
+    template_name = 'punzh.html'
+
+
 def index(request, letter='A', page=1):
 
     articles = Article.objects.all().filter(first_letter=letter.upper())
