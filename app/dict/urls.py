@@ -9,6 +9,7 @@ urlpatterns = [
     # TODO: combine similar
     path('about/', views.AboutPageView.as_view(), name='about'),
     path('about-el/', views.AboutElPageView.as_view(), name='about-el'),
+    path('punzhina/', views.PunzhView.as_view(), name='punzh'),
     path('search', views.search_proc, name='search_proc'),
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),
