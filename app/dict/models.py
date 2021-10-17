@@ -36,8 +36,10 @@ class Article(models.Model):
         )[:3].lower()
 
     def word_index(self):
-        return gen_word_variants(self.word)
-
+        if self.word_normalized:
+            return gen_word_variants(self.word_normalized)
+        else:
+            return gen_word_variants(self.word)
 
     def save(self, *args, **kwargs):
 
