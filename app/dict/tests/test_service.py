@@ -64,14 +64,14 @@ class KrlServiceTestCase(TestCase):
 
     def test_get_variants_ves2(self):
         self.assertEqual(
-            gen_word_variants('mi̮ajäičä I'),
-            {'mi̮ajäičä', 'miajäičä'}
+            gen_word_variants('mi̮ajäicä I'),
+            {'mi̮ajäicä', 'miajäicä'}
         )
 
     def test_get_variants_normal(self):
         self.assertEqual(
-            gen_word_variants('muš||ta, ~tan’e'),
-            {'mušta', 'muštane'}
+            gen_word_variants('mus||ta, ~tan’e'),
+            {'musta', 'mustane'}
         )
 
     def test_get_variants_tilda(self):
@@ -110,9 +110,9 @@ class KrlServiceTestCase(TestCase):
 
     def test_get_variants_complex3(self):
         self.assertEqual(
-            gen_word_variants('armaš|miel’i|aigoman’e'),
-            {'armaš', 'mieli', 'aigomane',
-             'armašmieliaigomane'}
+            gen_word_variants('armas|miel’i|aigoman’e'),
+            {'armas', 'mieli', 'aigomane',
+             'armasmieliaigomane'}
         )
 
     def test_get_variants_wytilda(self):
@@ -133,12 +133,12 @@ class KrlServiceTestCase(TestCase):
 
     def test_get_variants_complex_yw(self):
         self.assertEqual(
-            gen_word_variants('ühen|šuwrun’e'),
-            {'ühenšuwrune', 'yhen', 'ühenšuvrune',
-             'yhenšuvrune', 'yhenšuwrune',
-             'šuvrune', 'yhenšuurune',
-             'ühen', 'šuurune', 'šuwrune',
-             'ühenšuurune'}
+            gen_word_variants('ühen|suwrun’e'),
+            {'ühensuwrune', 'yhen', 'ühensuvrune',
+             'yhensuvrune', 'yhensuwrune',
+             'suvrune', 'yhensuurune',
+             'ühen', 'suurune', 'suwrune',
+             'ühensuurune'}
         )
 
     def test_get_variants_complex_w(self):
