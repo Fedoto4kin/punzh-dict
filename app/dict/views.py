@@ -1,5 +1,6 @@
 import re
 from django.shortcuts import render, redirect
+from django.utils.http import urlquote
 from django.core.paginator import Paginator
 from django.views.generic import TemplateView
 
@@ -63,14 +64,14 @@ def index(request, letter='A', page=1):
     }
     return render(request, 'article_list.html', context)
 
-
 def search_proc(request):
 
     query = request.GET.get('query', '')
+
     if len(query.strip()):
 
         query = re.sub(r'[^\w\s\.\?]', '', query)
-        return redirect('/search/' + query)
+        return redirect('/search/' + urlquote(query))
     else:
         return render(request, 'search.html',  {"search": "true"})
 
@@ -86,11 +87,11 @@ def search(request, query='', page=1):
     slug_query = query \
         .replace('š', 's') \
         .replace('č', 'c') \
-        .replace('ž', 'z') 
+        .replace('ž', 'z') \
+        .replace('?', '%') \
+        .replace('.', '_') \
 
-
-    pks0 = ArticleIndexWord.objects.filter(word__istartswith=slug_query).values_list('article_id', flat=True)
-
+    pks0 = ArticleIndexWord.objects.filter(word__like=slug_query + '%').values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
 
     articles = sorted(articles,
@@ -99,7 +100,6 @@ def search(request, query='', page=1):
                           sorted_by_krl(el, 'word'),
                       )
                       )
-
 
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
