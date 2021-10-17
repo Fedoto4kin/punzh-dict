@@ -3,7 +3,7 @@
 {% load dict_extras %}
 
 {% block title %}
-     Поиск - Словарь Карельского Языка
+    Поиск - Словарь Карельского Языка
 {% endblock %}
 
 {% block content %}
@@ -55,7 +55,13 @@
             {% for a in page_obj %}
                 <div class="card bg-light mb-3">
                     <div class="card-header">
-                        <h5 class="mb-0">{{ a.word|clear|safe }}</h5>
+                        <h5 class="mb-0">
+                            {%  if a.word_normalized %}
+                                {{a.word_normalized|safe}}
+                            {% else %}
+                                {{a.word|clear|safe}}
+                            {% endif %}
+                        </h5>
                     </div>
                     <div class="card-body">
                         {{ a.article_html|nice|highlight_rus|safe }}
