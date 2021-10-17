@@ -76,22 +76,23 @@ def search_proc(request):
         return render(request, 'search.html',  {"search": "true"})
 
 
-def rev_search(request, query, page=1):
+def article_search(query, page=1):
 
-    return
+    articles = Article.objects.filter(article_html__contains=query)
 
+    paginator = Paginator(articles, num_by_page)
+    return paginator.get_page(page)
 
+def word_search(query, page):
 
-def search(request, query='', page=1):
-
-    slug_query = query \
+    query = query \
         .replace('š', 's') \
         .replace('č', 'c') \
         .replace('ž', 'z') \
         .replace('?', '%') \
-        .replace('.', '_') \
+        .replace('.', '_')
 
-    pks0 = ArticleIndexWord.objects.filter(word__like=slug_query + '%').values_list('article_id', flat=True)
+    pks0 = ArticleIndexWord.objects.filter(word__like=query + '%').values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
 
     articles = sorted(articles,
@@ -99,10 +100,17 @@ def search(request, query='', page=1):
                           len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
-                      )
+    )
 
     paginator = Paginator(articles, num_by_page)
-    page_obj = paginator.get_page(page)
+    return paginator.get_page(page)
+
+def search(request, query='', page=1):
+
+    if re.match(r'[А-я\s]', query):
+        page_obj = article_search(query, page)
+    else:
+        page_obj = word_search(query, page)
 
     context = {
         "ABC": KRL_ABC,
