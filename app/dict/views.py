@@ -107,7 +107,7 @@ def word_search(query, page):
 
 def search(request, query='', page=1):
 
-    if re.match(r'[А-я\s]', query):
+    if re.match(r'[А-яЁё\s]', query):
         page_obj = article_search(query, page)
     else:
         page_obj = word_search(query, page)
