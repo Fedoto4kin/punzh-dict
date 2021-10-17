@@ -64,6 +64,7 @@ def index(request, letter='A', page=1):
     }
     return render(request, 'article_list.html', context)
 
+
 def search_proc(request):
 
     query = request.GET.get('query', '')
@@ -78,10 +79,17 @@ def search_proc(request):
 
 def article_search(query, page=1):
 
-    articles = Article.objects.filter(article_html__contains=query)
+    articles = Article.objects.filter(article_html__icontains=query)
+    articles = sorted(articles,
+                      key=lambda el: (
+                          len(el.word),
+                          sorted_by_krl(el, 'word'),
+                      )
+    )
 
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
+
 
 def word_search(query, page):
 
@@ -104,6 +112,7 @@ def word_search(query, page):
 
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
+
 
 def search(request, query='', page=1):
 
