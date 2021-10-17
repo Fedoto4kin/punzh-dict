@@ -54,11 +54,11 @@ def gen_word_variants(word) -> ():
     variants = []
     word = re.sub('(I+)$', '', word)
     word = word.replace('˛', '')
+    word = word.lower()
 
     for w in word.split(','):
         variants += proc(w, word)
 
-        # TODO: comment for regexp
         if w.count('|') \
                 and not re.findall(r'([|])\1{1,2}', w):
             for _ in w.split('|'):
@@ -73,6 +73,10 @@ def gen_word_variants(word) -> ():
         i.strip().replace('’', '')
             .replace('||', '')
             .replace('|', '')
+            .replace('š', 's')
+            .replace('č', 'c')
+            .replace('ž', 'z')
+
         for i in variants
     ])
 

@@ -69,7 +69,7 @@ def search_proc(request):
     query = request.GET.get('query', '')
     if len(query.strip()):
 
-        query = re.sub(r'[^\w\s]', '', query)
+        query = re.sub(r'[^\w\s\.\?]', '', query)
         return redirect('/search/' + query)
     else:
         return render(request, 'search.html',  {"search": "true"})
@@ -83,20 +83,19 @@ def rev_search(request, query, page=1):
 
 def search(request, query='', page=1):
 
-    query = query
+    slug_query = query \
+        .replace('š', 's') \
+        .replace('č', 'c') \
+        .replace('ž', 'z') 
 
-    pks0 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
+
+    pks0 = ArticleIndexWord.objects.filter(word__istartswith=slug_query).values_list('article_id', flat=True)
+
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
-    # ex_pk += pks0
-
-    # pks1 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
-    # articles1 = Article.objects.extra(select={'sort_order': "1"}).filter(pk__in=pks1).exclude(pk__in=ex_pk).all()
-
-    #articles = list(chain(articles0, articles1))
 
     articles = sorted(articles,
                       key=lambda el: (
-                              len(el.word),
+                          len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
                       )
