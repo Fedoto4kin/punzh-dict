@@ -9,6 +9,7 @@ KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVWÜÄÖ'
 class Article(models.Model):
 
     word = models.CharField(unique=True, max_length=255, db_index=True)
+    word_normalized = models.CharField(default=None, blank=True, null=True, max_length=255, db_index=True)
 
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)

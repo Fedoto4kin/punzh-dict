@@ -1,5 +1,5 @@
 from django.test import TestCase
-from dict.services import gen_word_variants, clear_pallat, new_orthography
+from dict.services import gen_word_variants, normalization
 from dict.models import Article
 
 
@@ -30,47 +30,30 @@ class KrlServiceTestCase(TestCase):
             'abč'
         )
 
-    def test_new_orthography_1(self):
+    def test_normalization_1(self):
         self.assertEqual(
-            'eu',
-            new_orthography('ew')
+            'myödätuuli',
+            normalization('müöd’ä|tuwl’i')
         )
 
-    def test_new_orthography_2(self):
+    def test_normalization_2(self):
         self.assertEqual(
-            'uuži',
-            new_orthography('uwži')
+            'olgupiäluu',
+            normalization('olgu|piä|luw')
         )
 
-    def test_new_orthography_2(self):
+    def test_normailization_3(self):
         self.assertEqual(
-            'ägeyttiä',
-            new_orthography('ägewttiä')
+            'leyhendeliečie',
+            normalization('l’ewhend’el’iečie')
         )
 
-    def test_clear_pallat_1(self):
+    def test_normalization_4(self):
         self.assertEqual(
-            'mal’l’ane',
-            clear_pallat('mal’l’an’e')
+            'yhekšäntoista, yheksäntois’t’a',
+            normalization('ühekšän|toista, üheks’än|tois’t’a')
         )
 
-    def test_clear_pallat_2(self):
-        self.assertEqual(
-            'gos’t’a',
-            clear_pallat('gos’t’a')
-        )
-
-    def test_clear_pallat_3(self):
-        self.assertEqual(
-            'kallis’',
-            clear_pallat('kallis’')
-        )
-
-    def test_clear_pallat_4(self):
-        self.assertEqual(
-            'petel’',
-            clear_pallat('pet’el’')
-        )
 
     # VARIANTS
     def test_get_variants_ves1(self):
