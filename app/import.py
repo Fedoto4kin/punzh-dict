@@ -91,7 +91,7 @@ def get_content(content):
 if __name__ == '__main__':
 
     # TODO: variable
-    with open("data/Rv3.html") as file:
+    with open("data/Kv3.html") as file:
         data = file.read()
 
     contents = bs(data,  "html.parser")

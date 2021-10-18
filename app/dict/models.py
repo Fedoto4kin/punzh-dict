@@ -3,7 +3,7 @@ from django.db import models
 from .services import gen_word_variants
 
 
-KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVWÜÄÖ'
+KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVÜÄÖ'
 
 
 class Article(models.Model):
@@ -18,7 +18,7 @@ class Article(models.Model):
     @staticmethod
     def get_krl_abc():
         abc = ''
-        for l in KRL_ABC:
+        for l in KRL_ABC.replace('ü', 'Y'):
             abc += l + l.lower()
         return abc
 
