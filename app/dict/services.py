@@ -3,10 +3,13 @@ import re
 
 def sorted_by_krl(article, field='first_trigram'):
 
+    def prepare_word(word):
+        return normalization(word.replace('i̮a', 'ua'))
+
     return [
         article.get_krl_abc().index(c)
         for c in ''.join(
-            [c for c in getattr(article, field).replace('i̮a', 'ua') if c in set(article.get_krl_abc())]
+            [c for c in prepare_word(getattr(article, field)) if c in set(article.get_krl_abc())]
         )
     ]
 
@@ -80,6 +83,7 @@ def gen_word_variants(word) -> ():
         for i in variants
     ])
 
+
 def normalization(header):
 
     word = header
@@ -96,10 +100,8 @@ def normalization(header):
     base = re.split(r'\|{2}', word)[0]
     word = word.replace('||', '')
     res = new_orthography(word)
-
     if appendix:
         var = base + appendix
-
     if var:
         res += ', ' + new_orthography(var)
 

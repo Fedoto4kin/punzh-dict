@@ -82,7 +82,7 @@ def article_search(query, page=1):
     articles = Article.objects.filter(article_html__icontains=query)
     articles = sorted(articles,
                       key=lambda el: (
-                          len(el.word),
+                     #     len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
     )
@@ -106,7 +106,7 @@ def word_search(query, page):
 
     articles = sorted(articles,
                       key=lambda el: (
-                          len(el.word),
+                      #    len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
     )
