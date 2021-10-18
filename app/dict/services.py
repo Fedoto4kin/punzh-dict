@@ -4,7 +4,7 @@ import re
 def sorted_by_krl(article, field='first_trigram'):
 
     def prepare_word(word):
-        return normalization(word.replace('i̮a', 'ua'))
+        return normalization(word.replace('i̮a', 'ua').split(',')[0])
 
     return [
         article.get_krl_abc().index(c)
@@ -135,6 +135,3 @@ def new_orthography(word):
         w.append(part_proc(word))
 
     return clear_pallat(''.join(w))
-
-
-

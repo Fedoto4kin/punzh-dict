@@ -35,7 +35,6 @@ def index(request, letter='A', page=1):
     if len(articles):
         articles = sorted(articles,
                           key=lambda el: (
-                              sorted_by_krl(el),
                               sorted_by_krl(el, 'word')
                           )
                           )
@@ -82,11 +81,9 @@ def article_search(query, page=1):
     articles = Article.objects.filter(article_html__icontains=query)
     articles = sorted(articles,
                       key=lambda el: (
-                     #     len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
-    )
-
+                      )
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
 
@@ -106,10 +103,10 @@ def word_search(query, page):
 
     articles = sorted(articles,
                       key=lambda el: (
-                      #    len(el.word),
+                          #    len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
-    )
+                      )
 
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
