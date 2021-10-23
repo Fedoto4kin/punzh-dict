@@ -18,7 +18,7 @@ class Article(models.Model):
     @staticmethod
     def get_krl_abc():
         abc = ''
-        for l in KRL_ABC.replace('ü', 'Y'):
+        for l in KRL_ABC.replace('Ü', 'Y'):
             abc += l + l.lower()
         return abc
 
