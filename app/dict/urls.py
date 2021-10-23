@@ -7,9 +7,10 @@ from .models import KRL_ABC
 urlpatterns = [
     path('', views.index, name='index'),
     # TODO: combine similar
-    path('about/', views.AboutPageView.as_view(), name='about'),
-    path('about-el/', views.AboutElPageView.as_view(), name='about-el'),
-    path('punzhina/', views.PunzhView.as_view(), name='punzh'),
+    path('about/', views.AboutPageStaticView.as_view(), name='about'),
+    path('about-el/', views.AboutElPageStaticView.as_view(), name='about-el'),
+    path('punzhina/', views.PunzhStaticView.as_view(), name='punzh'),
+    path('dialects/', views.DialectsStaticView.as_view(), name='dialects'),
     path('search', views.search_proc, name='search_proc'),
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),

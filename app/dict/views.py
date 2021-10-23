@@ -5,31 +5,38 @@ from django.core.paginator import Paginator
 from django.views.generic import TemplateView
 
 from .models import *
-from .services import sorted_by_krl
+from .services import sorted_by_krl, normalization
 
 num_by_page = 18
 
 
-class AboutPageView(TemplateView):
+class AboutPageStaticView(TemplateView):
 
     template_name = 'about.html'
 
 
-class AboutElPageView(TemplateView):
+class AboutElPageStaticView(TemplateView):
 
     template_name = 'about-el.html'
 
 
-class PunzhView(TemplateView):
+class PunzhStaticView(TemplateView):
 
     template_name = 'punzh.html'
+
+
+class DialectsStaticView(TemplateView):
+
+    template_name = 'dialects.html'
 
 
 def index(request, letter='A', page=1):
 
     articles = Article.objects.all().filter(first_letter=letter.upper())
+    last_page_word = ''
     last_page_trigram = ''
     first_page_trigram = ''
+    first_page_word = ''
     trigrams_dict = {}
 
     if len(articles):
@@ -44,8 +51,10 @@ def index(request, letter='A', page=1):
     trigrams = [a.first_trigram for a in articles[0::num_by_page]]
 
     if len(page_obj):
+        last_page_word = normalization(page_obj[-1].word)
         last_page_trigram = page_obj[-1].first_trigram
         first_page_trigram = page_obj[0].first_trigram
+        first_page_word = normalization(page_obj[0].word)
         trigrams_dict = dict(
             zip(
                 range(1, len(trigrams) + 1),
@@ -57,7 +66,9 @@ def index(request, letter='A', page=1):
         "ABC": KRL_ABC,
         "letter": letter.upper(),
         "last_page_trigram": last_page_trigram,
+        "last_page_word": last_page_word,
         "first_page_trigram": first_page_trigram,
+        "first_page_word": first_page_word,
         "trigrams": trigrams_dict,
         'page_obj': page_obj,
     }
@@ -103,7 +114,6 @@ def word_search(query, page):
 
     articles = sorted(articles,
                       key=lambda el: (
-                          #    len(el.word),
                           sorted_by_krl(el, 'word'),
                       )
                       )
