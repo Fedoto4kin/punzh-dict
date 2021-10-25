@@ -13,7 +13,11 @@
     {% bootstrap_javascript %}
 
     {% bootstrap_css %}
-    <link href="{% static 'common.css' %}" rel="stylesheet">
+    {% block style %}
+        <link rel="stylesheet" type="text/css" href="{% static "fontawesome/css/all.min.css" %}" />
+        <link href="{% static 'common.css' %}" rel="stylesheet">
+    {% endblock %}
+
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
 
 
