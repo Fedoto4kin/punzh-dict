@@ -19,7 +19,13 @@
                 aria-label="Toggle navigation">
             {{ letter }}
         </span>
-        <ul class="collapse navbar-collapse navbar-nav mt-2 mx-auto justify-content-center" role="group" id="ABC">
+        <ul class="collapse 
+                   navbar-collapse
+                   flex-wrap
+                   navbar-nav
+                   mt-2
+                   mx-auto
+                   justify-content-center" role="group" id="ABC">
             {% for l in ABC %}
                 <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
                     <a class="nav-link" href="/{{l}}" >{{ l }}</a>
@@ -42,8 +48,8 @@
         <ul class="pagination
                    navbar-collapse
                    collapse
-                   pagination-sm
-                   flex-sm-wrap
+                   pagination
+                   flex-wrap
                    mx-auto
                    mt-1
                    justify-content-center" id="trigram">
