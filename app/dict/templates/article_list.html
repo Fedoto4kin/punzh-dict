@@ -11,21 +11,19 @@
 
 <hav  class="navbar navbar-expand-lg navbar-light">
     <div class="container">
-        <button class="navbar-toggler" type="button"
+        <span class="btn navbar-toggler"
                 data-toggle="collapse"
                 data-target="#ABC"
                 aria-controls="ABC"
                 aria-expanded="false"
                 aria-label="Toggle navigation">
             {{ letter }}
-        </button>
+        </span>
         <ul class="collapse navbar-collapse navbar-nav mt-2 mx-auto justify-content-center" role="group" id="ABC">
             {% for l in ABC %}
-                {% if l != 'W' %}
-                    <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
-                        <a class="nav-link" href="/{{l}}" >{{ l }}</a>
-                    </li>
-                {% endif %}
+                <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
+                    <a class="nav-link" href="/{{l}}" >{{ l }}</a>
+                </li>
             {% endfor %}
         </ul>
     </div>
