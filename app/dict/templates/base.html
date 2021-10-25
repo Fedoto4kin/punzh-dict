@@ -9,11 +9,14 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {% bootstrap_javascript %}
 
     {% bootstrap_css %}
     <link href="{% static 'common.css' %}" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+
+
 
 </head>
 <body class="min-vh-100">
@@ -24,7 +27,7 @@
                 <h3 class="mb-0">
                     <img class="logo" width="46" src="{% static 'images/logo.svg' %}" >&nbsp;
                     <div class="d-none d-xs-inline d-xl-inline">
-                    Словарь карельского языка <span class="text-muted">(Тверские говоры)</span>
+                        Словарь карельского языка <span class="text-muted">(Тверские говоры)</span>
                     </div>
                 </h3>
             </a>
