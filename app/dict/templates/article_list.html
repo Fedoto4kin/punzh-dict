@@ -9,26 +9,16 @@
 
 {% block content %}
 
-<hav  class="navbar navbar-expand-lg navbar-light">
+<hav  class="navbar navbar-expand navbar-light">
     <div class="container">
-        <span class="btn navbar-toggler"
-                data-toggle="collapse"
-                data-target="#ABC"
-                aria-controls="ABC"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
-            {{ letter }}
-        </span>
-        <ul class="collapse 
-                   navbar-collapse
+        <ul class="navbar-nav
                    flex-wrap
-                   navbar-nav
                    mt-2
                    mx-auto
                    justify-content-center" role="group" id="ABC">
             {% for l in ABC %}
-                <li class="nav-item px-1 {% if l == letter%} active btn-light{% endif %}">
-                    <a class="nav-link" href="/{{l}}" >{{ l }}</a>
+                <li class="btn px-1 {% if l == letter%} active btn-light{% endif %}">
+                    <a class="nav-link text-grey" href="/{{l}}" >{{ l }}</a>
                 </li>
             {% endfor %}
         </ul>
@@ -84,8 +74,8 @@
     </div>
 </hav>
 <div class="row mb-4">
-    <div class="badge badge-pill badge-secondary mr-auto">{{ first_page_word }}</div>
-    <div class="badge badge-pill badge-secondary ml-auto">{{ last_page_word }}</div>
+    <div class="badge badge-pill badge-secondary mr-auto ml-1">{{ first_page_word }}</div>
+    <div class="badge badge-pill badge-secondary ml-auto mr-1">{{ last_page_word }}</div>
 </div>
 
 <div class="row">
