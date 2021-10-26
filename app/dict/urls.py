@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     # TODO: combine similar
     path('about/', views.AboutPageStaticView.as_view(), name='about'),
+    path('intro/', views.IntroStaticView.as_view(), name='intro'),
     path('about-el/', views.AboutElPageStaticView.as_view(), name='about-el'),
     path('punzhina/', views.PunzhStaticView.as_view(), name='punzh'),
     path('dialects/', views.DialectsStaticView.as_view(), name='dialects'),

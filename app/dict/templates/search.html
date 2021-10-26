@@ -7,10 +7,10 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row mt-4">
-        <form  action="/search/">
-                <div class="input-group my-4 mx-4">
-
+    <div class="mt-4 row">
+        <div class="col-lg-5">
+            <form action="/search/">
+                <div class="input-group my-4">
                     <input class="form-control"
                            name="query"
                            id="search"
@@ -27,7 +27,9 @@
                         </button>
                     </div>
                 </div>
-        </form>
+            </form>
+        </div>
+
     </div>
     <script type="application/javascript">
         let addChar = function (el) {
@@ -44,11 +46,10 @@
         }
     </script>
 
-    <hav  class="navbar navbar-expand-md mb-4 navbar-light">
+    <hav class="navbar navbar-expand mb-4 navbar-light row">
         {% if page_obj.has_other_pages %}
             <ul class="pagination
-                       pagination-sm
-                       flex-sm-wrap
+                       flex-wrap
                        mt-1">
                 {% if page_obj.has_previous %}
                     <li class="page-item"><a class="page-link" href="/search/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
