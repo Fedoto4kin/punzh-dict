@@ -15,6 +15,11 @@ class AboutPageStaticView(TemplateView):
     template_name = 'about.html'
 
 
+class IntroStaticView(TemplateView):
+
+    template_name = 'intro.html'
+
+
 class AboutElPageStaticView(TemplateView):
 
     template_name = 'about-el.html'
@@ -34,8 +39,6 @@ def index(request, letter='A', page=1):
 
     articles = Article.objects.all().filter(first_letter=letter.upper())
     last_page_word = ''
-    last_page_trigram = ''
-    first_page_trigram = ''
     first_page_word = ''
     trigrams_dict = {}
 
@@ -52,8 +55,6 @@ def index(request, letter='A', page=1):
 
     if len(page_obj):
         last_page_word = normalization(page_obj[-1].word)
-        last_page_trigram = page_obj[-1].first_trigram
-        first_page_trigram = page_obj[0].first_trigram
         first_page_word = normalization(page_obj[0].word)
         trigrams_dict = dict(
             zip(
@@ -65,9 +66,7 @@ def index(request, letter='A', page=1):
     context = {
         "ABC": KRL_ABC,
         "letter": letter.upper(),
-        "last_page_trigram": last_page_trigram,
         "last_page_word": last_page_word,
-        "first_page_trigram": first_page_trigram,
         "first_page_word": first_page_word,
         "trigrams": trigrams_dict,
         'page_obj': page_obj,
@@ -82,7 +81,7 @@ def search_proc(request):
     if len(query.strip()):
 
         query = re.sub(r'[^\w\s\.\?]', '', query)
-        return redirect('/search/' + urlquote(query))
+        return redirect('/search/' + urlquote(query.strip()))
     else:
         return render(request, 'search.html',  {"search": "true"})
 
