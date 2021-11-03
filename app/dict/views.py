@@ -35,7 +35,10 @@ class DialectsStaticView(TemplateView):
     template_name = 'dialects.html'
 
 
-def index(request, letter='A', page=1):
+def index(request, letter=None, page=1):
+
+    if not letter:
+        return render(request, 'index.html')
 
     articles = Article.objects.all().filter(first_letter=letter.upper())
     last_page_word = ''
