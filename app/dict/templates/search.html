@@ -7,47 +7,13 @@
 {% endblock %}
 
 {% block content %}
-    <div class="mt-4 row">
-        <div class="col-lg-7">
-            <form action="/search/">
-                <div class="input-group my-4">
-                    <input class="form-control"
-                           name="query"
-                           id="search"
-                           type="text"
-                           value="{{ query }}"
-                           placeholder=""
-                           aria-label="Search" autofocus>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ü</button>
-                        <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ä</button>
-                        <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ö</button>
-                    </div>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary my-sm-0" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </form>
+    <div class="my-5 row">
+        <div class="col-lg-6">
+            {% block search %}
+                {% include "searchForm.html" %}
+            {% endblock %}
         </div>
-
     </div>
-    <script type="application/javascript">
-        let addChar = function (el) {
-            let input = document.getElementById('search');
-            let position =  input.selectionStart;
-            input.value = [
-                input.value.slice(0, position),
-                el.innerText,
-                input.value.slice(position)
-            ].join('');
-            input.focus();
-            input.setSelectionRange(position+1, position+1);
-            return false;
-        }
-    </script>
-
     <hav class="navbar navbar-expand mb-4 navbar-light row">
         {% if page_obj.has_other_pages %}
             <ul class="pagination
