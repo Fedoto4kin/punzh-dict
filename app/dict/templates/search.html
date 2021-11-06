@@ -3,7 +3,7 @@
 {% load dict_extras %}
 
 {% block title %}
-    Поиск - Словарь Карельского Языка
+    Поиск - Словарь карельского языка
 {% endblock %}
 
 {% block content %}
@@ -14,8 +14,8 @@
             {% endblock %}
         </div>
     </div>
-    <hav class="navbar navbar-expand mb-4 navbar-light row">
-        {% if page_obj.has_other_pages %}
+    {% if page_obj.has_other_pages %}
+        <hav class="navbar navbar-expand navbar-light row">
             <ul class="pagination
                        flex-wrap
                        mt-1">
@@ -37,8 +37,8 @@
                     <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
                 {% endif %}
             </ul>
-        {% endif %}
-    </hav>
+        </hav>
+    {% endif %}
     <div class="row mt-4">
         <div class="card-columns">
             {% for a in page_obj %}
