@@ -15,14 +15,14 @@ class AboutPageStaticView(TemplateView):
     template_name = 'about.html'
 
 
+class DialectsStaticView(TemplateView):
+
+    template_name = 'dialects.html'
+
+
 class IntroStaticView(TemplateView):
 
     template_name = 'intro.html'
-
-
-class AboutElPageStaticView(TemplateView):
-
-    template_name = 'about-el.html'
 
 
 class PunzhStaticView(TemplateView):
@@ -30,9 +30,10 @@ class PunzhStaticView(TemplateView):
     template_name = 'punzh.html'
 
 
-class DialectsStaticView(TemplateView):
+class TeamStaticView(TemplateView):
 
-    template_name = 'dialects.html'
+    template_name = 'team.html'
+
 
 
 def index(request, letter=None, page=1):

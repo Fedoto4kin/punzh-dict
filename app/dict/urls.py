@@ -9,9 +9,9 @@ urlpatterns = [
     # TODO: combine similar
     path('about/', views.AboutPageStaticView.as_view(), name='about'),
     path('intro/', views.IntroStaticView.as_view(), name='intro'),
-    path('about-el/', views.AboutElPageStaticView.as_view(), name='about-el'),
     path('punzhina/', views.PunzhStaticView.as_view(), name='punzh'),
     path('dialects/', views.DialectsStaticView.as_view(), name='dialects'),
+    path('team/', views.TeamStaticView.as_view(), name='team'),
     path('search', views.search_proc, name='search_proc'),
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),

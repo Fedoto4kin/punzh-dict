@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+
+{% block title %}
+        Участники
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="row mt-5">
+
+        <div class="col-sm-12">
+            <h3>
+                В создании электронной версии принимали участие
+            </h3>
+        </div>
+        <td class="col-sm-12">
+            <table class="table my-3 col-sm-8">
+
+                <tr><td>Александр Анатольевич Булкин</td><td class="text-muted"> автор идеи, вычитка</td></tr>
+                <tr>
+                    <td>
+                        Анатолий Александрович Федоточкин
+                        <a href="https://github.com/Fedoto4kin/" target="_blank">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/fedotochkin/" target="_blank">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </td>
+                    <td class="text-muted"> программное обеспечение, хостинг сайта</td>
+                </tr>
+                <tr>
+                    <td>
+                        Ирина Петровна Новак
+                        <a href="http://illhportal.krc.karelia.ru/member.php?id=745&plang=r" target="_blank">
+                            <i class="fas fa-address-card"></i>
+
+                        </a>
+                    </td>
+                    <td class="text-muted"> внесение авторской корректуры, вычитка</td></tr>
+                <tr><td>Игорь Александрович Никишин</td><td class="text-muted"> вычитка</td></tr>
+                <tr><td>Анастасия Николаевна Рунтова</td><td class="text-muted"> вычитка</td></tr>
+                <tr><td>Ирина Юрьевна Комиссарова</td><td class="text-muted"> вычитка</td></tr>
+                <tr><td>Иван Сергеевич Петушков</td><td class="text-muted"> вычитка</td></tr>
+                <tr><td>Юлия Юрьевна Бочкарёва</td><td class="text-muted"> вычитка</td></tr>
+
+            </table>
+
+    </div>
+
+    </div>
+
+{%  endblock %}
