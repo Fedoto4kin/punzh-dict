@@ -1,9 +1,6 @@
 from django.db import models
 
-from .services import gen_word_variants
-
-
-KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVÜÄÖ'
+from .services import gen_word_variants, create_ngram, KRL_ABC
 
 
 class Article(models.Model):
@@ -25,15 +22,8 @@ class Article(models.Model):
     def __str__(self):
         return self.word
 
-    def make_trigram(self):
-        self.first_trigram = ''.join(
-            list(
-                filter(
-                    lambda x: x in self.get_krl_abc(),
-                    self.word.split()[0].replace('i̮a', 'ua')
-                )
-            )
-        )[:3].lower()
+    def make_ngram(self, n=3):
+        return create_ngram(self.word, n)
 
     def word_index(self):
         if self.word_normalized:
@@ -44,7 +34,6 @@ class Article(models.Model):
     def save(self, *args, **kwargs):
 
         self.first_letter = self.word[0].upper()
-        self.make_trigram()
         super(Article, self).save(*args, **kwargs)
 
         ArticleIndexWord.objects.filter(article=self).delete()
