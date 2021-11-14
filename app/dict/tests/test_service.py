@@ -1,33 +1,15 @@
 from django.test import TestCase
-from dict.services import gen_word_variants, normalization
-from dict.models import Article
+from dict.services import gen_word_variants, normalization, create_ngram
 
 
 class KrlServiceTestCase(TestCase):
 
-    # TRIGRAMS
-    def test_get_trigram_one(self):
-        a1 = Article(word='a I', article_html='<b>Test 3</b>')
-        a1.make_trigram()
-        self.assertEqual(
-            a1.first_trigram,
-            'a'
-        )
+    # N-GRAMS
+    def test_ngram_1(self):
 
-    def test_get_trigram_ves(self):
-        a2 = Article(word='mi̮atičča', article_html='<b>Test 1</b>')
-        a2.make_trigram()
         self.assertEqual(
-            a2.first_trigram,
-            'mua'
-        )
-
-    def test_get_trigram_normal(self):
-        a3 = Article(word='abčüäö II', article_html='<b>Test 2</b>')
-        a3.make_trigram()
-        self.assertEqual(
-            a3.first_trigram,
-            'abč'
+            'yö',
+            create_ngram('yö, yöhyt', 3)
         )
 
     def test_normalization_1(self):

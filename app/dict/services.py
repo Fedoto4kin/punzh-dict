@@ -1,5 +1,7 @@
 import re
 
+KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ'
+
 
 def sorted_by_krl(article, field='first_trigram'):
 
@@ -114,7 +116,7 @@ def new_orthography(word):
 
     def clear_pallat(word):
         word = re.sub(r'(’)([^aou$])', r'\2', word)
-        return re.sub(r'([^aeioui̮äöü])(\w)’', r'\1’\2’', word)
+        return re.sub(r'([dlnrszt])(\w)’', r'\1’\2’', word)
 
     def part_proc(word):
 
@@ -135,3 +137,10 @@ def new_orthography(word):
         w.append(part_proc(word))
 
     return clear_pallat(''.join(w))
+
+
+def create_ngram(word, n):
+
+    word = normalization(word.lower().replace('’', ''))
+    word = re.split(r'\s|,', word, maxsplit=1)
+    return word[0][:n]
