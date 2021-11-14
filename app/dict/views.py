@@ -45,7 +45,6 @@ def index(request, letter=None, page=1):
     last_page_word = ''
     first_page_word = ''
     trigrams_dict = {}
-    ngrams = []
 
     if len(articles):
         articles = sorted(articles,
@@ -57,19 +56,20 @@ def index(request, letter=None, page=1):
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
 
-    trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
+    ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
 
-    for idx in range(len(trigrams)-1, -1, -1):
+    for idx in range(1, len(trigrams)-1):
         n = 3
-
-        while trigrams[idx-1] == trigrams[idx]:
-            n += 1
+        while True:
             if n > len(articles[0::num_by_page][idx].word):
                 break
-            trigrams[idx] = create_ngram(articles[0::num_by_page][idx].word, n)
-            trigrams[idx-1] = create_ngram(articles[0::num_by_page][idx-1].word, n)
+            prev_ng = create_ngram(articles[0::num_by_page][idx-1].word, n)
+            next_ng = create_ngram(articles[0::num_by_page][idx+1].word, n)
+            ngrams[idx] = create_ngram(articles[0::num_by_page][idx].word, n)
 
-
+            if ngrams[idx][0:n] != prev_ng and ngrams[idx][0:n] != next_ng:
+                break
+            n += 1
 
     if len(page_obj):
         last_page_word = normalization(page_obj[-1].word)
@@ -77,7 +77,7 @@ def index(request, letter=None, page=1):
         trigrams_dict = dict(
             zip(
                 range(1, len(trigrams) + 1),
-                trigrams
+                ngrams
             )
         )
 
