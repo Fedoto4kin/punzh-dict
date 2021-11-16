@@ -1,7 +1,6 @@
 from django.contrib import admin
-from django.utils.html import strip_tags
 from dict.services import normalization
-from django.utils.html import format_html
+from django.utils.html import format_html, html_safe
 
 
 from .models import Article
@@ -19,10 +18,10 @@ class ArticleAdm(admin.ModelAdmin):
     exclude = ("first_letter", "text_search", 'first_trigram')
 
 
-    @staticmethod
-    def _article_html(self):
-        return strip_tags(self.article_html)
+    def _article_html(self, obj):
+        return format_html(obj.article_html)
 
+    _article_html.short_description = 'Словарная статья'
 
     def _word(self, obj):
         return format_html("<b>{word}</b>", word=normalization(obj.word))
