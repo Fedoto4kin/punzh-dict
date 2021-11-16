@@ -2,17 +2,23 @@ from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from .services import gen_word_variants, create_ngram, KRL_ABC
+from .services import gen_word_variants, create_ngram, KRL_ABC, normalization
 
 
 class Article(models.Model):
 
-    word = models.CharField(unique=True, max_length=255, db_index=True)
-    word_normalized = models.CharField(default=None, blank=True, null=True, max_length=255, db_index=True)
+    word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово')
+    word_normalized = models.CharField(
+        default=None,
+        blank=True,
+        null=True,
+        max_length=255,
+        db_index=True,
+        verbose_name='Коррекция заголовка')
 
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)
-    article_html = models.TextField(default='')
+    article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
 
     @staticmethod
     def get_krl_abc():
@@ -26,7 +32,7 @@ class Article(models.Model):
         return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
 
     def __str__(self):
-        return self.word
+        return normalization(self.word)
 
     def make_ngram(self, n=3):
         return create_ngram(self.word, n)
@@ -47,6 +53,8 @@ class Article(models.Model):
         ArticleIndexWord.objects.bulk_create(indx)
 
     class Meta:
+        verbose_name = 'Слово'
+        verbose_name_plural = 'Слова'
         ordering = ['-id']
 
 
