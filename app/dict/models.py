@@ -1,3 +1,5 @@
+from django.urls import reverse
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from .services import gen_word_variants, create_ngram, KRL_ABC
@@ -18,6 +20,10 @@ class Article(models.Model):
         for l in KRL_ABC.replace('Ü', 'Y'):
             abc += l + l.lower()
         return abc
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
 
     def __str__(self):
         return self.word
