@@ -1,0 +1,18 @@
+{% load dict_extras %}
+<div class="card bg-light mb-3 ml-1 mr-1">
+    <div class="card-header">
+        <h5 class="mb-0">
+            {%  if article.word_normalized %}
+                {{article.word_normalized|safe}}
+            {% else %}
+                {{article.word|clear|safe}}
+            {% endif %}
+        {% if user.is_authenticated and user.is_staff%}
+        <a href="{{  a.get_admin_url }}" target="_blank" class="btn btn-outline-info btn-sm float-right"><i class="fa fa-pen"></i></a>
+        {%  endif  %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {{article.article_html|nice|highlight_rus|safe}}
+    </div>
+</div>
