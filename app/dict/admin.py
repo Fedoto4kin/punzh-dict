@@ -22,6 +22,8 @@ class ArticleAdm(admin.ModelAdmin):
     _article_html.short_description = 'Словарная статья'
 
     def _word(self, obj):
+        if obj.word_normalized:
+            return format_html("<s>{word}</s> <b>{word_norm}</b>", word=normalization(obj.word), word_norm=obj.word_normalized)
         return format_html("<b>{word}</b>", word=normalization(obj.word))
     _word.short_description = 'Заголовок (в норм. орф.)'
 
