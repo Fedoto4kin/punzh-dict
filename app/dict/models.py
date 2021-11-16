@@ -7,7 +7,7 @@ from .services import gen_word_variants, create_ngram, KRL_ABC, normalization
 
 class Article(models.Model):
 
-    word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово')
+    word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово (ориг.)')
     word_normalized = models.CharField(
         default=None,
         blank=True,
