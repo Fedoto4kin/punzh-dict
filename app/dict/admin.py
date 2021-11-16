@@ -9,11 +9,12 @@ from .models import Article
 
 class ArticleAdm(admin.ModelAdmin):
 
-    fields = ('_word', 'word_normalized', 'article_html')
+    fields = ('_word', 'word_normalized', 'word', 'article_html')
 
     list_display = ('_word', '_article_html')
 
-    readonly_fields = ["_word",]
+    readonly_fields = ["_word"]
+
     search_fields = ('word',)
     exclude = ("first_letter", "text_search", 'first_trigram')
 
