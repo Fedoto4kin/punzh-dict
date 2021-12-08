@@ -70,25 +70,13 @@ class ArticleIndexWord(models.Model):
         unique_together = ('word', 'article',)
 
 
-class ArticleIndexSemantic(models.Model):
+class ArticleIndexTranslate(models.Model):
 
-    word = models.CharField(max_length=255, default=None, blank=True, null=True)
+    rus_word = models.CharField(max_length=255, default=None, blank=True, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.word
+        return self.rus_word
 
     class Meta:
-        unique_together = ('word', 'article',)
-
-
-class ArticleIndexContext(models.Model):
-
-    word = models.CharField(max_length=255, default=None, blank=True, null=True)
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.word
-
-    class Meta:
-        unique_together = ('word', 'article',)
+        unique_together = ('rus_word', 'article',)
