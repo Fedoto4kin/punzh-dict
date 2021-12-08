@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  nginx:
+    container_name: punzh_nginx
+    restart: "on-failure"
+    image: nginx:latest
+    ports:
+      - ${NGINX_PORT:-80}:80
+      - "443:443"
+    volumes:
+      - ./images/nginx/punzh.ssl.conf:/etc/nginx/conf.d/default.conf
+      - ./logs:/var/log/nginx
+      - ./app:/app/
+    depends_on:
+      - django
+    networks:
+      - punzh-net
+
+  django:
+    #tty: true
+    restart: "on-failure"
+    container_name: punzh_django
+    volumes:
+      - ./app:/app
+    build:
+      context: ./
+      dockerfile: images/django/Dockerfile
+    depends_on:
+      - db
+    command: uwsgi --ini /app/uwsgi.ini
+    expose:
+      - "3000"
+    networks:
+      - punzh-net
+
+  db:
+    container_name: punzh_db
+    image: postgres
+    restart: "on-failure"
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=punzh_dict
+    networks:
+      - punzh-net
+
+networks:
+  punzh-net:
+    driver: bridge
