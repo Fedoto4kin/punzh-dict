@@ -35,7 +35,6 @@ class TeamStaticView(TemplateView):
     template_name = 'team.html'
 
 
-
 def index(request, letter=None, page=1):
 
     if not letter:
@@ -116,6 +115,24 @@ def article_search(query, page=1):
     return paginator.get_page(page)
 
 
+def search_by_translate(query, page=1):
+
+    query = query.replace('ё', 'е')
+
+    pks0 = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list('article_id', flat=True)
+    articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
+
+    articles = sorted(articles,
+                      key=lambda el: (
+                          sorted_by_krl(el, 'word'),
+                      )
+                      )
+
+    paginator = Paginator(articles, num_by_page)
+
+    return paginator.get_page(page)
+
+
 def word_search(query, page):
 
     query = query \
@@ -124,7 +141,6 @@ def word_search(query, page):
         .replace('ž', 'z') \
         .replace('?', '%') \
         .replace('.', '_')
-
 
     pks0 = ArticleIndexWord.objects.filter(word__ilike=query + '%').values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
@@ -142,7 +158,7 @@ def word_search(query, page):
 def search(request, query='', page=1):
 
     if re.match(r'[А-яЁё\s]', query):
-        page_obj = article_search(query, page)
+        page_obj = search_by_translate(query, page)
     else:
         page_obj = word_search(query, page)
 
