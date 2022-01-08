@@ -18,7 +18,7 @@
     "word_normalized": null,
     "first_letter": "D",
     "first_trigram": "da",
-    "article_html": "<b>da II</b> <i>particl</i> l да; tuletgo meil’ä? da, tulen придешь ли к нам? да, приду; ongo külüššä viel’ä l’owlüö? da, on есть ли еще пар в бане? да, есть"
+    "article_html": "<b>da II</b> <i>particl</i> да; tuletgo meil’ä? da, tulen придешь ли к нам? да, приду; ongo külüššä viel’ä l’owlüö? da, on есть ли еще пар в бане? да, есть"
   }
 },
 {
@@ -1074,7 +1074,7 @@
     "word_normalized": null,
     "first_letter": "D",
     "first_trigram": "dvo",
-    "article_html": "<b>dvorovikka</b> <i>s</i> суев. дворовик; hevos’t’a ajelow ~, hebon’e on ün’n’äh märgä лошадь гоняет дворовик, лошадь совсем мокрая; <i>ср.</i> tanhuoniz’än’d’ä"
+    "article_html": "<b>dvorovikka</b> <i>s</i> <i>суев.</i> дворовик; hevos’t’a ajelow ~, hebon’e on ün’n’äh märgä лошадь гоняет дворовик, лошадь совсем мокрая; <i>ср.</i> tanhuoniz’än’d’ä"
   }
 },
 {
@@ -1785,7 +1785,7 @@
   "model": "dict.article",
   "pk": 1638,
   "fields": {
-    "word": "eiII",
+    "word": "ei II",
     "word_normalized": null,
     "first_letter": "E",
     "first_trigram": "eii",
@@ -5012,7 +5012,7 @@
     "word_normalized": null,
     "first_letter": "L",
     "first_trigram": "lad",
-    "article_html": "<b>ladvie||n’e</b> <i>s</i> гpубая пpяжа из пepвых oчёсoк льна, вepхoвьe; t’üöštä har’jattuoh ~ hurštiloih, värčil’öih первая пряжа из волокна после очёса — верховье, на половики, мешки; t’üt’t’özet opaštel’iečettih kezriämäh ložieda ~s’t’a девочки обучались прясть грубую пряжу; <i>ср.</i> ruohin"
+    "article_html": "<b>ladvie||n’e</b> <i>s</i> грубая пряжа из первых очёсок льна, верховье; t’üöštä har’jattuoh ~ hurštiloih, värčil’öih первая пряжа из волокна после очёса — верховье, на половики, мешки; t’üt’t’özet opaštel’iečettih kezriämäh ložieda ~s’t’a девочки обучались прясть грубую пряжу; <i>ср.</i> ruohin"
   }
 },
 {
@@ -53390,7 +53390,7 @@
     "word_normalized": null,
     "first_letter": "A",
     "first_trigram": "awg",
-    "article_html": "<b>awgusta</b> <i>s</i> август; pelvahat ~llа d’erit’äh, kolot’itah в августе лен вытеребят, околотят"
+    "article_html": "<b>awgusta</b> <i>s</i> август; pelvahat ~lla d’erit’äh, kolot’itah в августе лен вытеребят, околотят"
   }
 },
 {
@@ -55106,7 +55106,7 @@
     "word_normalized": null,
     "first_letter": "Č",
     "first_trigram": "čil",
-    "article_html": "<b>čilahellа</b> <i>v</i> <i>descr</i> <i>freq</i> позванивать чему-л.; buruzet našein’ikašša vain ~h, kun ajat pruaz’n’iekalla бубенцы только позванивают на нашейнике, как едешь на праздник"
+    "article_html": "<b>čilahella</b> <i>v</i> <i>descr</i> <i>freq</i> позванивать чему-л.; buruzet našein’ikašša vain ~h, kun ajat pruaz’n’iekalla бубенцы только позванивают на нашейнике, как едешь на праздник"
   }
 },
 {
@@ -82793,7 +82793,7 @@
     "word_normalized": null,
     "first_letter": "H",
     "first_trigram": "hlo",
-    "article_html": "<b>hlopott||a</b> <i>s</i> хлопоты; еn’n’еn pruaz’n’iekkua on ~ua перед праздником хлопоты"
+    "article_html": "<b>hlopott||a</b> <i>s</i> хлопоты; en’n’en pruaz’n’iekkua on ~ua перед праздником хлопоты"
   }
 },
 {
@@ -156152,7 +156152,7 @@
     "word_normalized": null,
     "first_letter": "K",
     "first_trigram": "kuo",
-    "article_html": "<b>kuol’ie</b> <i>s</i> покойник? умерший; ~t kät’kiet’t’ü madalalla покойники похоронены неглубоко; igävä on el’äväštä erota, a jügie on ~da kät’kie грустно с живым расставаться, тяжело покойника хоронить"
+    "article_html": "<b>kuol’ie</b> <i>s</i> покойник, умерший; ~t kät’kiet’t’ü madalalla покойники похоронены неглубоко; igävä on el’äväštä erota, a jügie on ~da kät’kie грустно с живым расставаться, тяжело покойника хоронить"
   }
 },
 {
@@ -157065,7 +157065,7 @@
     "word_normalized": null,
     "first_letter": "K",
     "first_trigram": "kut",
-    "article_html": "<b>kut’t’i||e</b> <i>v</i> <ol><li>кутить, пировать, šuaw d’engua, tuaš alletah ~ он заработает деньги, опять начнут кутить </li><li><i>impers</i> мести, вьюжить; rubei ~mah, dorogan umbuaw завьюжило, дорогу заметёт; s’inčoh jogo ragoh lunda ~w в сени в каждую щёлочку снегу наметёт; <i>ср.</i> kurie 2</li></ol>"
+    "article_html": "<b>kut’t’i||e</b> <i>v</i> <ol><li>кутить, пировать; šuaw d’engua, tuaš alletah ~ он заработает деньги, опять начнут кутить </li><li><i>impers</i> мести, вьюжить; rubei ~mah, dorogan umbuaw завьюжило, дорогу заметёт; s’inčoh jogo ragoh lunda ~w в сени в каждую щёлочку снегу наметёт; <i>ср.</i> kurie 2</li></ol>"
   }
 },
 {
@@ -165467,14 +165467,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 477989,
-  "fields": {
-    "word": "kuttie",
-    "article": 22654
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 477990,
   "fields": {
     "word": "kutermo",
@@ -166495,14 +166487,6 @@
   "fields": {
     "word": "kuoline",
     "article": 22572
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 478118,
-  "fields": {
-    "word": "kuolie",
-    "article": 22571
   }
 },
 {
@@ -254275,14 +254259,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 489144,
-  "fields": {
-    "word": "hlopotta",
-    "article": 14849
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 489145,
   "fields": {
     "word": "hlopoccie",
@@ -290011,14 +289987,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 493619,
-  "fields": {
-    "word": "cilahella",
-    "article": 11308
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 493620,
   "fields": {
     "word": "cilahaldua",
@@ -291783,30 +291751,6 @@
   "fields": {
     "word": "awkottia",
     "article": 11153
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 493841,
-  "fields": {
-    "word": "awgusta",
-    "article": 11152
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 493842,
-  "fields": {
-    "word": "avgusta",
-    "article": 11152
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 493843,
-  "fields": {
-    "word": "augusta",
-    "article": 11152
   }
 },
 {
@@ -352819,14 +352763,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 501485,
-  "fields": {
-    "word": "ladviene",
-    "article": 4021
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 501486,
   "fields": {
     "word": "ladviehane",
@@ -356659,14 +356595,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 501965,
-  "fields": {
-    "word": "ei",
-    "article": 1638
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 501966,
   "fields": {
     "word": "ei",
@@ -357263,14 +357191,6 @@
   "fields": {
     "word": "dvuirodnoi",
     "article": 1574
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 502042,
-  "fields": {
-    "word": "dvorovikka",
-    "article": 1573
   }
 },
 {
@@ -358427,14 +358347,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 502187,
-  "fields": {
-    "word": "da",
-    "article": 1476
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 502188,
   "fields": {
     "word": "da",
@@ -359063,6 +358975,94 @@
   "fields": {
     "word": "edäh",
     "article": 1609
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502274,
+  "fields": {
+    "word": "da",
+    "article": 1476
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502275,
+  "fields": {
+    "word": "ei",
+    "article": 1638
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502276,
+  "fields": {
+    "word": "dvorovikka",
+    "article": 1573
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502277,
+  "fields": {
+    "word": "kuttie",
+    "article": 22654
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502278,
+  "fields": {
+    "word": "kuolie",
+    "article": 22571
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502281,
+  "fields": {
+    "word": "ladviene",
+    "article": 4021
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502282,
+  "fields": {
+    "word": "cilahella",
+    "article": 11308
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502283,
+  "fields": {
+    "word": "hlopotta",
+    "article": 14849
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502284,
+  "fields": {
+    "word": "avgusta",
+    "article": 11152
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502285,
+  "fields": {
+    "word": "awgusta",
+    "article": 11152
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 502286,
+  "fields": {
+    "word": "augusta",
+    "article": 11152
   }
 }
 ]
