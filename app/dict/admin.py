@@ -3,7 +3,11 @@ from dict.services import normalization
 from django.utils.html import format_html, html_safe
 
 
-from .models import Article
+from .models import Article, ArticleIndexTranslate
+
+class TranslateInline(admin.TabularInline):
+    extra = 0
+    model = ArticleIndexTranslate
 
 
 class ArticleAdm(admin.ModelAdmin):
@@ -15,6 +19,11 @@ class ArticleAdm(admin.ModelAdmin):
 
     search_fields = ('word',)
     exclude = ("first_letter", "text_search", 'first_trigram')
+
+    inlines = [
+        TranslateInline,
+    ]
+
 
 
     def _article_html(self, obj):
