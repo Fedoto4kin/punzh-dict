@@ -72,7 +72,11 @@ class ArticleIndexWord(models.Model):
 
 class ArticleIndexTranslate(models.Model):
 
-    rus_word = models.CharField(max_length=255, default=None, blank=True, null=True)
+    rus_word = models.CharField(max_length=255,
+                                default=None,
+                                blank=True,
+                                null=True,
+                                verbose_name='Перевод')
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -80,3 +84,6 @@ class ArticleIndexTranslate(models.Model):
 
     class Meta:
         unique_together = ('rus_word', 'article',)
+        verbose_name = 'Переводы'
+        verbose_name_plural = 'Переводы'
+        ordering = ['rus_word']
