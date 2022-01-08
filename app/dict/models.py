@@ -84,6 +84,6 @@ class ArticleIndexTranslate(models.Model):
 
     class Meta:
         unique_together = ('rus_word', 'article',)
-        verbose_name = 'Переводы'
+        verbose_name = 'Перевод'
         verbose_name_plural = 'Переводы'
         ordering = ['rus_word']
