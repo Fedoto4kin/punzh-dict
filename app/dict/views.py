@@ -97,7 +97,7 @@ def search_proc(request):
 
     if len(query.strip()):
 
-        query = re.sub(r'[^\w\s\.\?]', '', query)
+        query = re.sub(r'[^\w\-\s\.\?]', '', query)
         return redirect('/search/' + urlquote(query.strip()))
     else:
         return render(request, 'search.html',  {"search": "true"})
