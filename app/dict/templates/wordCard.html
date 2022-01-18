@@ -16,7 +16,7 @@
         {{article.article_html|nice|highlight_rus|safe}}
     </div>
     {% if user.is_authenticated and user.is_staff%}
-        <div class="card-footer text-right small {{ article.source.css }}">
+        <div class="card-footer small {{ article.source.css }}">
             <span class="badge">{{ article.source.title }}</span>
             {%  if article.source_detalization %}
                 <span class="badge"> {{ article.source_detalization }}</span>
