@@ -11,7 +11,9 @@ class TranslateInline(admin.TabularInline):
 
 @admin.register(Source)
 class SourceAdm(admin.ModelAdmin):
-    pass
+
+    exclude = ("css",)
+
 
 @admin.register(Article)
 class ArticleAdm(admin.ModelAdmin):
