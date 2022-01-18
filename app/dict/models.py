@@ -5,6 +5,16 @@ from django.db import models
 from .services import gen_word_variants, create_ngram, KRL_ABC, normalization
 
 
+class Source(models.Model):
+
+    title = models.CharField(max_length=255,
+                             verbose_name='Название источника')
+    description = models.TextField(default='',
+                                   blank=True,
+                                   null=True,
+                                   verbose_name='Описание')
+    css = models.CharField(max_length=255)
+
 class Article(models.Model):
 
     word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово (ориг.)')
@@ -19,6 +29,16 @@ class Article(models.Model):
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)
     article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
+    source_id = models.ForeignKey(Source,
+                                  null=True,
+                                  on_delete=models.SET_NULL
+                                  )
+    source_detalization = models.CharField(
+        default=None,
+        blank=True,
+        null=True,
+        max_length=255,
+        verbose_name='Уточнение источника')
 
     @staticmethod
     def get_krl_abc():
