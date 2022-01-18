@@ -13,7 +13,12 @@ class Source(models.Model):
                                    blank=True,
                                    null=True,
                                    verbose_name='Описание')
-    css = models.CharField(max_length=255)
+    css = models.CharField(max_length=255, blank=True, null=True,)
+
+
+    def __str__(self):
+        return self.title
+
 
 class Article(models.Model):
 
@@ -29,10 +34,11 @@ class Article(models.Model):
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)
     article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
-    source_id = models.ForeignKey(Source,
-                                  null=True,
-                                  on_delete=models.SET_NULL
-                                  )
+    source = models.ForeignKey(Source,
+                               null=True,
+                               on_delete=models.SET_NULL,
+                               verbose_name='Источник'
+                               )
     source_detalization = models.CharField(
         default=None,
         blank=True,
