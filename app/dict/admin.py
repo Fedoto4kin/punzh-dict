@@ -9,7 +9,11 @@ class TranslateInline(admin.TabularInline):
     extra = 0
     model = ArticleIndexTranslate
 
+@admin.register(Source)
+class SourceAdm(admin.ModelAdmin):
+    pass
 
+@admin.register(Article)
 class ArticleAdm(admin.ModelAdmin):
 
     fields = ('_word', 'word_normalized', 'word',
@@ -37,6 +41,3 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<b>{word}</b>", word=normalization(obj.word))
 
     _word.short_description = 'Заголовок (в норм. орф.)'
-
-
-admin.site.register(Article, ArticleAdm)
