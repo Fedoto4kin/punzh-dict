@@ -1,0 +1,47 @@
+[
+{
+  "model": "dict.source",
+  "pk": 1,
+  "fields": {
+    "title": "Словарь карельского языка (тверские говоры)",
+    "description": null,
+    "css": null
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 2,
+  "fields": {
+    "title": "Словарная картотека \"Словаря карельского языка (тверские говоры)\" А.В. Пунжиной (ИЯЛИ КарНЦ РАН) ",
+    "description": null,
+    "css": null
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 3,
+  "fields": {
+    "title": "Karjalan kielen verkkosanakirja",
+    "description": null,
+    "css": null
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 4,
+  "fields": {
+    "title": "Лексика из народа",
+    "description": null,
+    "css": null
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 5,
+  "fields": {
+    "title": "Неологизм",
+    "description": null,
+    "css": null
+  }
+}
+]
