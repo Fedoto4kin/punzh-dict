@@ -46,8 +46,8 @@ def index(request, letter=None, page=1):
     trigrams_dict = {}
 
     if len(articles):
-        articles =  articles[::-1] #todo: WHY?
-        page_obj = sorted(articles,
+      
+        articles = sorted(articles,
                           key=lambda el: (
                               sorted_by_krl(el, 'word')
                           )
