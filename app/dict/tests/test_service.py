@@ -132,3 +132,5 @@ class KrlServiceTestCase(TestCase):
              'mövkküne', 'möükküne', 'möykkyne',
              'jalgamöwkküne', 'jalgamöykkyne'}
         )
+
+    #todo: Add sorting by Krl test
