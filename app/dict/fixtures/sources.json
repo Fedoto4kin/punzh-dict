@@ -23,30 +23,75 @@
   "fields": {
     "title": "Karjalan kielen verkkosanakirja",
     "description": "",
-    "css": "alter-danger"
+    "css": "alert-danger"
   }
 },
 {
   "model": "dict.source",
-  "pk": 4,
+  "pk": 7,
   "fields": {
-    "title": "Художественная и учебная литература",
+    "title": "Печатные и рукописные источники: религиозные тексты",
     "description": "",
-    "css": "alter-warning"
+    "css": "alert-warning"
   }
 },
 {
   "model": "dict.source",
-  "pk": 5,
+  "pk": 8,
+  "fields": {
+    "title": "Печатные и рукописные источники: диалектные тексты",
+    "description": "",
+    "css": "alert-warning"
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 9,
+  "fields": {
+    "title": "Печатные и рукописные источники: публицистические тексты",
+    "description": "",
+    "css": "alert-warning"
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 10,
+  "fields": {
+    "title": "Печатные и рукописные источники: учебные тексты",
+    "description": "",
+    "css": "alert-warning"
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 11,
+  "fields": {
+    "title": "Печатные и рукописные источники: фольклорные тексты",
+    "description": "",
+    "css": "alert-warning"
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 12,
+  "fields": {
+    "title": "Печатные и рукописные источники: художественные тексты",
+    "description": "",
+    "css": "alert-warning"
+  }
+},
+{
+  "model": "dict.source",
+  "pk": 13,
   "fields": {
     "title": "Лексика из народа",
     "description": "",
-    "css": "alter-info"
+    "css": "alert-info"
   }
 },
 {
   "model": "dict.source",
-  "pk": 6,
+  "pk": 14,
   "fields": {
     "title": "Неологизм",
     "description": "",
