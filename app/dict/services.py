@@ -8,7 +8,7 @@ def sorted_by_krl(article, field='first_trigram'):
     def prepare_word(word):
         return normalization(
             re.split(r'\s|,', word.replace('i̮a', 'ua'), maxsplit=1)[0]
-        )
+        ).lower()
 
     return [
         article.get_krl_abc().index(c)
