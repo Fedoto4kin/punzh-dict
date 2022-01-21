@@ -1,9 +1,10 @@
+import re
 from django.contrib import admin
 from dict.services import normalization
 from django.utils.html import format_html, html_safe
 
-
-from .models import Article, ArticleIndexTranslate, Source
+from .models import Article, ArticleIndexTranslate, ArticleIndexWord, Source
+from .services import sorted_by_krl
 
 class TranslateInline(admin.TabularInline):
     extra = 0
@@ -31,6 +32,21 @@ class ArticleAdm(admin.ModelAdmin):
     inlines = [
         TranslateInline
     ]
+
+    def get_search_results(self, request, queryset, search_term):
+
+        search = re.sub(r'[^\w\-\s\.\?]', '', search_term) \
+            .replace('š', 's') \
+            .replace('č', 'c') \
+            .replace('ž', 'z') \
+            .replace('?', '%') \
+            .replace('.', '_')
+
+        pks0 = ArticleIndexWord.objects.filter(word__istartswith=search).values_list('article_id', flat=True)
+        queryset = Article.objects.filter(pk__in=pks0).all()
+
+        return queryset, False
+
 
     def _article_html(self, obj):
         return format_html(obj.article_html)
