@@ -46,7 +46,6 @@ def index(request, letter=None, page=1):
     trigrams_dict = {}
 
     if len(articles):
-
         articles = sorted(articles,
                           key=lambda el: (
                               sorted_by_krl(el, 'word')
@@ -120,7 +119,7 @@ def search_by_translate(query, page=1):
 
     query = query.replace('ё', 'е')
 
-    pks0 = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list('article_id', flat=True)
+    pks0 = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
 
     articles = sorted(articles,
@@ -143,7 +142,7 @@ def word_search(query, page):
         .replace('?', '%') \
         .replace('.', '_')
 
-    pks0 = ArticleIndexWord.objects.filter(word__ilike=query + '%').values_list('article_id', flat=True)
+    pks0 = ArticleIndexWord.objects.filter(word__istartswith=query).values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
 
     articles = sorted(articles,
