@@ -142,7 +142,7 @@ def word_search(query, page):
         .replace('?', '%') \
         .replace('.', '_')
 
-    pks0 = ArticleIndexWord.objects.filter(word__like=query + '%').values_list('article_id', flat=True)
+    pks0 = ArticleIndexWord.objects.filter(word__like=query).values_list('article_id', flat=True)
     articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
 
     articles = sorted(articles,
