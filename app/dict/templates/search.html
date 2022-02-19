@@ -14,6 +14,16 @@
             {% endblock %}
         </div>
     </div>
+    {%  if possible %}
+    <div class="row mt-4">
+        <div class="col-12"> <h6>Возможно вы искали:</h6></div>
+        {%  for w in possible %}
+            <div class="mx-2">
+                <a href="/search/{{ w.word | safe | clear | make_link }}" class="btn btn-link" >{{ w }}</a>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% if page_obj.has_other_pages %}
         <hav class="navbar navbar-expand navbar-light row">
             <ul class="pagination

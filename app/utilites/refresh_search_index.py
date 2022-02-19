@@ -13,4 +13,5 @@ from dict.models import Article
 if __name__ == '__main__':
 
     for a in Article.objects.all():
+        print(a.word_normalization_index())
         a.save()

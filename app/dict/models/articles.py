@@ -74,6 +74,13 @@ class Article(models.Model):
         else:
             return gen_word_variants(self.word)
 
+    def word_normalization_index(self):
+        word = self.word
+        if self.word_normalized:
+            word = self.word_normalized
+
+        return set(w.strip().replace('’', '').split(" ", 1)[0] for w in normalization(word).split(','))
+
     def save(self, *args, **kwargs):
 
         self.first_letter = self.word[0].upper()
@@ -82,6 +89,10 @@ class Article(models.Model):
         ArticleIndexWord.objects.filter(article=self).delete()
         indx = (ArticleIndexWord(article=self, word=var) for var in self.word_index())
         ArticleIndexWord.objects.bulk_create(indx)
+
+        ArticleIndexWordNormalization.objects.filter(article=self).delete()
+        indx = (ArticleIndexWordNormalization(article=self, word=var) for var in self.word_normalization_index())
+        ArticleIndexWordNormalization.objects.bulk_create(indx)
 
     class Meta:
         verbose_name = 'Слово'
@@ -127,6 +138,12 @@ class ArticleIndexWordNormalization(models.Model):
 
     def __str__(self):
         return self.word
+
+    def __eq__(self, other):
+        return self.word == other.word
+
+    def __hash__(self):
+        return super().__hash__()
 
     class Meta:
         unique_together = ('word', 'article',)

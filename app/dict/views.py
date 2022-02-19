@@ -62,10 +62,15 @@ def search(request, query='', page=1):
     else:
         page_obj = word_search(query, page)
 
+    possible = []
+    if not len(page_obj.object_list):
+        possible = search_possible(query)
+
     context = {
         "ABC": KRL_ABC,
         "query": query,
         "search": "true",
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "possible": possible
     }
     return render(request, 'search.html', context)
