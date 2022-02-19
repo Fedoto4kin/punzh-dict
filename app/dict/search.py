@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import F
 
 from .helpers import sorted_by_krl, create_ngram, normalization
-from .models import Article, ArticleIndexWord, ArticleIndexTranslate
+from .models import *
 
 num_by_page = 18
 
@@ -98,29 +98,23 @@ def word_search(query, page):
     return paginator.get_page(page)
 
 
-def possible_search(query):
-    pass
+def search_possible(query):
+    return set(w.word for w in (set(search_trigram(query)) & set(search_levenshtein(query))))
 
 
-def possible_search_trigramm(query):
+def search_trigram(query):
 
-    ps =  Article.objects.annotate(similarity=TrigramSimilarity('word', query), )\
-                          .filter(similarity__gt=0.35)\
-                          .order_by('-similarity')\
-                          .limit(10)\
-                          .values_list('article_id', flat=True)[:10]
-    return ps
-    return Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=ps).all().order_by(Length('word').asc())[:10]
+    return  ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), )\
+                          .filter(similarity__gt=0.19)\
+                          .order_by('-similarity', Length('word').asc())
 
 
-def possible_search_levenshtein(query):
+def search_levenshtein(query):
 
-    ps =  ArticleIndexWord.objects.annotate(
+    return  ArticleIndexWordNormalization.objects.annotate(
                                 lev_dist=Levenshtein(F('word'), query)
                             ).filter(
                                 lev_dist__lte=2
                             )\
-                            .order_by('-lev_dist', Length('word').asc())\
-                            .values_list('article_id', flat=True)
+                            .order_by('-lev_dist', Length('word').asc())
 
-    return Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=ps).all()
