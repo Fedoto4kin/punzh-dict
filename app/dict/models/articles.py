@@ -1,21 +1,9 @@
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Func
+
 
 from ..helpers import gen_word_variants, create_ngram, KRL_ABC, normalization
-
-class Levenshtein(Func):
-    template = "%(function)s(%(expressions)s, '%(search_term)s')"
-    function = "levenshtein"
-
-    def __init__(self, expression, search_term, **extras):
-        super(Levenshtein, self).__init__(
-            expression,
-            search_term=search_term,
-            **extras
-        )
-
 
 class Source(models.Model):
 
@@ -130,3 +118,15 @@ class ArticleIndexTranslate(models.Model):
         verbose_name = 'Перевод'
         verbose_name_plural = 'Переводы'
         ordering = ['rus_word']
+
+
+class ArticleIndexWordNormalization(models.Model):
+
+    word = models.CharField(max_length=255, default=None, blank=True, null=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.word
+
+    class Meta:
+        unique_together = ('word', 'article',)

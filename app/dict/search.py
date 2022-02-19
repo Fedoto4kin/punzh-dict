@@ -98,6 +98,10 @@ def word_search(query, page):
     return paginator.get_page(page)
 
 
+def possible_search(query):
+    pass
+
+
 def possible_search_trigramm(query):
 
     ps =  Article.objects.annotate(similarity=TrigramSimilarity('word', query), )\
