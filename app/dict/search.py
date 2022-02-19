@@ -105,7 +105,7 @@ def search_possible(query):
 def search_trigram(query):
 
     return  ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), )\
-                          .filter(similarity__gt=0.19)\
+                          .filter(similarity__gt=0.2)\
                           .order_by('-similarity', Length('word').asc())
 
 
