@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Func
 
-from .helpers import gen_word_variants, create_ngram, KRL_ABC, normalization
+from ..helpers import gen_word_variants, create_ngram, KRL_ABC, normalization
 
 class Levenshtein(Func):
     template = "%(function)s(%(expressions)s, '%(search_term)s')"
