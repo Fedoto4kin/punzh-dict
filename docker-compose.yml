@@ -3,7 +3,7 @@ version: '3'
 services:
 
   web:
-    restart: "on-failure"
+    restart: "always"
     container_name: punzh_django
     volumes:
       - ./app:/app
@@ -21,7 +21,7 @@ services:
   db:
     container_name: punzh_db
     image: postgres
-    restart: "on-failure"
+    restart: "always"
     ports:
       - ${POSTGRES_PORT:-5432}:5432
     volumes:

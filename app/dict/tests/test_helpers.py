@@ -1,5 +1,5 @@
 from django.test import TestCase
-from dict.services import gen_word_variants, normalization, create_ngram
+from ..helpers import *
 
 
 class KrlServiceTestCase(TestCase):

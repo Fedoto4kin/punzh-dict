@@ -1,10 +1,9 @@
 import re
 from django.contrib import admin
-from dict.services import normalization
 from django.utils.html import format_html, html_safe
 
 from .models import Article, ArticleIndexTranslate, ArticleIndexWord, Source
-from .services import sorted_by_krl
+from .helpers import normalization
 
 class TranslateInline(admin.TabularInline):
     extra = 0
@@ -14,7 +13,6 @@ class TranslateInline(admin.TabularInline):
 class SourceAdm(admin.ModelAdmin):
 
     exclude = ("css",)
-
 
 @admin.register(Article)
 class ArticleAdm(admin.ModelAdmin):
