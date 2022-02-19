@@ -9,30 +9,29 @@ from .services import sorted_by_krl, normalization, create_ngram
 
 num_by_page = 18
 
-
 class AboutPageStaticView(TemplateView):
 
-    template_name = 'about.html'
+    template_name = 'staticPages/about.html'
 
 
 class DialectsStaticView(TemplateView):
 
-    template_name = 'dialects.html'
+    template_name = 'staticPages/dialects.html'
 
 
 class IntroStaticView(TemplateView):
 
-    template_name = 'intro.html'
+    template_name = 'staticPages/intro.html'
 
 
 class PunzhStaticView(TemplateView):
 
-    template_name = 'punzh.html'
+    template_name = 'staticPages/punzh.html'
 
 
 class TeamStaticView(TemplateView):
 
-    template_name = 'team.html'
+    template_name = 'staticPages/team.html'
 
 
 def index(request, letter=None, page=1):
@@ -166,6 +165,6 @@ def search(request, query='', page=1):
         "ABC": KRL_ABC,
         "query": query,
         "search": "true",
-        'page_obj': page_obj
+        "page_obj": page_obj
     }
     return render(request, 'search.html', context)
