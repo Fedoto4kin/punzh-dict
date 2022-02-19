@@ -1,7 +1,7 @@
 from django.test import TestCase
 from ..helpers import *
 
-class KrlServiceTestCase(TestCase):
+class KrlHelpersTestCase(TestCase):
 
     # N-GRAMS
     def test_ngram_1(self):
@@ -33,6 +33,12 @@ class KrlServiceTestCase(TestCase):
         self.assertEqual(
             'yhekšäntoista, yheksäntois’t’a',
             normalization('ühekšän|toista, üheks’än|tois’t’a')
+        )
+
+    def test_normalization_5(self):
+        self.assertEqual(
+            'vuate, vuatehut, vi̮ate',
+            normalization('vuat||e, ~ehut, vi̮ate')
         )
 
 
