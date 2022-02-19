@@ -3,8 +3,8 @@ from django.db.models.functions import Length
 from django.core.paginator import Paginator
 from django.db.models import F
 
-from .helpers import sorted_by_krl
-from .models import *
+from .helpers import sorted_by_krl, create_ngram, normalization
+from .models import Article, ArticleIndexWord, ArticleIndexTranslate
 
 num_by_page = 18
 
