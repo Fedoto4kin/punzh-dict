@@ -41,6 +41,11 @@ class KrlHelpersTestCase(TestCase):
             normalization('vuat||e, ~ehut, vi̮ate')
         )
 
+    def test_normalization_5(self):
+        self.assertEqual(
+            'vuate, vuatehut, vi̮ate',
+            normalization('vuat||e, ~ehut, vi̮ate')
+        )
 
     # VARIANTS
     def test_get_variants_ves1(self):
