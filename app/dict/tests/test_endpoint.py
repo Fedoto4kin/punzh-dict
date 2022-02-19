@@ -17,5 +17,5 @@ class EndpointTestCase(TestCase):
 
     def test_search(self):
 
-         response = self.c.get('/search/aig')
+         response = self.c.get('/search/aiga')
          self.assertEqual(200, response.status_code)

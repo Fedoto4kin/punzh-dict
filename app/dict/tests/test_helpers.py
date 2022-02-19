@@ -1,7 +1,6 @@
 from django.test import TestCase
 from ..helpers import *
 
-
 class KrlServiceTestCase(TestCase):
 
     # N-GRAMS

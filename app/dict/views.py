@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect
 from django.utils.http import urlquote
 from django.views.generic import TemplateView
-from django.core.paginator import Paginator
+
 
 from .helpers import *
-from .models import Article
 from .search import *
+
+num_by_page = 18
 
 class AboutPageStaticView(TemplateView):
     template_name = 'staticPages/about.html'
