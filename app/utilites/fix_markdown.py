@@ -6,14 +6,12 @@ from bs4 import BeautifulSoup as bs
 
 sys.path.append('../')
 
-
-# todo: doctests
 os.environ["DJANGO_SETTINGS_MODULE"] = 'punzh.settings'
 django.setup()
 
 from dict.models import Article
 
-# todo: create class and incasulate article and functions
+# todo: create class and encapsulate article and functions
 
 def replace_cyr_by_lat_b(article_html):
     b = re.search(r'<b>(.*)</b>', article_html)

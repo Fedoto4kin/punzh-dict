@@ -1,6 +1,6 @@
 import re
 from django import template
-from dict.services import normalization
+from ..helpers import normalization
 
 register = template.Library()
 
