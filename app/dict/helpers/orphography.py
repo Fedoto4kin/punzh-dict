@@ -1,5 +1,6 @@
 import re
 
+
 def normalization(header):
 
     word = header
@@ -11,11 +12,12 @@ def normalization(header):
             appendix = re.search(r'~(.*)', header).group(1)
         else:
             var = re.search(r',\s(.*)', header).group(1)
-        word = re.search(r'(.*),', header).group(1)
+        word = header.split(',')[0]
 
     base = re.split(r'\|{2}', word)[0]
     word = word.replace('||', '')
     res = new_orthography(word)
+
     if appendix:
         var = base + appendix
     if var:
