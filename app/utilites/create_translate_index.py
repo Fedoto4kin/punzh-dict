@@ -19,7 +19,7 @@ def find_rus_translation(text):
     if df:
         return df.group()\
                   .strip()\
-                  .replace('ё', 'e')
+                  .replace('ё', 'е')
 
 
 def split_by_li(html):
@@ -81,9 +81,16 @@ if __name__ == '__main__':
                     trans.append(__.strip())
                     for ___ in prepare_trans_list_additional(__):
                         trans.append(___)
-        if len(trans) > 0:
+        # if len(trans) > 0:
+        if None:
             indx = (ArticleIndexTranslate(article=a, rus_word=var) for var in set(trans) if len(var) != 0)
             ArticleIndexTranslate.objects.bulk_create(indx)
             print(a)
             print(trans)
             print('---------------------------')
+
+        if len(trans) == 0:
+             print(a)
+             print(a.article_html)
+             print('---------------------------')
+
