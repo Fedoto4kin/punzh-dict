@@ -19,7 +19,7 @@
         <div class="col-12"> <h6>Возможно вы искали:</h6></div>
         {%  for w in possible %}
             <div class="mx-2">
-                <a href="/search/{{ w.word | safe | clear | make_link }}" class="btn btn-link" >{{ w }}</a>
+                <a href="/search/{{ w }}" class="btn btn-link" >{{ w }}</a>
             </div>
         {% endfor %}
     </div>
