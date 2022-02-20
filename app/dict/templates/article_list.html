@@ -9,19 +9,28 @@
 
 {% block content %}
 
-<hav  class="navbar navbar-expand navbar-light">
+<hav  class="navbar navbar-expand-lg navbar-light">
     <div class="container">
-        <ul class="navbar-nav
-                   flex-wrap
-                   mt-2
-                   mx-auto
-                   justify-content-center" role="group" id="ABC">
-            {% for l in ABC %}
-                <li class="btn px-1 {% if l == letter%} active btn-light{% endif %}">
-                    <a class="nav-link text-grey" href="/{{l}}" >{{ l }}</a>
-                </li>
-            {% endfor %}
-        </ul>
+        <button class="btn btn-disable mx-auto btn-primary-outline" type="button"
+                    data-toggle="collapse"
+                    data-target="#abc"
+                    aria-controls="abc"
+                    aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span>{{ letter }}</span> <span class="btn navbar-toggler navbar-toggler-icon small"></span></button>
+        <div class="navbar-collapse collapse" id="abc">
+            <ul class="navbar-nav
+                       flex-wrap
+                       mt-2
+                       mx-0
+                       justify-content-center" role="group" >
+                {% for l in ABC %}
+                    <li class="btn px-1 {% if l == letter%} active btn-light{% endif %}">
+                        <a class="nav-link text-grey" href="/{{l}}" >{{ l }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </hav>
 <hav  class="navbar navbar-expand-lg mb-2 navbar-light">
@@ -44,16 +53,13 @@
             {% endif %}
         </div>
 
-
         <ul class="pagination
                    navbar-collapse
                    collapse
-                   pagination
                    flex-wrap
                    mx-auto
                    mt-1
                    justify-content-center" id="trigram">
-
             {% for i in page_obj.paginator.page_range %}
             {% ifequal i page_obj.number %}
             <li class="active page-item">
