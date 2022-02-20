@@ -11,13 +11,14 @@
 
 <hav  class="navbar navbar-expand-lg navbar-light">
     <div class="container">
-        <button class="btn btn-disable mx-auto btn-primary-outline" type="button"
+        <button class="btn-sm mx-auto btn-primary-outline navbar-toggler" type="button"
                     data-toggle="collapse"
                     data-target="#abc"
                     aria-controls="abc"
                     aria-expanded="false"
                 aria-label="Toggle navigation">
-            <span>{{ letter }}</span> <span class="btn navbar-toggler navbar-toggler-icon small"></span></button>
+            <span>{{ letter }}</span> <span class="btn btn-light navbar-toggler-icon small"></span>
+        </button>
         <div class="navbar-collapse collapse" id="abc">
             <ul class="navbar-nav
                        flex-wrap
@@ -31,6 +32,7 @@
                 {% endfor %}
             </ul>
         </div>
+    
     </div>
 </hav>
 <hav  class="navbar navbar-expand-lg mb-2 navbar-light">
