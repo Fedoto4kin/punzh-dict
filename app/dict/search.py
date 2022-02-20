@@ -91,7 +91,7 @@ def word_search(query, page):
 
 
 def search_possible(query):
-    return set(w.word for w in (set(search_trigram(query)) & set(search_levenshtein(query))))
+    return set(w.word for w in (set(search_trigram(query.lower())) & set(search_levenshtein(query.lower()))))
 
 
 def search_trigram(query):
