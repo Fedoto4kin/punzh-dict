@@ -3,7 +3,7 @@ from django.db.models.functions import Length
 from django.core.paginator import Paginator
 from django.db.models import F
 
-from .helpers import sorted_by_krl, create_ngram, normalization
+from .helpers import sorted_by_krl
 from .models import *
 
 num_by_page = 18
@@ -11,20 +11,19 @@ num_by_page = 18
 
 def search_by_pointer(letter, page):
 
-    articles = Article.objects.all().filter(first_letter=letter.upper())
     last_page_word = ''
     first_page_word = ''
     trigrams_dict = {}
 
-    if len(articles):
-        articles = sorted(articles,
+    articles = sorted(Article.objects.all().filter(first_letter=letter.upper()),
                           key=lambda el: (
                               sorted_by_krl(el, 'word')
                           )
-                          )
+                      )
 
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
+
 
     ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
 
@@ -59,14 +58,9 @@ def search_by_pointer(letter, page):
                  })()
 
 
-def search_by_translate(query, page=1):
+def get_sorted_articles(ids, page):
 
-    query = query.replace('ё', 'е')
-
-    pks0 = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
-    articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
-
-    articles = sorted(articles,
+    articles = sorted(Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=ids).all(),
                       key=lambda el: (
                           sorted_by_krl(el, 'word'),
                       )
@@ -74,6 +68,13 @@ def search_by_translate(query, page=1):
 
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
+
+
+def search_by_translate(query, page=1):
+
+    query = query.replace('ё', 'е')
+    ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
+    return get_sorted_articles(ids, page)
 
 
 def word_search(query, page):
@@ -85,17 +86,8 @@ def word_search(query, page):
         .replace('?', '%') \
         .replace('.', '_')
 
-    pks0 = ArticleIndexWord.objects.filter(word__ilike=query).values_list('article_id', flat=True)
-    articles = Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=pks0).all()
-
-    articles = sorted(articles,
-                      key=lambda el: (
-                          sorted_by_krl(el, 'word'),
-                      )
-                      )
-
-    paginator = Paginator(articles, num_by_page)
-    return paginator.get_page(page)
+    ids = ArticleIndexWord.objects.filter(word__ilike=query).values_list('article_id', flat=True)
+    return get_sorted_articles(ids, page)
 
 
 def search_possible(query):

@@ -27,14 +27,24 @@
 <hav  class="navbar navbar-expand-lg mb-2 navbar-light">
     <div class="container">
         {% if page_obj.has_other_pages %}
-        <button class="btn-sm navbar-toggler" type="button"
-                data-toggle="collapse"
-                data-target="#trigram"
-                aria-controls="trigram"
-                aria-expanded="false"
-                aria-label="Toggle navigation">
-            {{ trigrams|get_item:page_obj.number }}
-        </button>
+        <div class="btn-group navbar-toggler">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-light btn-link"  href="/{{ letter }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+            {% endif %}
+            <button class="btn-sm btn btn-link" type="button"
+                    data-toggle="collapse"
+                    data-target="#trigram"
+                    aria-controls="trigram"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                {{ trigrams|get_item:page_obj.number }}
+            </button>
+            {% if page_obj.has_next %}
+                <a class="btn btn-light  btn-link" href="/{{ letter }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
+            {% endif %}
+        </div>
+
+
         <ul class="pagination
                    navbar-collapse
                    collapse
@@ -43,6 +53,7 @@
                    mx-auto
                    mt-1
                    justify-content-center" id="trigram">
+
             {% for i in page_obj.paginator.page_range %}
             {% ifequal i page_obj.number %}
             <li class="active page-item">
@@ -58,6 +69,7 @@
         {% endif %}
     </div>
 </hav>
+
 <div class="row mb-4">
     <div class="badge badge-pill badge-secondary mr-auto ml-1">{{ first_page_word }}</div>
     <div class="badge badge-pill badge-secondary ml-auto mr-1">{{ last_page_word }}</div>
