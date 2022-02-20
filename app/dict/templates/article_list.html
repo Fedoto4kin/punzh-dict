@@ -9,18 +9,30 @@
 
 {% block content %}
 
-<hav  class="navbar navbar-expand-lg navbar-light">
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container d-none d-lg-block">
+        <ul class="navbar-nav
+                       flex-wrap
+                       mt-2
+                       mx-0
+                       justify-content-center"
+            role="group" >
+            {% for l in ABC %}
+                <li class="btn px-1 {% if l == letter%} active btn-light{% endif %}">
+                    <a class="nav-link text-grey" href="/{{l}}" >{{ l }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</nav>
+
+<hav class="navbar d-block d-md-none navbar-light">
+
     <div class="container">
-        <button class="btn-sm mx-auto btn-primary-outline navbar-toggler" type="button"
-                    data-toggle="collapse"
-                    data-target="#abc"
-                    aria-controls="abc"
-                    aria-expanded="false"
-                aria-label="Toggle navigation">
-            <span>{{ letter }}</span> <span class="btn btn-light navbar-toggler-icon small"></span>
-        </button>
+
         <div class="navbar-collapse collapse" id="abc">
-            <ul class="navbar-nav
+            <ul class="navbar-right
+                       navbar-pills
                        flex-wrap
                        mt-2
                        mx-0
@@ -32,7 +44,15 @@
                 {% endfor %}
             </ul>
         </div>
-    
+        <button class="btn-sm mx-auto btn-primary-outline navbar-toggler" type="button"
+                data-toggle="collapse"
+                data-target="#abc"
+                aria-controls="abc"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span>{{ letter }}</span> <span class="btn btn-light-outline navbar-toggler-icon small"></span>
+        </button>
+
     </div>
 </hav>
 <hav  class="navbar navbar-expand-lg mb-2 navbar-light">
