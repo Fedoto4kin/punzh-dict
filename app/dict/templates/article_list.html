@@ -14,7 +14,7 @@
         <ul class="navbar-nav
                        flex-wrap
                        mt-2
-                       mx-0
+                       mx-auto
                        justify-content-center"
             role="group" >
             {% for l in ABC %}
@@ -27,9 +27,7 @@
 </nav>
 
 <hav class="navbar d-block d-md-none navbar-light">
-
     <div class="container">
-
         <div class="navbar-collapse collapse" id="abc">
             <ul class="navbar
                        navbar-pills
@@ -44,7 +42,8 @@
                 {% endfor %}
             </ul>
         </div>
-        <button class="btn-sm mx-auto btn-primary-outline navbar-toggler" type="button"
+        <div class="btn-group navbar-toggler ml-n3 mr-auto">
+        <button class="btn btn-primary-outline " type="button"
                 data-toggle="collapse"
                 data-target="#abc"
                 aria-controls="abc"
@@ -52,13 +51,14 @@
                 aria-label="Toggle navigation">
             <span>{{ letter }}</span> <span class="btn btn-light-outline navbar-toggler-icon small"></span>
         </button>
+         </div>
 
     </div>
 </hav>
 <hav  class="navbar navbar-expand-lg mb-2 navbar-light">
     <div class="container">
         {% if page_obj.has_other_pages %}
-        <div class="btn-group navbar-toggler mx-auto">
+        <div class="btn-group navbar-toggler ml-0 mr-auto">
             {% if page_obj.has_previous %}
                 <a class="btn btn-light btn-link"  href="/{{ letter }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
             {% endif %}
@@ -74,7 +74,6 @@
                 <a class="btn btn-light  btn-link" href="/{{ letter }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
             {% endif %}
         </div>
-
         <ul class="pagination
                    navbar-collapse
                    collapse
