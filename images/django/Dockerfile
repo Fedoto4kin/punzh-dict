@@ -12,6 +12,7 @@ RUN  apt-get update && \
      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY ./app/requirements.txt /tmp/
+COPY ./.env /.env
 
 RUN pip install -U pip
 RUN pip install -Ur /tmp/requirements.txt
