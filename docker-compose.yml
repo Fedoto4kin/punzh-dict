@@ -22,7 +22,6 @@ services:
     container_name: punzh_db
     image: postgres
     restart: "always"
-    ports:
       
     volumes:
       - ./db:/var/lib/postgresql/data

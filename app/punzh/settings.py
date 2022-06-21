@@ -12,10 +12,13 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
+env.read_env('/.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '=9emnu)qmm%z&6!m7e0!#vx$ll$due_3a^im2+b$u!b(a*ju&6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG =  env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -83,8 +86,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'punzh_dict',
-        'USER': 'admin',
-        'PASSWORD': '12345',
+        'USER': env('PG_USER'),
+        'PASSWORD': env('PG_PASS'),
         'HOST': 'punzh_db',
         'PORT': 5432,
     }
