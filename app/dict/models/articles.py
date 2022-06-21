@@ -64,7 +64,7 @@ class Article(models.Model):
 
     def save(self, *args, **kwargs):
 
-        self.first_letter = self.word[0].upper()
+        self.first_letter = normalization(self.word)[0].upper()
         super(Article, self).save(*args, **kwargs)
 
         ArticleIndexWord.objects.filter(article=self).delete()

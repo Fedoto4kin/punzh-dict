@@ -1,3 +1,4 @@
 #COPY ME TO .env AND CHANGE
 
-DOMAIN=punz.local
+PG_PASS=very-secure-password
+PG_USER=user
