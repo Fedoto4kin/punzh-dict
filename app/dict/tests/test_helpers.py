@@ -11,6 +11,12 @@ class KrlHelpersTestCase(TestCase):
             create_ngram('yö, yöhyt', 3)
         )
 
+    def test_ngram_2(self):
+        self.assertEqual(
+            'tuu',
+            create_ngram('tuwl’||i, ~ut', 3)
+        )
+
     def test_normalization_1(self):
         self.assertEqual(
             'myödätuuli',
