@@ -4,7 +4,7 @@ from django.db import models
 
 
 from .source import Source
-from ..helpers import gen_word_variants, create_ngram, KRL_ABC, normalization
+from ..helpers import gen_word_variants, r_gen_word_variants, create_ngram, KRL_ABC, normalization
 
 class Article(models.Model):
 
@@ -51,7 +51,7 @@ class Article(models.Model):
 
     def word_index(self):
         if self.word_normalized:
-            return gen_word_variants(self.word_normalized)
+            return r_gen_word_variants(word=self.word_normalized, _word=self.word)
         else:
             return gen_word_variants(self.word)
 
