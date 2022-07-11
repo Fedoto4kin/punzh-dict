@@ -2,3 +2,5 @@
 
 PG_PASS=very-secure-password
 PG_USER=user
+
+DJANGO_SECRET_KEY=
