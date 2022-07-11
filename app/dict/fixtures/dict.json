@@ -50141,7 +50141,7 @@
   "fields": {
     "word": "üčči",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üčč",
     "article_html": "<b>üčči</b> <i>s</i> <i>детск.</i>: ottua ~h взять на ручки; istuo üčis’s’ä сидеть на коленках; el’ä it’e, mama ottaw ~h не плачь, мама возьмёт на ручки",
     "source": 1,
@@ -50154,7 +50154,7 @@
   "fields": {
     "word": "ügi||ssä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ügi",
     "article_html": "<b>ügi||ssä</b> <i>v</i> <i>descr</i> мычать, говорить глухо и невнятно; ~z’öw i ožuttaw d’engoida он мычит и показывает деньги; ~ un’issa бормотать во сне",
     "source": 1,
@@ -50167,7 +50167,7 @@
   "fields": {
     "word": "ühekšikkö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšikkö</b> <i>s</i> девятка; ~ kart’i kahekšikon kattaw карта девятка восьмёрку покроет; ~ pirda бердо на девять пасм",
     "source": 1,
@@ -50180,7 +50180,7 @@
   "fields": {
     "word": "ühekšän",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšän</b>, <b>üheks’än</b> <i>всг.</i> <i>num</i> девять; ~ vakkua juablokkua девять мер картофеля; kananke kävel’i ~ čipi̮a всг. с курицей ходило девять цыплят",
     "source": 1,
@@ -50193,7 +50193,7 @@
   "fields": {
     "word": "ühekšän|kümmen’d’ä, üheks’än|kümmen’d’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšän|kümmen’d’ä, üheks’än|kümmen’d’ä</b> <i>всг.</i> <i>num</i> девяносто; d’erie i šeizattua ~ pivuo pelvašta натеребить и поставить в бабки девяносто снопиков льна",
     "source": 1,
@@ -50206,7 +50206,7 @@
   "fields": {
     "word": "ühekšän|toista, üheks’än|tois’t’a",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšän|toista, üheks’än|tois’t’a</b> <i>всг.</i> <i>num</i> девятнадцать; savušša ~ juablokkapuwhutta в саду [растёт] девятнадцать яблоней",
     "source": 1,
@@ -50219,7 +50219,7 @@
   "fields": {
     "word": "ühekšäš, üheks’äs’",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšäš, üheks’äs’</b> <i>всг.</i> <i>num</i> девятый; aigua n’üt ~ čuasu сейчас времени девятый час",
     "source": 1,
@@ -50232,7 +50232,7 @@
   "fields": {
     "word": "ühekšäš|toista",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühekšäš|toista</b> <i>num</i> девятнадцатый",
     "source": 1,
@@ -50245,7 +50245,7 @@
   "fields": {
     "word": "ühel’l’äh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühel’l’äh</b> <i>adv</i> однако, всё же; kakšičči päiväššä l’ämmit’ämmä, а ~ on vilu дважды в день топим [лежанку], а однако холодно; kun važa koissa, n’in l’ehmiä aja hot’ pellon peräh, ~ tulow kod’ih если телёнок дома, корову загони хоть в конец поля, всё равно придёт домой; ср. ühet’t’iän",
     "source": 1,
@@ -50258,7 +50258,7 @@
   "fields": {
     "word": "ühen|aigan’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|aigan’e</b> <i>a</i> <i>см.</i> ühenigähin’e; ~aigaz’ista olen jiänün elošša požalui vain üks’iin пожалуй, я один жив из одногодок",
     "source": 1,
@@ -50271,7 +50271,7 @@
   "fields": {
     "word": "ühen|jüt’t’ün’än’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|jüt’t’ün’än’e</b> <i>a</i> подобный, одинаковый; val’l’ita ~jüt’t’ün’äzet čaškat выбрать одинаковые чашки; t’iäl’ä kaikin piet’äh ~jüt’t’ün’äs’t’ä roduo lammašta здесь все держат овец одинаковой породы",
     "source": 1,
@@ -50284,7 +50284,7 @@
   "fields": {
     "word": "ühen|igähin’e, ühen|igehin’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|igähin’e, ühen|igehin’e</b> <i>всг.</i> <i>a</i> и s одних лет с кем-л., ровесник; kül’äššä ol’i art’el’i ~igähis’t’ä t’üt’t’üö в деревне была артель девушек одного возраста; <i>см.</i> ühenaigan’e",
     "source": 1,
@@ -50297,7 +50297,7 @@
   "fields": {
     "word": "ühen|igän’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|igän’e</b> <i>a</i> <i>см.</i> ühenigähin’e",
     "source": 1,
@@ -50310,7 +50310,7 @@
   "fields": {
     "word": "ühen|muon’e, ühen|moin’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|muon’e, ühen|moin’e</b> <i>всг.</i> <i>a</i> одинаковый; равный; kaikki riižikat ~muozet, kun n’übl’ät все рыжики одинаковые, как пуговицы; l’eikkuat kolme ~muos’t’a n’ärehüt’t’ä срубишь три одинаковые ёлочки; čikkoloilla oldih ~moiz’et paikat piäs’s’ä <i>всг.</i> на голове у сестёр были одинаковые платки",
     "source": 1,
@@ -50323,7 +50323,7 @@
   "fields": {
     "word": "ühen|n’ägön’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|n’ägön’e</b> <i>a</i> <ol><li> одинаковый, похожий; kaz’inpoigazet ~n’ägözet harmuazet котята одинаковые, серенькие </li><li> однотонный, одноцветный; kirikköh pid’äis’ panna ~ paikkan’e, ei kir’java в церковь надо бы повязать однотонный, не пёстрый платок</li></ol>",
     "source": 1,
@@ -50336,7 +50336,7 @@
   "fields": {
     "word": "ühen|pidun’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|pidun’e</b> <i>a</i> одной, одинаковой длины; puwn pil’it’äh ~piduz’ih čurkaz’ih дерево распилят на чурочки одинаковой длины; ~piduz’ista langoista pl’et’it’äh palmikon косичку заплетут из ниток одинаковой длины",
     "source": 1,
@@ -50349,7 +50349,7 @@
   "fields": {
     "word": "ühen|šuwrun’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühen|šuwrun’e</b> <i>a</i> одинаковой величины, размера; parembi šuolata ~šuwruz’ie ogurčaz’ie, järeid’ä ei ottua солить лучше огурчики одной величины, крупных не брать",
     "source": 1,
@@ -50362,7 +50362,7 @@
   "fields": {
     "word": "üheššä, ühes’s’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>üheššä, ühes’s’ä</b> <i>всг.</i> <i>adv</i> вместе; совместно; tuldih ~, a l’äht’iet’t’ih eris’ [они] пришли вместе, а ушли порознь; riihi i guomno oldih ~, ovi oveh рига и овин были вместе, дверь в дверь; müö ~ ri̮amma <i>всг.</i> мы работаем совместно; <i>ср.</i> üheštäh 1, üht’ehizešti",
     "source": 1,
@@ -50375,7 +50375,7 @@
   "fields": {
     "word": "ühešt’äh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühešt’äh</b> <i>adv</i> <ol><li> совместно, сообща; kaivua kaivo ~ sus’iedoinke выкопать колодец сообща с соседями; vel’l’ekšet perehin’eh el’et’äh viel’ä ~ братья с семьями живут ещё совместно </li><li> дружно; заодно; miän lapšet ollah ~ kaikinke, ei čakaššeta наши дети дружны со всеми, не ссорятся; l’uboissa az’iešša on ~ toiz’inke он в любом деле заодно с остальными</li></ol>",
     "source": 1,
@@ -50388,7 +50388,7 @@
   "fields": {
     "word": "ühešt’ähin’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühešt’ähin’e</b> <i>a</i> <i>см.</i> üht’ehin’e; ~ guomno n’el’l’äl’l’ä taluo совместное гумно на четыре дома",
     "source": 1,
@@ -50401,7 +50401,7 @@
   "fields": {
     "word": "ühet’t’iän",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühet’t’iän</b> <i>adv</i> <i>см.</i> ühel’l’äh; t’ükičiin ravot s’inčozešša šammalella, a ~ tuwlow я заткнул щели в сенцах [бани] мхом, а всё равно дует",
     "source": 1,
@@ -50414,7 +50414,7 @@
   "fields": {
     "word": "ühet’t’ömäh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühet’t’ömäh</b> <i>adv</i> <i>см.</i> ühet’t’ömäkši",
     "source": 1,
@@ -50427,7 +50427,7 @@
   "fields": {
     "word": "ühet’t’ömäkši, ühettömäks’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühe",
     "article_html": "<b>ühet’t’ömäkši, ühettömäks’i</b> <i>всг.</i> <i>adv</i> полностью, дочиста; jawhot loppiečettih ~ мука кончилась полностью; kod’i palo ~ дом сгорел дотла ’до конца’",
     "source": 1,
@@ -50440,7 +50440,7 @@
   "fields": {
     "word": "ühis’t’||iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühi",
     "article_html": "<b>ühis’t’||iä</b> <i>v</i> застать вместе <i>(пару)</i>; mužikka i ~äw šil’l’ä kerralla naizen druwgunke <i>флк.</i> мужик в тот раз и застал ’застает’ жену с любовником",
     "source": 1,
@@ -50453,7 +50453,7 @@
   "fields": {
     "word": "ühičči",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühi",
     "article_html": "<b>ühičči</b> <i>adv</i> однажды, один раз; <i>см.</i> kerran",
     "source": 1,
@@ -50466,7 +50466,7 @@
   "fields": {
     "word": "ühit’t’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühi",
     "article_html": "<b>ühit’t’iä</b> <i>v</i> <i>см.</i> ühüt’t’iä",
     "source": 1,
@@ -50479,7 +50479,7 @@
   "fields": {
     "word": "üht’ehi||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’ehi||n’e</b> <i>a</i> общий, совместный; kahella talolla ~ pluwga на два хозяйства ’дома’ имеется общий плуг; sus’iedoinke meil’ä ol’i ~ kül’ü у нас с соседями была совместная баня; см. ühešt’ähin’e, üht’el’än’e",
     "source": 1,
@@ -50492,7 +50492,7 @@
   "fields": {
     "word": "üht’ehizešti",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’ehizešti</b> <i>adv</i> <i>см.</i> üheštäh 1; härgiä pid’imä ~, kül’äl’l’eh мы кормили ’содержали’ быка сообща, деревней",
     "source": 1,
@@ -50505,7 +50505,7 @@
   "fields": {
     "word": "üht’el’ä||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’el’ä||n’e</b> <i>a</i> <i>см.</i> üht’ehin’e; n’iitokšet molemmilla perehil’l’ä oldih ~zet, hein’iä šuadih kerralla у обеих семей покосы были общие, сено заготавливали разом",
     "source": 1,
@@ -50518,7 +50518,7 @@
   "fields": {
     "word": "üht’enän’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’enän’e</b> <i>a</i> <ol><li> сплошной, цельный; torvešša hoikka ~ vuate käz’ipaikkoih, ew viel’ä i l’eikattu в рулоне тонкое цельное полотно на полотенца, ещё и не разрезанное </li><li> непрерывный, беспрестанный; kaiken šügüžün ~ vihma всю осень беспрестанный дождь</li></ol>",
     "source": 1,
@@ -50531,7 +50531,7 @@
   "fields": {
     "word": "üht’ew||d’üö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’ew||d’üö</b> <i>v</i> <i>refl</i> соединяться; сходиться; žiivattua n’üt vähä, i kakši karjua ~vüt’t’ih скота теперь мало, и два стада соединились; mečäl’l’ä dorogat ~vütäh дороги в лесу сходятся",
     "source": 1,
@@ -50544,7 +50544,7 @@
   "fields": {
     "word": "üht’ewt’||tia",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’ewt’||tia</b> <i>v</i> <i>caus</i> соединить; смешать; ~ kagrazet i ozrazet jawhot смешать овсяную и ячневую муку; šuolattavat i kuivattavat gribat pannah eris’, ei ~et’ä грибы для засолки и сушки положат отдельно, не смешивают",
     "source": 1,
@@ -50557,7 +50557,7 @@
   "fields": {
     "word": "üht’iäl’d’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’iäl’d’ä</b> <i>adv</i> с одной стороны, с одного места; pruaz’n’iekalla keräwvüt’äh ~, toizualda на праздники собираются с одной стороны, с другой стороны; halguo ved’imä nagole ~ мы возили дрова всегда с одного места; üks’i andaw n’iid’eh ~ päin, toin’e vaššašša istuw i ottaw n’iid’eh одна с одной стороны в ниты подаёт [основу], другая сидит напротив и принимает в ниты",
     "source": 1,
@@ -50570,7 +50570,7 @@
   "fields": {
     "word": "üht’iäl’l’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’iäl’l’ä</b> <i>adv</i> в одном месте, в одной стороне; kaikin vaštawduma ~ мы все встретились в одном месте; ~ kuwluw kellon’e, toizualla koira hawkkuw в одной стороне слышен колокольчик, в другой стороне собака лает",
     "source": 1,
@@ -50583,7 +50583,7 @@
   "fields": {
     "word": "üht’üö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’üö</b> <i>v</i> <i>refl</i> <ol><li> <i>см.</i> üht’ewd’üö; mužikat ühüt’t’ih artel’ih i ruvettih plotn’ikuimah мужики объединились в артель и стали плотничать; bokko üht’ü vierahaže karjah баран пристал ’присоединился’ к чужому стаду </li><li> встретиться, сойтись l’ähemmä randoih, a šid’ä kangahalla ühümmä пойдём в разные стороны, а затем в бору встретимся; ammuin en n’iä Kol’ašihua, ei šua ~ давно не вижу жену Николая, не удаётся встретиться </li><li> сойтись в браке; kodvan el’et’t’ih šulahazenke eris’, n’üt tuaš ühüt’t’ih [они] с мужем долго жили отдельно, теперь сошлись опять; l’eški l’eššenke ühüt’t’ih, ostatkan ijän i el’et’t’ih вдовец со вдовой сошлись, остальной век и жили</li></ol>",
     "source": 1,
@@ -50596,7 +50596,7 @@
   "fields": {
     "word": "üht’äl’än’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’äl’än’e</b> <i>a</i> сплошной, цельный; единый; nuora pit’kä, ~, šolmittu n’imis’s’ä ewlun верёвка длинная, сплошная, нигде не была завязана узлами; guomno ~ riihenke, riiheššä kuivuat, a guomnošša puičet гумно единое с ригой, в риге сушишь, а на гумне молотишь; <i>ср.</i> üht’enän’e 1",
     "source": 1,
@@ -50609,7 +50609,7 @@
   "fields": {
     "word": "üht’äl’äs’t’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üht",
     "article_html": "<b>üht’äl’äs’t’ä</b> <i>adv</i> подряд, без перерыва; emmä muannun ~ kahet suwtkat мы не спали подряд двое суток; ruavoin fermalla ~ kümmenen vuotta я работал на ферме без перерыва десять лет",
     "source": 1,
@@ -50622,7 +50622,7 @@
   "fields": {
     "word": "ühüt’||t’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühü",
     "article_html": "<b>ühüt’||t’iä</b> <i>v</i> <i>caus</i> <ol><li> <i>см.</i> üht’ewt’t’iä; kakši rawdapalua pid’äw ~ два куска жести надо соединить </li><li> сводить <i>(в браке)</i>; vanhemmat paistih kešken’äh: ~ämmä puaran, ana el’et’äh родители поговорили между собой: соединим пару, пусть живут</li></ol>",
     "source": 1,
@@ -50635,7 +50635,7 @@
   "fields": {
     "word": "ühä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühä",
     "article_html": "<b>ühä</b> <i>adv</i> <ol><li> <i>см.</i> ül’en; ~ ägie šiä очень жаркая погода; ~ šuwri kivi очень большой камень; ~ раhataban’e [человек] очень плохого характера; doroga ~ rikottu дорога весьма разбита; juwva ~ tahottaw очень хочется пить </li><li> далеко, вдали; t’uön’n’et’t’ih ruadamah ~ работать отправили далеко; n’üt hiän on jo ~ теперь он уже далеко; miäččü ~ l’en’d’i мяч далеко полетел</li></ol>",
     "source": 1,
@@ -50648,7 +50648,7 @@
   "fields": {
     "word": "ühäššä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühä",
     "article_html": "<b>ühäššä</b> <i>adv</i> вдали, далеко; karbalošuo ~, vaivut männeššä клюквенное болото вдали, устанешь идти; lapšet el’et’äh ~, kaikissa rannoissa дети живут далеко, по разным ’всем’ сторонам",
     "source": 1,
@@ -50661,7 +50661,7 @@
   "fields": {
     "word": "ühäšt’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ühä",
     "article_html": "<b>ühäšt’ä</b> <i>adv</i> издалека; voinan aigah šiiričči ajettih ~ žiivattua во время войны мимо [нас] издалека гнали скот; iän’i kuwluw ~ издалека слышен голос",
     "source": 1,
@@ -50674,7 +50674,7 @@
   "fields": {
     "word": "üks’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i</b> <ol><li> <i>num</i> один; ~ vuoži один год; ~ puw одно дерево; ~ hebon’е i kakši l’ehmiä одна лошадь и две коровы; piiččuo kuvottih ~in langaz’iin, l’iew t’ämä harvan’e ряднину ткали пo одной ниточке, получается это редким; pellot pergaw ragehella, n’in ~in korduz’iin keriäl’emäh rubiet град так побьёт поля, что станешь подбирать по одному стебельку </li><li><i>a</i> тот (самый), один (тот же); kaikki lapšet katat ühel’l’ä od’jualalla всех детей накроешь одним одеялом; üht’ä kül’üö sus’iedoinke l’ämmit’t’el’imä, kun’i omua emmä šeizattan мы топили с соседями одну баню, пока не построили свою; Pawšanke olemma ühešt’ä kül’äšt’ä мы с Павлом из одной деревни </li><li><i>pron</i> <i>indef</i> только один; ничто другое, кроме; šüömis’t’ä ~ nuat’t’irokka из еды – одни щи; šuolaimma üht’ä vahvuo мы засолили одних волнушек; ših aigah jäi l’eikata ~ kagra в ту пору осталось сжать только овёс </li><li> <i>pron</i> <i>indef</i> какой-то, некий; tul’i ~ nain’e какая-то женщина пришла; ~ ris’t’ikanža šanel’i, buitto n’ägi kondieda некий человек рассказывал, будто видел медведя ◊ üht’eh iäneh в один голос, разом; tulet kod’ih, lapšet üht’eh iäneh ärvätäh придёшь домой, дети ревут в один голос; üht’eh mänöh в одно время, как-то; t’äššä jogirannalla üht’eh mänöh čiganat šeizottih тут на берегу реки цыгане проживали ’стояли’ в одно время; üht’eh pidoh подряд, беспробудно; kaiken üön magain üht’eh pidoh я спал беспробудно всю ночь; üht’eh rukah одинаково, сходно; pal’tot ommeldu üht’eh rukah оба пальто сшиты одинаково; üht’eh t’ieh одновременно, заодно; aštukkua kül’üh üht’eh t’ieh, kun’i on l’öwl’üö пойдёмте вместе ’заодно’ в баню, пока есть пар; ~ kaikki всё равно; ~ kaikki omalla luad’i он всё равно сделал по-своему; ~in ühis’t’äh один-одинёшенек; ~in ühis’t’äh l’äks’i üöl’l’ä vaštah он один-одинёшенек отправился к ночи в дорогу</li></ol>",
     "source": 1,
@@ -50687,7 +50687,7 @@
   "fields": {
     "word": "üks’ičči",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’ičči</b> <i>adv</i> однажды, один раз; ambu ~ i tappo hukan он выстрелил один раз и убил волка; <i>ср.</i> kerran",
     "source": 1,
@@ -50700,7 +50700,7 @@
   "fields": {
     "word": "üks’iin, üks’in",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’iin, üks’in</b> <i>всг.</i> <i>adv</i> один <i>(без других)</i>; el’än ~ живу один; lapšet ~ kažvatiin, mužikatta я вырастила детей одна, без мужа; ~ et viikkuo riid’el’e <i>флк.</i> один долго не поскандалишь",
     "source": 1,
@@ -50713,7 +50713,7 @@
   "fields": {
     "word": "üks’iin|pidoz’iin",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’iin|pidoz’iin</b> <i>adv</i> неровно, выступами, неодинаково <i>(по длине)</i>; tukat l’eikattu ~ волосы подрезаны неровно; helma sverez’il’l’ä ~ у юбки неровный подол; pivo harjattu ~, pid’äw kohennaldua šuvalla повесмо волокна вычесаны неровно, нужно подправить щетью",
     "source": 1,
@@ -50726,7 +50726,7 @@
   "fields": {
     "word": "üks’iin|päid’eh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’iin|päid’eh</b> <i>adv</i> один, сам с собой; наедине; jiät ~ i vain kumardelet jumalua останешься наедине и только молишься Богу",
     "source": 1,
@@ -50739,7 +50739,7 @@
   "fields": {
     "word": "üks’i|kerdan’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|kerdan’e</b> <i>a</i> одинарный, однослойный; langat oldih ~kerdazet, ewldu viel’ä kerrattu пряжа была одинарная, ещё не сучёная; šuappuašiäret luadiečettih ei ~kerdazet, ol’i pandu potkl’eika голенища сапог делались не одинарные, была вложена подклейка",
     "source": 1,
@@ -50752,7 +50752,7 @@
   "fields": {
     "word": "üks’ikkö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’ikkö</b> <i>s</i> одиночка; kaikin art’el’issa, šid’ä puaraz’iin, vain Jehimä ~ все в артели, затем парочками, лишь Ефим одиночка",
     "source": 1,
@@ -50765,7 +50765,7 @@
   "fields": {
     "word": "üks’i|miel’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|miel’in’e</b> <i>a</i> близкий, сходный по мыслям, по интересам <i>(о человеке)</i>; ol’ima üks’iaigazet, ~miel’izet, aigua viet’t’imä üheššä мы были одного возраста, одних интересов, вместе проводили время",
     "source": 1,
@@ -50778,7 +50778,7 @@
   "fields": {
     "word": "üks’i|miel’i|art’el’",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|miel’i|art’el’</b> <i>s</i> <i>поэт.</i> приятельская артель, артель сверстников; oiz’it viel’ä kualellun ~artel’iz’ih šominke šoittuz’inke <i>флк.</i> погулял бы ’побродил бы’ ты ещё в приятельских артелях с весёлыми ’красивыми’ гармошечками <i>(из плача на проводах сына на службу)</i>",
     "source": 1,
@@ -50791,7 +50791,7 @@
   "fields": {
     "word": "üks’i|päid’eh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|päid’eh</b> <i>adv</i> <i>см.</i> üks’iinpäid’eh; ~ vain pudronke vojuija <i>флк.</i> в одиночку лишь с кашей воевать",
     "source": 1,
@@ -50804,7 +50804,7 @@
   "fields": {
     "word": "üks’in’äh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’in’äh</b> <i>adv</i> в одиночку, один; juablokan kaivoin ~, awttajua ewlun я выкопал картофель в одиночку, помощников не было; igävä ~ el’iä одному жить тоскливо; <i>см.</i> üks’inäl’l’eh",
     "source": 1,
@@ -50817,7 +50817,7 @@
   "fields": {
     "word": "üks’in’äl’l’eh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’in’äl’l’eh</b> <i>adv</i> <i>см.</i> üks’in’äh; ~ ei šua kaškie puhaštua в одиночку не вычистить пожогу",
     "source": 1,
@@ -50830,7 +50830,7 @@
   "fields": {
     "word": "üks’inä||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’inä||n’e</b> <i>a</i> одинокий; единственный; kül’aššä n’üt enämbi ~s’t’ä akkua в деревне теперь больше одиноких старух; pert’izeššä ~zet ruamat i aivin vilu в избушке одни рамы и постоянно холодно",
     "source": 1,
@@ -50843,7 +50843,7 @@
   "fields": {
     "word": "üks’i|puol’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|puol’in’e</b> <i>a</i> односторонний; pal’tošša ~ mat’er’ja: et perel’icuiče материал в пальто односторонний: не перелицуешь",
     "source": 1,
@@ -50856,7 +50856,7 @@
   "fields": {
     "word": "üks’i|päiväl’l’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|päiväl’l’in’e</b> <i>a</i> <ol><li> однодневный, суточный; ~päiväl’l’izet t’ipazet jo hüviin n’okitah hienonnettuo jäiččiä однодневные цыплята уже хорошо клюют размельчённое яйцо </li><li> безалаберный, неэкономный; непутёвый; perehenke ei voi olla ~päiväl’l’izenä, pid’äw duwmaija i ed’izeh päin с семьёй безалаберным нельзя быть, нужно думать и о будущем; n’iin zaved’ittu ~päiväl’l’iz’il’l’ä: t’ämpiänä veššel’ä, a huomena velgah tullah pakkuomah у непутёвых так заведено: сегодня застолье ’весело’, а завтра придут в долг просить</li></ol>",
     "source": 1,
@@ -50869,7 +50869,7 @@
   "fields": {
     "word": "üks’it’eh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’it’eh</b> <i>adv</i> почти, совсем; päivän ruadoma ~ n’äl’l’äl’l’ä день мы работали почти голодные; vez’i kül’üššä jo ~ vilu вода в бане уже совсем холодная",
     "source": 1,
@@ -50882,7 +50882,7 @@
   "fields": {
     "word": "üks’i|toista, üks’i|tois’t’a",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|toista, üks’i|tois’t’a</b> <i>всг.</i> <i>num</i> одиннадцать; pereh ol’i ~ hengie семья была одиннадцать душ",
     "source": 1,
@@ -50895,7 +50895,7 @@
   "fields": {
     "word": "üks’it’t’iän",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’it’t’iän</b> <i>adv</i> по одному, поодиночке; ~ aššutah идут поодиночке; naizet ei ruohita ~ kävel’l’ä ed’äh meččäh женщины не смеют в одиночку далеко в лес ходить; ~ ei voinun männä kuwndelomah в одиночку нельзя было идти ворожить ’слушать’",
     "source": 1,
@@ -50908,7 +50908,7 @@
   "fields": {
     "word": "üks’it’t’iäz’in",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’it’t’iäz’in</b> <i>adv</i> <i>см.</i> üks’it’t’iän",
     "source": 1,
@@ -50921,7 +50921,7 @@
   "fields": {
     "word": "üks’i|vagan’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|vagan’e</b> <i>a</i> степенный; спокойный; ois’ hiän ~ mieš, el’än’d’ä män’iis’ kebiembi будь он степенный человек, жизнь в семье шла бы легче",
     "source": 1,
@@ -50934,7 +50934,7 @@
   "fields": {
     "word": "üks’i|vuod’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üks",
     "article_html": "<b>üks’i|vuod’in’e</b> <i>a</i> годовалый, однолетний; ~ härgä годовалый бык",
     "source": 1,
@@ -50947,7 +50947,7 @@
   "fields": {
     "word": "ül’behü||š, ül’büs’",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’behü||š, ül’büs’</b> <i>всг.</i> <i>s</i> своеволие; озорство; poijista en nähnün koirutta da ~t’t’ä от сыновей я не видел баловства и своеволия; silma ~ hüväh ei tuo <i>всг.</i> тебя озорство к добру не приведёт",
     "source": 1,
@@ -50960,7 +50960,7 @@
   "fields": {
     "word": "ül’bet’||ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’bet’||ä</b> <i>v</i> засвоевольничать, озорничать; расшалиться; tuatotta brihalapšet ~t’ih без отца мальчики засвоевольничали",
     "source": 1,
@@ -50973,7 +50973,7 @@
   "fields": {
     "word": "ül’bie",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’bie</b> <i>a</i> своевольный, непослушный, озорной; äijäl’d’i ~ lapši, buabo hänenke vaibuw ребёнок очень непослушный, бабушка с ним устаёт; ukko nuorena ol’i ~ молодым старик был озорной",
     "source": 1,
@@ -50986,7 +50986,7 @@
   "fields": {
     "word": "ül’bieččä||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’bieččä||n’e</b> <i>a</i> баловной; шаловливый; ~zet kaz’inpoijat kizatah keräl’l’ä, ševotellah langua шаловливые котята играют клубком, запутают пряжу",
     "source": 1,
@@ -50999,7 +50999,7 @@
   "fields": {
     "word": "ül’biehko",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’biehko</b> <i>a</i> озорноватый, довольно непослушный; t’üt’t’ön’e, a ~, kun brihalapši девочка, а озороватая, будто мальчишка",
     "source": 1,
@@ -51012,7 +51012,7 @@
   "fields": {
     "word": "ül’biel’d’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülb",
     "article_html": "<b>ül’biel’d’i</b> <i>adv</i> своевольно, озорно; вызывающе; brihat juolletah l’iigua i piet’äh iččied’ä ~ парни выпьют лишку и ведут себя вызывающе",
     "source": 1,
@@ -51025,7 +51025,7 @@
   "fields": {
     "word": "ül’či, ül’ičči",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülč",
     "article_html": "<b>ül’či, ül’ičči</b> <i>всг.</i> <ol><li> <i>prep</i> вдоль, по; t’üt’öt i brihat gul’aijah ~ kül’än девушки и парни гуляют вдоль деревни; t’üt’öl’l’ä ~ šel’giä üks’i kassa, modua ewlun kakši у девушки вдоль спины одна коса, две – не было обычая </li><li> <i>pron</i> полный, целый; весь, целиком; ~ talven ved’imä hirt’ä мы возили брёвна всю зиму; en’n’ein nuoriz’o ewldu pihalla ~ üöd’ä раньше молодёжь не была ночь напролёт на улице; <i>ср.</i> ül’i</li></ol>",
     "source": 1,
@@ -51038,7 +51038,7 @@
   "fields": {
     "word": "ül’čin’ä||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülč",
     "article_html": "<b>ül’čin’ä||n’e</b> <i>a</i> продольный; долевой; kablahin piäl’l’ä pannah ~zet kawšat сверху на копылья положат продольные накопыльники",
     "source": 1,
@@ -51051,7 +51051,7 @@
   "fields": {
     "word": "ül’dü||ö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üld",
     "article_html": "<b>ül’dü||ö</b> <i>v</i> <i>refl</i> <ol><li> расходиться, разойтись, действовать энергично, с азартом; andilaš ~w it’kemäh unohtumiz’ih šuat невеста разойдётся плакать до обморока; lapšet ül’l’üt’t’ih koiraštamah, kiel’d’iä ei šua дети расшалились, и унять невозможно; pruaz’n’ikan jäl’geh mužikka ~h juomah мужик разошёлся пить с праздника ’после праздника’; hebon’e ül’d’ü alagorah лошадь разогналась под гору </li><li> усиливаться, крепчать; vihma ül’d’ü, n’üt ildah šuat ei heit’ä дождь усилился, теперь до вечера не прекратится</li></ol>",
     "source": 1,
@@ -51064,7 +51064,7 @@
   "fields": {
     "word": "ül’eht’üö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’eht’üö</b> <i>v</i> <i>refl</i> <i>см.</i> ül’d’üö",
     "source": 1,
@@ -51077,7 +51077,7 @@
   "fields": {
     "word": "ül’embiänä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’embiänä</b> <i>adv</i> <i>comp</i> повыше <i>(где)</i>; ~ parembi l’eheš ol’i, vain katata ei šuanun повыше берёзовые ветки были лучше, но обломать не удалось",
     "source": 1,
@@ -51090,7 +51090,7 @@
   "fields": {
     "word": "ül’emmä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’emmä</b> <i>adv</i> <i>comp</i> выше <i>(куда)</i>; čuasut pid’äw riputtua ~ часы нужно повесить выше; vihmakežänä hiiret luajitah pežoloida ~, hein’iköššä koržiloih мыши в дождливое лето гнёзда делают выше, на стеблях трав; kаbad’i puwh ~ i kekšit kül’än заберись выше на дерево и заметишь деревню",
     "source": 1,
@@ -51103,7 +51103,7 @@
   "fields": {
     "word": "ül’en",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’en</b> <i>adv</i> очень, весьма; ~ šoma t’üt’t’ö очень красивая девушка; mus’s’ikat ollah ~ küpšet, käz’is’s’ä mädžet’äh черника очень зрелая, в руках мнётся; ~ pöwrüöw, regil’öin jäl’gie ei nävü очень метёт, не видно санного следа",
     "source": 1,
@@ -51116,7 +51116,7 @@
   "fields": {
     "word": "ül’en’||d’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’en’||d’iä</b> <i>v</i> <ol><li> отправлять; провожать; ~ posilka отправить посылку; ~ opaštumah l’innah отправить в город учиться; ~d’imä poijan sluwžibah мы проводили сына на службу </li><li> направлять, придавать ход; подталкивать; regüzet gorašta ~n’ät, jogeh šuat i čurahetah с горы санки разгонишь, до реки и покатятся</li></ol>",
     "source": 1,
@@ -51129,7 +51129,7 @@
   "fields": {
     "word": "ül’e||t’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üle",
     "article_html": "<b>ül’e||t’ä</b> <i>v</i> <i>refl</i> <ol><li> отправляться, направляться; naizet ~t’t’ih karbaloh женщины отправились за клюквой; Tverih ~n’imä kahella hebozella illašta мы направились в Тверь с вечера на двух лошадях; jügiehkön’e ol’i ~ koista трудновато было отправляться из дому </li><li> подниматься выше; päivän’e ~n’öw, šilloin kašša kuivaw солнце поднимется выше, тогда роса сойдёт ’высохнет’</li></ol>",
     "source": 1,
@@ -51142,7 +51142,7 @@
   "fields": {
     "word": "ül’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’i</b> <i>pron</i> <i>см.</i> ül’či 2; ~ päivät häil’üö mečäššä целыми днями бродить в лесу; keviäl’l’ä ~ illat kizaimma lattah весной все вечера мы играли в лапту",
     "source": 1,
@@ -51155,7 +51155,7 @@
   "fields": {
     "word": "ül’i|huwl’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’i|huwl’i</b> <i>s</i> верхняя губа; šil’l’ä miehel’l’ä ol’i hallen ~ у того человека была заячья ’треснувшая’ верхняя губа",
     "source": 1,
@@ -51168,7 +51168,7 @@
   "fields": {
     "word": "ül’immä||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’immä||n’e</b><ol><li> <i>a</i> <i>super</i> самый верхний; ottua ~ piirua взять верхний пирог; šeizattua čaškat ~zel’l’ä pal’čalla поставить чашки на верхнюю полку; <i>ср.</i> piäl’in’e </li><li><i>s</i> главный, старший <i>(по чину)</i>; ~ kir’juttaw kaikki päiväruavot старший учитывает все работы за день</li></ol>",
     "source": 1,
@@ -51181,7 +51181,7 @@
   "fields": {
     "word": "ül’i||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’i||n’e</b> <i>a</i> <i>см.</i> ül’immän’e 1; jäi vähän’e juablokas’t’a ~z’il’l’ä okšilla осталось немного яблочек на верхних ветках",
     "source": 1,
@@ -51194,7 +51194,7 @@
   "fields": {
     "word": "ül’i|puol’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’i|puol’i</b> <i>s</i> верхняя, лицевая сторона; paikalla ~ ün’n’äh vieri лицевая сторона у платка совсем выгорела",
     "source": 1,
@@ -51207,7 +51207,7 @@
   "fields": {
     "word": "ül’is’||t’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’is’||t’iä</b> <i>v</i> попадать выше цели <i>(при стрельбе, броске)</i>; uid’i orava, ušto ~s’iin белка ушла, я, видимо, взял выше",
     "source": 1,
@@ -51220,7 +51220,7 @@
   "fields": {
     "word": "ül’it’t’||iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üli",
     "article_html": "<b>ül’it’t’||iä</b> <i>v</i> намерзать наледи, образоваться гололёду; kovilla pakkaz’illa pid’äw vähemmiin valua kaivon ieššä, ein’in ~äw ümbäri в сильные морозы нужно меньше расплескивать воды у колодца, иначе кругом намёрзнет наледь",
     "source": 1,
@@ -51233,7 +51233,7 @@
   "fields": {
     "word": "ül’l’üt’||t’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üll",
     "article_html": "<b>ül’l’üt’||t’iä</b> <i>v</i> <i>caus</i> подгонять, заставлять двигаться быстрее; ~t’i kol’essun, n’in i spiiččoida ei tunnu он так разогнал колесо, что и спиц не видно; n’uhiskuo hevos’t’a aivin ~ät ruošalla медлительную лошадь постоянно подгоняешь кнутом",
     "source": 1,
@@ -51246,7 +51246,7 @@
   "fields": {
     "word": "ül’ä|gorah",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ä|gorah</b> <i>adv</i> в гору, на подъём; ~ hebon’e regie jügiešt’i ved’äw лошадь тяжело везёт воз в гору",
     "source": 1,
@@ -51259,7 +51259,7 @@
   "fields": {
     "word": "ül’äh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’äh</b> <i>adv</i> вверх, наверх; высоко; luwva miäččü ~ подбросить мяч вверх; tuwlella koppai šollet ~ холсты подхватило ветром вверх; nowšša ~ puwh забраться высоко на дерево",
     "source": 1,
@@ -51272,7 +51272,7 @@
   "fields": {
     "word": "ül’äh|päi(n)",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’äh|päi(n)</b> <i>adv</i> кверху, вверх; kukkazet noššettih piähüöt ~ цветы приподняли головки кверху; jäl’gimäzen l’iwht’ehen pannah kuhl’ahalla t’ähkät alahpäin, t’üvi ~ последний сноп положат на суслон колосьями книзу, срезом ’комлем’ кверху; <i>ср.</i> ül’äh",
     "source": 1,
@@ -51285,7 +51285,7 @@
   "fields": {
     "word": "ül’ähüš",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ähüš</b> <i>s</i> высота, высь; taivahan ~ небесная высь",
     "source": 1,
@@ -51298,7 +51298,7 @@
   "fields": {
     "word": "ül’ähäd’ä, ul’ähiän’d’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ähäd’ä, ul’ähiän’d’ä</b> <i>всг.</i> <i>adv</i> сверху; šolahtua ~ pordahie müöt’ спуститься сверху по лестнице; piä püöriw kaččuošša ~ alah <i>всг.</i> голова кружится смотреть сверху вниз",
     "source": 1,
@@ -51311,7 +51311,7 @@
   "fields": {
     "word": "ül’ähäkkäl’i",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ähäkkäl’i</b> <i>adv</i> высоко, верхом; piäkšüöt l’en’n’el’l’äh ~ powviks’i <i>примета</i> ласточки летают высоко к вёдру",
     "source": 1,
@@ -51324,7 +51324,7 @@
   "fields": {
     "word": "ül’ähäkši",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ähäkši</b> <i>adv</i> <i>см.</i> ül’äh; alahakši t’ühjäčen, ~ t’äwvüčen <i>(bad’ja kaivolla) флк.</i> вниз – пустым, вверх – полным <i>(бадья на колодце)</i>",
     "source": 1,
@@ -51337,7 +51337,7 @@
   "fields": {
     "word": "ül’ähänä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülä",
     "article_html": "<b>ül’ähänä</b>, <b>ül’ähiänä</b> <i>всг.</i> <i>adv</i> наверху; высоко; hawkka l’en’d’äw ~ ястреб летит высоко",
     "source": 1,
@@ -51350,7 +51350,7 @@
   "fields": {
     "word": "ül’övä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ülö",
     "article_html": "<b>ül’övä</b> <i>a</i> высокий, возвышенный <i>(о местности)</i>; kül’ä on ~l’l’ä šomalla paikalla деревня расположена на возвышенном красивом месте; jovella üks’i ber’oga on ~, toin’e madala у реки один берег высокий, другой – низкий",
     "source": 1,
@@ -51363,7 +51363,7 @@
   "fields": {
     "word": "ümbäri",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ümb",
     "article_html": "<b>ümbäri</b> <ol><li> <i>prep</i> и <i>postp</i> кругом, вокруг; ~ kevošta pandu riwguhin’e aida вокруг стога поставлена изгородь из жердей; mančikka kažvaw goraz’illa, kandoloista ~ земляника растёт на пригорках, вокруг пней; kravat’ista ~ riputettu rangin’e кругом кровати повешен полог; humalan köwnöšt’ä pid’iä ~ ičeštä, šilloin ei tartu l’äz’imin’e i rikoš <i>поверье</i> если обмотать ’держать’ на себя ’вокруг себя’ плеть хмеля, тогда не пристанет болезнь и порча </li><li> <i>adv</i> кругом, вокруг; kaččel’iečie ~ оглядываться вокруг; ~ šuwret mečät кругом большие леса ◊ ~ vuoži круглый год, весь год; pelvahanke ruaduo on ~ vuoži на круглый год хватит работы со льном</li></ol>",
     "source": 1,
@@ -51376,7 +51376,7 @@
   "fields": {
     "word": "ümbärüš",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ümb",
     "article_html": "<b>ümbärüš</b> <i>s</i> <ol><li> окрестность; ečiin kaiken ~šän, en toivon, što l’öwvän l’ehmän я искал по всей окрестности, не думал, что найду корову </li><li> место вокруг чего-л.; juablokkapuwn ~t’ä pid’äw rojia, panna tuahta место вокруг яблони нужно разрыхлить, положить навозу</li></ol>",
     "source": 1,
@@ -51389,7 +51389,7 @@
   "fields": {
     "word": "ümmerd’||iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ümm",
     "article_html": "<b>ümmerd’||iä</b> <i>v</i> понимать, разуметь; en ~än kuwnnella tuaton šanoida не взял я на ум отцовских слов; <i>ср.</i> maltua",
     "source": 1,
@@ -51402,7 +51402,7 @@
   "fields": {
     "word": "ünnäh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ünn",
     "article_html": "<b>ünnäh</b> <i>adv</i> <ol><li> совсем; jallat ~ lamewvuttih ноги совсем ослабли; kannot ollah jo ~ hapannuot пни уже совсем гнилые; monet perehet uijittih kül’äšt’ä многие семьи навсегда ’совсем’ уехали из деревни </li><li> целиком, полностью; ~ möwkün šüöd’ih kerdah они съели целиком ковригу зараз; kondie toi aizakši puwn ~ juwriloinke <i>флк.</i> медведь принёс для оглобли дерево целиком с корнями</li></ol>",
     "source": 1,
@@ -51415,7 +51415,7 @@
   "fields": {
     "word": "ünnälä||n’e, ünnälli||n’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ünn",
     "article_html": "<b>ünnälä||n’e, ünnälli||n’e</b> <i>всг.</i> <i>a</i> полный, целый <i>(неначатый)</i>; ~s’t’ä piiruada ei jiänün, ühet palat целого пирога не осталось, одни куски; gos’t’illa šeizatat ~zen butilkan гостям поставишь непочатую бутылку; leikki̮a kannikko ~zes’t’ä möwküs’t’ä <i>всг.</i> отрежь краюху от целого каравая; <i>ср.</i> kogonan’e, t’äwd’el’än’e",
     "source": 1,
@@ -51428,7 +51428,7 @@
   "fields": {
     "word": "ürgiäč||ie",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ürg",
     "article_html": "<b>ürgiäč||ie</b> <i>v</i> <i>refl</i> броситься вдогонку; brihat ~et’t’ih hebozella jäl’l’es’t’i, da ei tavotettu парни бросились вслед за лошадью, да не догнали; <i>ср.</i> luottuačie",
     "source": 1,
@@ -51441,7 +51441,7 @@
   "fields": {
     "word": "üri||s’s’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üri",
     "article_html": "<b>üri||s’s’ä</b> <i>v</i> <i>descr</i> тихонько мычать; l’ehmä tul’i pellošta da hil’l’akkazeh ~z’öw verejin ieššä корова пришла с пастбища ’с поля’ и тихонько мычит перед воротами; <i>ср.</i> möris’s’ä",
     "source": 1,
@@ -51454,7 +51454,7 @@
   "fields": {
     "word": "ürrät’ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "ürr",
     "article_html": "<b>ürrät’ä</b> <i>v</i> выгнать, согнать; направить в нужную сторону; ~ kanat ogordašta выгнать кур из огорода; šid’ä ürgiän žiivatat jovella juomah затем направлю скотину на реку на водопой; emän’d’ä ürgäi humalahizen živozeh krinčoilda pois’ хозяйка спустила пьяного с крыльца",
     "source": 1,
@@ -51467,7 +51467,7 @@
   "fields": {
     "word": "üšk||ä, üs’k||ä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üšk",
     "article_html": "<b>üšk||ä, üs’k||ä</b> <i>всг.</i> <i>s</i> <ol><li> охапка; kеžäl’l’ä kül’üö l’ämmit’t’iäs’s’ä ei pie monda ~iä halguo летом для топки бани не нужно много охапок дров; annoin l’ehmäl’l’ä üššän hein’iä [я] дал корове охапку сена; jogo päiviä emän’d’ä polttaw kaksi ~iä halguo <i>всг.</i> хозяйка сжигает каждый день две охапки дров </li><li>: ~äh на руки, на колени <i>(брать)</i>; üššäššä, üššäs’s’ä на руках, на коленях <i>(сидеть)</i>; ota lapši ~äh возьми ребёнка на руки; ol’i i n’iin: briha ištuw t’üt’öl’l’ä üs’s’äs’s’ä <i>всг.</i> бывало и так: парень сидит на коленях у девушки</li></ol>",
     "source": 1,
@@ -51480,7 +51480,7 @@
   "fields": {
     "word": "üškä|lapši",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üšk",
     "article_html": "<b>üškä|lapši</b> <i>s</i> грудной ребёнок; ~lарšen imet’ät da uinotat, šilloin voit kodvane kezrät’ä дашь пососать грудь да усыпишь грудного ребёнка, тогда можно немного попрясть",
     "source": 1,
@@ -51493,7 +51493,7 @@
   "fields": {
     "word": "üššit’||t’iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üšš",
     "article_html": "<b>üššit’||t’iä</b> <i>v</i> сгребать сено отдельными валками с одну охапку <i>(для удобства складывания копен)</i>; hein’ät ~ämmä, šid’ä väl’iäzeh panemma rugoloih сгребём сено в валки с одну охапку, затем быстренько сложим в копны",
     "source": 1,
@@ -51506,7 +51506,7 @@
   "fields": {
     "word": "üššäkkeh",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üšš",
     "article_html": "<b>üššäkkeh</b> <i>adv</i> сидеть у кого-л. на коленях; brihat t’üt’t’öl’öinke bes’owdašša issutah ~ на посиделках парни с девушками сидят на коленях друг у друга",
     "source": 1,
@@ -51519,7 +51519,7 @@
   "fields": {
     "word": "üššäl’l’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üšš",
     "article_html": "<b>üššäl’l’in’e</b> <i>s</i> полная охапка чего-л.; andua l’ehmäl’l’ä ~ bukvan nuat’t’ie дать корове целую охапку ботвы брюквы",
     "source": 1,
@@ -51532,7 +51532,7 @@
   "fields": {
     "word": "üö, ~hüt",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üö",
     "article_html": "<b>üö, ~hüt</b> <i>s</i> ночь; pimie ~, t’äht’il’öid’ä ei n’ävü тёмная ночь, не видно звёзд; muakkua meil’ä ~ поспите у нас ночь; šügüžül’l’ä ~l’l’ä püwvet’äh kalua azruamella осенью ночью рыбу бьют ’ловят’ острогой; ~n aloh taigina nowžow за ночь тесто ’квашня’ поднимется; el’giä l’äkkiä ~l’l’ä vaštah не уходите на ночь глядя; l’ebiäčie koissa jäl’gimän’e ~hüt последнюю ночку отдохнуть дома",
     "source": 1,
@@ -51545,7 +51545,7 @@
   "fields": {
     "word": "üöd’ü||ö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üöd",
     "article_html": "<b>üöd’ü||ö</b> <i>v</i> задержаться в пути до ночи, заночевать в дороге; jiämmä t’eil’ä üökši, kuin ~mä останемся у вас ночевать, как задержались в пути до ночи; ajelukšešša üövüin, tul’in kod’ih huomnešpuoleh в поездке я припозднился, домой добрался под утро",
     "source": 1,
@@ -51558,7 +51558,7 @@
   "fields": {
     "word": "üökšüt’t’||iä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üök",
     "article_html": "<b>üökšüt’t’||iä</b> <i>v</i> <i>impers</i> водить, заставлять плутать, блуждать; l’ähet Čornofkalla, t’äl’l’ä šuondeikolla nagole ved’el’öw, ~äw пойдёшь в Черновку, так на этой болотине всегда водит, заставляет плутать",
     "source": 1,
@@ -51571,7 +51571,7 @@
   "fields": {
     "word": "üökšü||ö, üöks’üö",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üök",
     "article_html": "<b>üökšü||ö, üöks’üö</b> <i>всг.</i> <i>v</i> <i>refl</i> заблудиться; ris’t’ikanža üökšü, mögizöw mečäššä человек заблудился, кричит в лесу; šegoma tropašta i ~mä мы сбились с тропы и заблудились; mečäššä ~t, pid’äw vuate muwrniin panna <i>примета</i> заблудишься в лесу, надо одежду наизнанку надеть",
     "source": 1,
@@ -51584,7 +51584,7 @@
   "fields": {
     "word": "üö|kundah",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üök",
     "article_html": "<b>üö|kundah</b> <i>adv</i> <i>см.</i> üökunžissa; pid’äis’ kerritä stančalla ~ надо бы успеть на станцию за ночь",
     "source": 1,
@@ -51597,7 +51597,7 @@
   "fields": {
     "word": "üo|kunžissa",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üok",
     "article_html": "<b>üo|kunžissa</b> <i>adv</i> в течение ночи, за ночь; kun et magua, n’in ~ kaikki kukot kuwndelet если не спишь, то за ночь всех петухов наслушаешься",
     "source": 1,
@@ -51610,7 +51610,7 @@
   "fields": {
     "word": "üö|lakko",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üöl",
     "article_html": "<b>üö|lakko</b> <i>s</i> <ol><li> летучая мышь; illalla hämäris’s’ä ~lakot l’en’n’el’l’äh летучие мыши летают вечером в сумерках; heit’t’iä piäšt’ä valgie paikka, ei istuočiis’ ~ снять с головы белый платок, чтобы не села летучая мышь </li><li> <i>перен.</i> полуночник, гуляка; müöhäh šuat ~lakot šowvellah pihalla полуночники бродят допоздна на улице</li></ol>",
     "source": 1,
@@ -51623,7 +51623,7 @@
   "fields": {
     "word": "üöl’l’in’e",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üöl",
     "article_html": "<b>üöl’l’in’e</b> <i>a</i> ночной; ~ pimie taivaš ночное темное небо",
     "source": 1,
@@ -51636,7 +51636,7 @@
   "fields": {
     "word": "üön’iek||ka, üön’iekkä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üön",
     "article_html": "<b>üön’iek||ka, üön’iekkä</b> <i>всг.</i> <i>s</i> ночлежник; magawšijan ~alla luajittih karžinlawvalla постель ночлежнику приготовили на голбце у печи",
     "source": 1,
@@ -51649,7 +51649,7 @@
   "fields": {
     "word": "üön|it’et’t’äjä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üön",
     "article_html": "<b>üön|it’et’t’äjä</b> <i>s</i> <i>миф.</i> дух – возбудитель детского плача; крикса, болезнь; ~ t’üt’t’ölapšella, šilloin muatiččah čökät’äh kuožel’izen värt’inänke, brihazella – orazen <i>поверье</i> [если] крикса у девочки, тогда в балку воткнут прялочку с веретеном, у мальчика – шило; kun lapšella ~, valetah tuwlenpežošta l’äbi <i>поверье</i> коли у ребёнка крикса, его окатывают водой сквозь ведьмину метлу; ~itettäjäštä kiägäh šivotah jallačit от криксы к дверной ручке привязывают обувку",
     "source": 1,
@@ -51662,7 +51662,7 @@
   "fields": {
     "word": "üö|šija, üö|s’ijä",
     "word_normalized": null,
-    "first_letter": "Ü",
+    "first_letter": "Y",
     "first_trigram": "üöš",
     "article_html": "<b>üö|šija, üö|s’ijä</b> <i>всг.</i> <i>s</i> ночлег; müöhäšt’ümä i eččimä ~šijua мы запоздали и искали ночлег; ~šijan annettih rannimmazešša talošša на ночлег пустили ’дали’ в крайнем доме",
     "source": 1,
@@ -55356,7 +55356,7 @@
     "word_normalized": null,
     "first_letter": "B",
     "first_trigram": "boh",
-    "article_html": "<b>bohročča|hein’ä</b> <i>s</i> <i>бот.</i> тимьян,богородская травка (Thymus serpyllum) ~hein’iä Iivanan päiviä vaššen keriämmä, kuivuamma, a konža l’ehmä kandaw, kuwrimma богородскую травку собираем накануне Иванова дня, сушим, а когда корова отелится, окуриваем [ею]",
+    "article_html": "<b>bohročča|hein’ä</b> <i>s</i> <i>бот.</i> тимьян, богородская травка (Thymus serpyllum) ~hein’iä Iivanan päiviä vaššen keriämmä, kuivuamma, a konža l’ehmä kandaw, kuwrimma богородскую травку собираем накануне Иванова дня, сушим, а когда корова отелится, окуриваем [ею]",
     "source": 1,
     "source_detalization": null
   }
@@ -97069,11 +97069,11 @@
   "model": "dict.article",
   "pk": 14782,
   "fields": {
-    "word": "hil’la",
+    "word": "hil’l’a",
     "word_normalized": null,
     "first_letter": "H",
     "first_trigram": "hil",
-    "article_html": "<b>hil’la</b> <i>a</i> <i>см.</i> hil’l’an’e; ~ ruadaja медлительный работник; ~ pagina тихий разговор",
+    "article_html": "<b>hil’l’a</b> <i>a</i> <i>см.</i> hil’l’an’e; ~ ruadaja медлительный работник; ~ pagina тихий разговор",
     "source": 1,
     "source_detalization": null
   }
@@ -102478,7 +102478,7 @@
   "pk": 15198,
   "fields": {
     "word": "hüviin",
-    "word_normalized": null,
+    "word_normalized": "hyvin",
     "first_letter": "H",
     "first_trigram": "hüv",
     "article_html": "<b>hüviin</b> <i>adv</i> хорошо; t’üt’är ~ opaštuw дочь учится хорошо; l’eibä miän peldoloilla kažvaw ~ хлеб на наших полях растёт хорошо; žiivattua pid’äw ~ kaččuo за скотом надо хорошо ухаживать",
@@ -152297,7 +152297,7 @@
     "word_normalized": null,
     "first_letter": "P",
     "first_trigram": "pri",
-    "article_html": "<b>pr’imiet||ta</b> <i>s</i> <i>примета</i>, признак; šeizattua vuagien’e ~akši поставить приметой колышек; miän lambahilla ~tana šivallettu ruškiezet trapiččäl’entazet у наших овец привязаны приметой красные тряпичные ленточки; panna ~alla примечать, делать пометку",
+    "article_html": "<b>pr’imiet||ta</b> <i>s</i> примета, признак; šeizattua vuagien’e ~akši поставить приметой колышек; miän lambahilla ~tana šivallettu ruškiezet trapiččäl’entazet у наших овец привязаны приметой красные тряпичные ленточки; panna ~alla примечать, делать пометку",
     "source": 1,
     "source_detalization": null
   }
@@ -229753,14 +229753,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 507752,
-  "fields": {
-    "word": "primietta",
-    "article": 20083
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 507753,
   "fields": {
     "word": "prijuatela",
@@ -253773,22 +253765,6 @@
   "fields": {
     "word": "tuvlimelliccä",
     "article": 18205
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 510755,
-  "fields": {
-    "word": "tuuli",
-    "article": 18204
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 510756,
-  "fields": {
-    "word": "tuulut",
-    "article": 18204
   }
 },
 {
@@ -280273,22 +280249,6 @@
 },
 {
   "model": "dict.articleindexword",
-  "pk": 514067,
-  "fields": {
-    "word": "hüviin",
-    "article": 15198
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 514068,
-  "fields": {
-    "word": "hyviin",
-    "article": 15198
-  }
-},
-{
-  "model": "dict.articleindexword",
   "pk": 514069,
   "fields": {
     "word": "hyvetä",
@@ -285133,14 +285093,6 @@
   "fields": {
     "word": "hillah",
     "article": 14783
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 514675,
-  "fields": {
-    "word": "hilla",
-    "article": 14782
   }
 },
 {
@@ -329053,30 +329005,6 @@
   "fields": {
     "word": "bohroccazet",
     "article": 10550
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 520169,
-  "fields": {
-    "word": "bohroccaheinä",
-    "article": 10549
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 520170,
-  "fields": {
-    "word": "heinä",
-    "article": 10549
-  }
-},
-{
-  "model": "dict.articleindexword",
-  "pk": 520171,
-  "fields": {
-    "word": "bohrocca",
-    "article": 10549
   }
 },
 {
@@ -388805,6 +388733,126 @@
   "fields": {
     "word": "rüöstiä",
     "article": 13196
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527645,
+  "fields": {
+    "word": "heinä",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527646,
+  "fields": {
+    "word": "bohroccaheinä",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527647,
+  "fields": {
+    "word": "bohrocca",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527654,
+  "fields": {
+    "word": "hüvin",
+    "article": 15198
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527655,
+  "fields": {
+    "word": "hyviin",
+    "article": 15198
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527656,
+  "fields": {
+    "word": "hüviin",
+    "article": 15198
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527657,
+  "fields": {
+    "word": "hyvin",
+    "article": 15198
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527658,
+  "fields": {
+    "word": "tuvli",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527659,
+  "fields": {
+    "word": "tuwli",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527660,
+  "fields": {
+    "word": "tuuli",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527661,
+  "fields": {
+    "word": "tuvlut",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527662,
+  "fields": {
+    "word": "tuulut",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527663,
+  "fields": {
+    "word": "tuwlut",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527665,
+  "fields": {
+    "word": "hilla",
+    "article": 14782
+  }
+},
+{
+  "model": "dict.articleindexword",
+  "pk": 527666,
+  "fields": {
+    "word": "primietta",
+    "article": 20083
   }
 },
 {
@@ -680832,6 +680880,30 @@
   }
 },
 {
+  "model": "dict.articleindextranslate",
+  "pk": 36778,
+  "fields": {
+    "rus_word": "тимьян",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindextranslate",
+  "pk": 36779,
+  "fields": {
+    "rus_word": "богородская травка",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindextranslate",
+  "pk": 36780,
+  "fields": {
+    "rus_word": "примета",
+    "article": 20083
+  }
+},
+{
   "model": "dict.articleindexwordnormalization",
   "pk": 1,
   "fields": {
@@ -704113,14 +704185,6 @@
 },
 {
   "model": "dict.articleindexwordnormalization",
-  "pk": 2911,
-  "fields": {
-    "word": "primietta",
-    "article": 20083
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
   "pk": 2912,
   "fields": {
     "word": "prijuatela",
@@ -718773,22 +718837,6 @@
   "fields": {
     "word": "tuulimelliččä",
     "article": 18205
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
-  "pk": 4744,
-  "fields": {
-    "word": "tuuli",
-    "article": 18204
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
-  "pk": 4745,
-  "fields": {
-    "word": "tuulut",
-    "article": 18204
   }
 },
 {
@@ -735777,14 +735825,6 @@
 },
 {
   "model": "dict.articleindexwordnormalization",
-  "pk": 6869,
-  "fields": {
-    "word": "hyviin",
-    "article": 15198
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
   "pk": 6870,
   "fields": {
     "word": "hyvetä",
@@ -739197,14 +739237,6 @@
   "fields": {
     "word": "hillah",
     "article": 14783
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
-  "pk": 7297,
-  "fields": {
-    "word": "hilla",
-    "article": 14782
   }
 },
 {
@@ -765581,14 +765613,6 @@
   "fields": {
     "word": "bohroččazet",
     "article": 10550
-  }
-},
-{
-  "model": "dict.articleindexwordnormalization",
-  "pk": 10598,
-  "fields": {
-    "word": "bohroččaheinä",
-    "article": 10549
   }
 },
 {
@@ -800701,6 +800725,54 @@
   "fields": {
     "word": "ryöštiä",
     "article": 13196
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14991,
+  "fields": {
+    "word": "bohroččaheinä",
+    "article": 10549
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14994,
+  "fields": {
+    "word": "hyvin",
+    "article": 15198
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14995,
+  "fields": {
+    "word": "tuuli",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14996,
+  "fields": {
+    "word": "tuulut",
+    "article": 18204
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14998,
+  "fields": {
+    "word": "hilla",
+    "article": 14782
+  }
+},
+{
+  "model": "dict.articleindexwordnormalization",
+  "pk": 14999,
+  "fields": {
+    "word": "primietta",
+    "article": 20083
   }
 }
 ]
