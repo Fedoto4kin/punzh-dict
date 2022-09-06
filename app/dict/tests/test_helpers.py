@@ -62,13 +62,13 @@ class KrlHelpersTestCase(TestCase):
 
     def test_get_variants_ves2(self):
         self.assertEqual(
-            gen_word_variants('mi̮ajäicä I'),
+            gen_word_variants('mi̮ajäičä I'),
             {'mi̮ajäicä', 'miajäicä'}
         )
 
     def test_get_variants_normal(self):
         self.assertEqual(
-            gen_word_variants('mus||ta, ~tan’e'),
+            gen_word_variants('muš||ta, ~tan’e'),
             {'musta', 'mustane'}
         )
 
@@ -131,7 +131,7 @@ class KrlHelpersTestCase(TestCase):
 
     def test_get_variants_complex_yw(self):
         self.assertEqual(
-            gen_word_variants('ühen|suwrun’e'),
+            gen_word_variants('ühen|šuwrun’e'),
             {'ühensuwrune', 'yhen', 'ühensuvrune',
              'yhensuvrune', 'yhensuwrune',
              'suvrune', 'yhensuurune',
@@ -148,5 +148,18 @@ class KrlHelpersTestCase(TestCase):
              'mövkküne', 'möükküne', 'möykkyne',
              'jalgamöwkküne', 'jalgamöykkyne'}
         )
+
+    def test_get_variants_simple_w1(self):
+        self.assertEqual(
+            gen_word_variants('piwš||ta'),
+            {'piwsta', 'pivsta', 'piusta'}
+        )
+
+    def test_get_variants_simple_w2(self):
+        self.assertEqual(
+            gen_word_variants('n’ew||guo'),
+            {'newguo', 'nevguo', 'neuguo'}
+        )
+
 
     #todo: Add sorting by Krl test
