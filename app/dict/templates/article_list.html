@@ -10,7 +10,7 @@
 {% block content %}
 
 <nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container d-none d-lg-block">
+    <div class="container d-none d-md-none d-sm-none d-lg-block">
         <ul class="navbar-nav
                        flex-wrap
                        mt-2
@@ -26,7 +26,7 @@
     </div>
 </nav>
 
-<hav class="navbar d-block d-md-none navbar-light">
+<nav class="navbar d-block d-md-block d-sm-block d-lg-none  navbar-light">
     <div class="container">
         <div class="navbar-collapse collapse" id="abc">
             <ul class="navbar
@@ -54,8 +54,8 @@
          </div>
 
     </div>
-</hav>
-<hav  class="navbar navbar-expand-lg mb-2 navbar-light">
+</nav>
+<nav  class="navbar navbar-expand-lg mb-2 navbar-light">
     <div class="container">
         {% if page_obj.has_other_pages %}
         <div class="btn-group navbar-toggler ml-0 mr-auto">
@@ -95,7 +95,7 @@
         </ul>
         {% endif %}
     </div>
-</hav>
+</>
 
 <div class="row mb-4">
     <div class="badge badge-pill badge-secondary mr-auto ml-1">{{ first_page_word }}</div>
