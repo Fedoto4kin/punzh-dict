@@ -5,7 +5,6 @@ class KrlHelpersTestCase(TestCase):
 
     # N-GRAMS
     def test_ngram_1(self):
-
         self.assertEqual(
             'yö',
             create_ngram('yö, yöhyt', 3)
