@@ -3,58 +3,83 @@
 {% load dict_extras %}
 
 {% block title %}
-    Поиск - Словарь карельского языка
+Поиск - Словарь карельского языка
 {% endblock %}
 
 {% block content %}
-    <div class="my-5 row">
-        <div class="col-lg-6">
-            {% block search %}
-                {% include "searchForm.html" %}
-            {% endblock %}
-        </div>
+<div class="my-5 row">
+    <div class="col-lg-6">
+        {% block search %}
+        {% include "searchForm.html" %}
+        {% endblock %}
     </div>
-    {%  if possible %}
-    <div class="row mt-4">
-        <div class="col-12"> <h6>Возможно вы искали:</h6></div>
-        {%  for w in possible %}
-            <div class="mx-2">
-                <a href="/search/{{ w }}" class="btn btn-link" >{{ w }}</a>
-            </div>
-        {% endfor %}
+</div>
+{%  if possible %}
+<div class="row mt-4">
+    <div class="col-12"> <h6>Возможно вы искали:</h6></div>
+    {%  for w in possible %}
+    <div class="mx-2">
+        <a href="/search/{{ w }}" class="btn btn-link" >{{ w }}</a>
     </div>
-    {% endif %}
-    {% if page_obj.has_other_pages %}
-        <hav class="navbar navbar-expand navbar-light row">
-            <ul class="pagination
+    {% endfor %}
+</div>
+{% endif %}
+{% if page_obj.has_other_pages %}
+<hav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination
                        flex-wrap
                        mt-1">
-                {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-                {% else %}
-                    <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
-                {% endif %}
-                {% for i in page_obj.paginator.page_range %}
-                    {% if page_obj.number == i %}
-                        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
-                    {% else %}
-                        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ i }}</a></li>
-                    {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-                {% else %}
-                    <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-                {% endif %}
-            </ul>
-        </hav>
-    {% endif %}
-    <div class="row mt-4">
-        <div class="card-columns">
-            {% for a in page_obj %}
-                  {% include "wordCard.html" with article=a %}
-            {% endfor %}
-        </div>
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</hav>
+{% endif %}
+<div class="row mt-4">
+    <div class="card-columns">
+        {% for a in page_obj %}
+        {% include "wordCard.html" with article=a %}
+        {% endfor %}
     </div>
+</div>
+{% if page_obj.has_other_pages %}
+<hav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination
+                       flex-wrap
+                       mt-1">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</hav>
+{% endif %}
 
 {%  endblock %}
