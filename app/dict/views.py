@@ -58,7 +58,7 @@ def search_proc(request):
 def search(request, query='', page=1):
 
     if re.match(r'[А-яЁё\s]', query):
-        page_obj = search_by_translate(query, page)
+        page_obj = search_by_translate_linked(query, page)
     else:
         page_obj = word_search(query, page)
 

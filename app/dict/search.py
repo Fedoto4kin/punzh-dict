@@ -66,14 +66,29 @@ def get_sorted_articles(ids, page):
                       )
                       )
 
+
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
+
+
+def search_by_translate_linked(query, page=1):
+
+    query = query.replace('ё', 'е')
+    ids = []
+    for a in ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).all():
+        ids.append(a.article.id)
+        if a.article.linked_article:
+            print(a.article.linked_article)
+            ids.append(a.article.linked_article.id)
+
+    return get_sorted_articles(ids, page)
 
 
 def search_by_translate(query, page=1):
 
     query = query.replace('ё', 'е')
     ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
+
     return get_sorted_articles(ids, page)
 
 
