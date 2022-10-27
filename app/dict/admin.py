@@ -19,7 +19,7 @@ class ArticleAdm(admin.ModelAdmin):
 
     fields = ('_word', 'word_normalized', 'word',
               'article_html', '_article_html', 'source',
-              'source_detalization',)
+              'source_detalization', 'linked_article')
     list_display = ('_word', '_article_html',)
 
     readonly_fields = ["_word", '_article_html',]

@@ -31,6 +31,12 @@ class Article(models.Model):
         null=True,
         max_length=255,
         verbose_name='Уточнение источника')
+    linked_article = models.ForeignKey('self',
+                               null=True,
+                               on_delete=models.SET_NULL,
+                               verbose_name='см.'
+                               )
+
 
     @staticmethod
     def get_krl_abc():
