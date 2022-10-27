@@ -34,8 +34,8 @@ def find_linked(pattern, num=None):
 def save_linked(article, linked_article):
     article.linked_article=linked_article
     article.save()
-    linked_article.linked_article=article
-    linked_article.save()
+    #linked_article.linked_article=article
+    #linked_article.save()
 
 if __name__ == '__main__':
 
