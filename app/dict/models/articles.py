@@ -32,7 +32,9 @@ class Article(models.Model):
         max_length=255,
         verbose_name='Уточнение источника')
     linked_article = models.ForeignKey('self',
+                               default=None,
                                null=True,
+                               blank=True,
                                on_delete=models.SET_NULL,
                                verbose_name='см.'
                                )
