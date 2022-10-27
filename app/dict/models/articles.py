@@ -86,7 +86,7 @@ class Article(models.Model):
     class Meta:
         verbose_name = 'Слово'
         verbose_name_plural = 'Слова'
-        ordering = ['-id']
+        ordering = ['word']
 
 
 class ArticleIndexWord(models.Model):
