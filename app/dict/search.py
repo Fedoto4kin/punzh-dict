@@ -2,6 +2,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.functions import Length
 from django.core.paginator import Paginator
 from django.db.models import F
+from itertools import chain
 
 from .helpers import sorted_by_krl
 from .models import *
@@ -66,7 +67,6 @@ def get_sorted_articles(ids, page):
                       )
                       )
 
-
     paginator = Paginator(articles, num_by_page)
     return paginator.get_page(page)
 
@@ -74,14 +74,9 @@ def get_sorted_articles(ids, page):
 def search_by_translate_linked(query, page=1):
 
     query = query.replace('ё', 'е')
-    ids = []
-    for a in ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).all():
-        ids.append(a.article.id)
-        if a.article.linked_article:
-            print(a.article.linked_article)
-            ids.append(a.article.linked_article.id)
-
-    return get_sorted_articles(ids, page)
+    ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
+    linked_ids = Article.objects.filter(linked_article__in=ids).values_list('id', flat=True)
+    return get_sorted_articles(list(chain(linked_ids, ids)), page)
 
 
 def search_by_translate(query, page=1):
