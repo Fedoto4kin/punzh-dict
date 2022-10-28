@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from .helpers import normalization
-from .models import Article, ArticleIndexTranslate, Source, ArticleIndexWord
+from .models import Article, ArticleIndexTranslate, Source
 
 
 class TranslateInline(admin.TabularInline):
@@ -37,11 +37,6 @@ class ArticleAdm(admin.ModelAdmin):
 
     def get_search_results(self, request, queryset, search_term):
 
-        search_term = re.sub(r'[^\w\-\s\.\?]', '', search_term) \
-            .replace('š', 's') \
-            .replace('č', 'c') \
-            .replace('ž', 'z')
-
         queryset, use_distinct = super(ArticleAdm, self).get_search_results(request, queryset, search_term)
         try:
             search_term_as_int = int(search_term)
@@ -51,7 +46,25 @@ class ArticleAdm(admin.ModelAdmin):
             queryset |= self.model.objects.filter(age=search_term_as_int)
         return queryset, use_distinct
 
+    def get_form(self, request, obj=None, **kwargs):
+
+        form = super(ArticleAdm, self).get_form(request, obj, **kwargs)
+        f0 = form.base_fields["linked_article"]
+        f0.widget.can_add_related = False
+        f0.widget.can_change_related = False
+        f0.widget.can_delete_related = False
+
+        f1 = form.base_fields["source"]
+        f1.widget.can_add_related = False
+        f1.widget.can_change_related = False
+        f1.widget.can_delete_related = False
+        
+        return form
+
     # def get_search_results(self, request, queryset, search_term):
+    #
+    #
+
     #
     #     pks0 = ArticleIndexWord.objects.filter(word__istartswith=search).values_list('article_id', flat=True)
     #     queryset = Article.objects.filter(pk__in=pks0).all()
