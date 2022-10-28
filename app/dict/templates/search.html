@@ -28,7 +28,9 @@
 <hav class="navbar navbar-expand navbar-light row">
     <ul class="pagination
                        flex-wrap
-                       mt-1">
+                       mt-1
+                       mx-auto
+                       justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
         {% else %}
@@ -60,7 +62,9 @@
 <hav class="navbar navbar-expand navbar-light row">
     <ul class="pagination
                        flex-wrap
-                       mt-1">
+                       mt-1
+                       mx-auto
+                       justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
         {% else %}
