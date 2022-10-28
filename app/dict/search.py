@@ -25,7 +25,6 @@ def search_by_pointer(letter, page):
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
 
-
     ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
 
     for idx in range(1, len(trigrams)-1):
@@ -40,6 +39,11 @@ def search_by_pointer(letter, page):
             if ngrams[idx][0:n] != prev_ng and ngrams[idx][0:n] != next_ng:
                 break
             n += 1
+
+    for idx in range(0, len(ngrams)-1):
+        if idx+1 <= len(ngrams):
+            ngrams[idx] = ngrams[idx] + ' ·· ' + ngrams[idx+1]
+
 
     if len(page_obj):
         last_page_word = normalization(page_obj[-1].word)
