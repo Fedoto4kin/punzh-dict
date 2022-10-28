@@ -89,6 +89,7 @@ class Article(models.Model):
         ordering = ['word']
 
 
+
 class ArticleIndexWord(models.Model):
 
     word = models.CharField(max_length=255, default=None, blank=True, null=True)
