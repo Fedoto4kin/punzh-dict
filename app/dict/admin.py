@@ -26,7 +26,7 @@ class ArticleAdm(admin.ModelAdmin):
     list_display = ('id', '_word', '_article_html',)
     readonly_fields = ["_word", '_article_html',]
 
-    sorting = ['id',]
+    sorting = ['-id',]
 
     search_fields = ('word',)
     exclude = ("first_letter", "text_search", 'first_trigram')
@@ -58,7 +58,7 @@ class ArticleAdm(admin.ModelAdmin):
         f1.widget.can_add_related = False
         f1.widget.can_change_related = False
         f1.widget.can_delete_related = False
-        
+
         return form
 
     # def get_search_results(self, request, queryset, search_term):
