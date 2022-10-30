@@ -93,8 +93,7 @@ def search_by_translate(query, page=1):
 
 def word_search(query, page):
 
-    query = query \
-        .replace('š', 's') \
+    query = query.replace('š', 's') \
         .replace('č', 'c') \
         .replace('ž', 'z') \
         .replace('?', '%') \

@@ -4,7 +4,6 @@ from ..helpers import normalization
 
 register = template.Library()
 
-
 @register.filter
 def nice(text):
     # TODO: only in <b> tags
@@ -23,7 +22,10 @@ def get_item(dictionary, key):
 def highlight_rus(text):
     return re.sub(r'([А-яЁё]+)', r'<span class="text-rus">\1</span>', text)
 
-
 @register.filter
-def make_link(word):
-    return word.split(',')[0]
+def make_link(text):
+    return re.sub(r'<i>(см\.|ср\.)</i>\s([\S]+);?', r'<i>\1</i> <a href="/search/\2">\2</A>', text)
+
+# @register.filter
+# def make_link(word):
+#     return word.split(',')[0]
