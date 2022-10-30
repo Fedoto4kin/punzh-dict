@@ -13,7 +13,7 @@
         </h5>
     </div>
     <div class="card-body">
-        {{article.article_html|nice|highlight_rus|safe}}
+        {{article.article_html|make_link|nice|highlight_rus|safe}}
     </div>
     <div class="card-footer small {{ article.source.css }}">
         <span class="badge">{{ article.source.title }}</span>
