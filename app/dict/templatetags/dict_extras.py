@@ -24,7 +24,7 @@ def highlight_rus(text):
 
 @register.filter
 def make_link(text):
-    return re.sub(r'<i>(см\.|ср\.)</i>\s([\S]+);?', r'<i>\1</i> <a href="/search/\2">\2</A>', text)
+    return re.sub(r'<i>(см\.|ср\.)</i>\s([A-z’ÜüÄäÖö]+);?', r'<i>\1</i> <a href="/search/\2">\2</A>', text)
 
 # @register.filter
 # def make_link(word):
