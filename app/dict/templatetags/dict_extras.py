@@ -28,7 +28,7 @@ def make_link(text):
 
 @register.filter
 def make_break(text):
-    return re.sub(r'(◊)', r'<br/>\1', text)
+    return re.sub(r'(◊)', r'<hr/>\1', text)
 
 
 
