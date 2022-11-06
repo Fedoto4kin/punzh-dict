@@ -54,7 +54,6 @@ def search_proc(request):
     else:
         return render(request, 'search.html',  {"search": "true"})
 
-
 def search(request, query='', page=1):
 
     if re.match(r'[А-яЁё\s]', query):
@@ -75,3 +74,56 @@ def search(request, query='', page=1):
         "possible": possible
     }
     return render(request, 'search.html', context)
+
+def tag_search(request, tags='', page=1):
+
+    test_list = set(tags.split(','))
+    try:
+        tag_ids = [int(x.strip()) for x in test_list]
+    except:
+        tag_ids = []
+
+    all_tags = get_tags_by_type()
+    geo_tags = get_tags_by_type(1)
+    linguistic_tags = get_tags_by_type(2)
+    tag_tags = get_tags_by_type(3)
+    dialect_tags = get_tags_by_type(4)
+    other_tags = get_tags_by_type(5)
+
+#    print(list(set(tag_tags.values_list('pk', flat=True)) & set(tag_ids)))
+#    by_tags = search_by_tags(tag_ids, page)
+#    by_geo = search_by_tags(tag_ids, page)
+#    by_ling = search_by_tags(tag_ids, page)
+#    by_other = search_by_tags(tag_ids, page)
+#    by_dialect = search_by_tags(tag_ids, page)
+
+ #   page_obj = search_by_tags_dumb(tag_ids, page)
+    if len(tag_ids):
+        page_obj = search_by_tags_smart(
+            by_geo=list(set(geo_tags.values_list('pk', flat=True)) & set(tag_ids)),
+            by_tags=list(set(tag_tags.values_list('pk', flat=True)) & set(tag_ids)),
+            by_dialect=list(set(dialect_tags.values_list('pk', flat=True)) & set(tag_ids)),
+            by_ling=list(set(linguistic_tags.values_list('pk', flat=True)) & set(tag_ids)),
+            by_other=list(set(other_tags.values_list('pk', flat=True)) & set(tag_ids)),
+            page=page
+        )
+    else:
+        page_obj = ()
+
+    context = {
+        "ABC": KRL_ABC,
+        "tagIds": tag_ids,
+        "allTags": {
+            'all': all_tags,
+            'geo': geo_tags,
+            'linguistic': linguistic_tags,
+            'tag': tag_tags,
+            'dialect': dialect_tags,
+            'other': other_tags
+
+        },
+        'query': ",".join(map(str, tag_ids)),
+        "page_obj": page_obj
+    }
+    return render(request, 'tags.html', context)
+

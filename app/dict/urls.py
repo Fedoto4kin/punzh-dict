@@ -15,6 +15,9 @@ urlpatterns = [
     path('search/', views.search_proc, name='search_proc'),
     path('search/<str:query>', views.search, name='search'),
     path('search/<str:query>/<int:page>', views.search, name='search'),
+    path('tags/', views.tag_search, name='tags'),
+    path('tags/<str:tags>', views.tag_search, name='tags'),
+    path('tags/<str:tags>/<int:page>', views.tag_search, name='tags'),
     path('<letter>/', views.index, name='index'),  # TODO: filter letter one char in KRL
-    path('<letter>/<int:page>', views.index, name='index'),  # TODO: filter letter one char in KRL
+    path('<letter>/<int:page>', views.index, name='index'),
 ]
