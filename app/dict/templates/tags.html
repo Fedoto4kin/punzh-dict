@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% load dict_extras %}
+
+{% block title %}
+Предметный указатель - Словарь карельского языка
+{% endblock %}
+
+{% block content %}
+<div class="my-5 row">
+    <div class="col-sm-12">
+        {% for t in allTags.all %}
+        {% if t.id in tagIds %}
+        <span class="badge badge-primary">{{t.name}} </span>
+        {% else %}{% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div class="my-5 row">
+
+    <div id="accordion" class="col-sm-12">
+        <div class="card" >
+            <div class="card-header" id="headingOne">
+                <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne"  role="button">
+                        Служебные отметки {% if tagIds %} <i class="fa fa-1x fa-check-square text-primary"></i> {% endif %}
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse {% if not tagIds %}show{% endif %}" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    <table>
+                        <tr>
+                            <td class="p-2">
+                                {% for t in allTags.linguistic %}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="tag_{{t.id}}">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="selectTag"
+                                               value="{{t.id}}"
+                                               id="tag_{{t.id}}"
+                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                        >
+                                        {{t.name}}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <br>
+                                {% for t in allTags.other %}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="tag_{{t.id}}">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="selectTag"
+                                               value="{{t.id}}"
+                                               id="tag_{{t.id}}"
+                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                        >
+                                        {{t.name}}
+                                    </label>
+                                </div>
+                                {% endfor %}
+
+                            </td>
+                            <td class="p-2">
+
+                                {% for t in allTags.tag %}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="tag_{{t.id}}">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="selectTag"
+                                               value="{{t.id}}"
+                                               id="tag_{{t.id}}"
+                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                        >
+                                        {{t.name}}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <hr>
+                                {% for t in allTags.geo %}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="tag_{{t.id}}">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="selectTag"
+                                               value="{{t.id}}"
+                                               id="tag_{{t.id}}"
+                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                        >
+                                        {{t.name}}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <br>
+                                {% for t in allTags.dialect %}
+                                <div class="form-check">
+                                    <label class="form-check-label" for="tag_{{t.id}}">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="selectTag"
+                                               value="{{t.id}}"
+                                               id="tag_{{t.id}}"
+                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                        >
+                                        {{t.name}}
+                                    </label>
+                                </div>
+                                {% endfor %}
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <hr>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <div class="form-group col-sm-12">
+                                    <button class="btn btn-outline-secondary my-sm-0" type="submit" id="button">
+                                        Найти все статьи c отметками
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+{% if page_obj.has_other_pages %}
+<hav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination
+                       flex-wrap
+                       mt-1
+                       mx-auto
+                       justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query  }}/{{ i }}">{{ i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</hav>
+{% endif %}
+<div class="row mt-4">
+    <div class="card-columns">
+        {% for a in page_obj %}
+        {% include "wordCard.html" with article=a %}
+        {% endfor %}
+    </div>
+</div>
+{% if page_obj.has_other_pages %}
+<hav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination
+                       flex-wrap
+                       mt-1
+                       mx-auto
+                       justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query  }}/{{ i }}">{{ i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/tags/{{ query}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</hav>
+{% endif %}
+<script type="application/javascript">
+
+    function getChecked() {
+        return $.map($('input[name="selectTag"]:checked'), (elem) => elem.value )
+    }
+
+    $( function() {
+        $('#button').click(() =>
+            window.location.href = '/tags/' + getChecked().join(',')
+        )
+    })
+
+</script>
+{%  endblock %}
