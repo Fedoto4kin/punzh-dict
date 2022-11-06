@@ -1,7 +1,7 @@
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.functions import Length
 from django.core.paginator import Paginator
-from django.db.models import F
+from django.db.models import F, Q
 from itertools import chain
 
 from .helpers import sorted_by_krl
@@ -17,9 +17,9 @@ def search_by_pointer(letter, page):
     trigrams_dict = {}
 
     articles = sorted(Article.objects.all().filter(first_letter=letter.upper()),
-                          key=lambda el: (
-                              sorted_by_krl(el, 'word')
-                          )
+                      key=lambda el: (
+                          sorted_by_krl(el, 'word')
+                      )
                       )
 
     paginator = Paginator(articles, num_by_page)
@@ -56,11 +56,11 @@ def search_by_pointer(letter, page):
         )
     return type('Content', (object,),
                 {
-                 'page_obj': page_obj,
-                 'last_page_word': last_page_word,
-                 'first_page_word': first_page_word,
-                 'trigrams_dict': trigrams_dict
-                 })()
+                    'page_obj': page_obj,
+                    'last_page_word': last_page_word,
+                    'first_page_word': first_page_word,
+                    'trigrams_dict': trigrams_dict
+                })()
 
 
 def get_sorted_articles(ids, page):
@@ -109,17 +109,81 @@ def search_possible(query):
 
 def search_trigram(query):
 
-    return  ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), )\
-                          .filter(similarity__gt=0.2)\
-                          .order_by('-similarity', Length('word').asc())
+    return  ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), ) \
+        .filter(similarity__gt=0.2) \
+        .order_by('-similarity', Length('word').asc())
 
 
 def search_levenshtein(query):
 
     return  ArticleIndexWordNormalization.objects.annotate(
-                                lev_dist=Levenshtein(F('word'), query)
-                            ).filter(
-                                lev_dist__lte=2
-                            )\
-                            .order_by('-lev_dist', Length('word').asc())
+        lev_dist=Levenshtein(F('word'), query)
+    ).filter(
+        lev_dist__lte=2
+    ) \
+        .order_by('-lev_dist', Length('word').asc())
 
+def get_tags_by_type(type_id=None):
+    if type_id:
+        return Tag.objects.filter(type=type_id)
+    return Tag.objects.all()
+
+def search_by_tags_dumb(ids, page):
+
+    tags = Tag.objects.filter(id__in=ids).values_list('tag', flat=True)
+
+    queries = [Q(article_html__contains=value) for value in tags]
+    # Take one Q object from the list
+    query = queries.pop()
+
+    # Or the Q object with the ones remaining in the list
+    for item in queries:
+        query |= item
+
+    articles = sorted(Article.objects.extra(select={'sort_order': "0"})
+                      .filter(query),
+                      key=lambda el: (
+                          sorted_by_krl(el, 'word'),
+                      )
+                      )
+
+    paginator = Paginator(articles, num_by_page)
+    return paginator.get_page(page)
+
+
+def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
+
+    def search_by_ids(ids, articles_ids, i=True):
+
+        tags = Tag.objects.filter(id__in=ids).values_list('tag', flat=True)
+        if i:
+            queries = [Q(article_html__contains='<i>' + value + '</i>') for value in tags]
+        else:
+            queries = [Q(article_html__contains=value) for value in tags]
+        # Take one Q object from the list
+        query = queries.pop()
+        # Or the Q object with the ones remaining in the list
+        for item in queries:
+            query |= item
+        articles = Article.objects \
+            .filter(query) \
+            .values_list('id', flat=True)
+        found_articles = list(set(articles) & set(articles_ids))
+        return list(set(found_articles) & set(articles_ids))
+
+    articles_ids = Article.objects \
+        .all() \
+        .values_list('id', flat=True)
+
+    if len(by_geo):
+        articles_ids = search_by_ids(by_geo, articles_ids)
+    if len(by_ling):
+        articles_ids = search_by_ids(by_ling, articles_ids)
+    if len(by_tags):
+        articles_ids = search_by_ids(by_tags, articles_ids)
+    if len(by_dialect):
+        articles_ids = search_by_ids(by_dialect, articles_ids)
+    if len(by_other):
+        articles_ids = search_by_ids(by_other, articles_ids, False)
+
+    return get_sorted_articles(articles_ids, page)
