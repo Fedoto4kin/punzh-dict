@@ -136,67 +136,101 @@
 
 
 </div>
-{% if page_obj.has_other_pages %}
-<hav class="navbar navbar-expand navbar-light row">
-    <ul class="pagination
-                       flex-wrap
-                       mt-1
-                       mx-auto
-                       justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-        {% else %}
-        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+
+<nav  class="navbar navbar-expand-lg mb-2 navbar-light">
+    <div class="container">
+        {% if page_obj.has_other_pages %}
+        <div class="btn-group navbar-toggler ml-0 mr-auto">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+            {% endif %}
+            <button class="btn-sm btn btn-link" type="button"
+                    data-toggle="collapse"
+                    data-target="#trigram"
+                    aria-controls="trigram"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                {{ trigrams|get_item:page_obj.number }}
+            </button>
+            {% if page_obj.has_next %}
+                <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
+            {% endif %}
+        </div>
+        <ul class="pagination
+                   navbar-collapse
+                   collapse
+                   flex-wrap
+                   mx-auto
+                   mt-1
+                   small
+                   justify-content-center" id="trigram">
+            {% for i in page_obj.paginator.page_range %}
+            {% ifequal i page_obj.number %}
+            <li class="active page-item">
+                <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="/tags/{{ query }}/{{ i }}">{{ trigrams|get_item:i }}</a>
+            </li>
+            {% endifequal %}
+            {% endfor %}
+        </ul>
         {% endif %}
-        {% for i in page_obj.paginator.page_range %}
-        {% if page_obj.number == i %}
-        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query  }}/{{ i }}">{{ i }}</a></li>
-        {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-        {% endif %}
-    </ul>
-</hav>
-{% endif %}
-<div class="row mt-4">
+    </div>
+</nav>
+
+<div class="row mt-4" id="result">
     <div class="card-columns">
         {% for a in page_obj %}
         {% include "wordCard.html" with article=a %}
         {% endfor %}
     </div>
 </div>
-{% if page_obj.has_other_pages %}
-<hav class="navbar navbar-expand navbar-light row">
-    <ul class="pagination
-                       flex-wrap
-                       mt-1
-                       mx-auto
-                       justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-        {% else %}
-        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+
+<nav  class="navbar navbar-expand-lg mb-2 navbar-light">
+    <div class="container">
+        {% if page_obj.has_other_pages %}
+        <div class="btn-group navbar-toggler ml-0 mr-auto">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+            {% endif %}
+            <button class="btn-sm btn btn-link" type="button"
+                    data-toggle="collapse"
+                    data-target="#trigram"
+                    aria-controls="trigram"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                {{ trigrams|get_item:page_obj.number }}
+            </button>
+            {% if page_obj.has_next %}
+                <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
+            {% endif %}
+        </div>
+        <ul class="pagination
+                   navbar-collapse
+                   collapse
+                   flex-wrap
+                   mx-auto
+                   mt-1
+                   small
+                   justify-content-center" id="trigram">
+            {% for i in page_obj.paginator.page_range %}
+            {% ifequal i page_obj.number %}
+            <li class="active page-item">
+                <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="/tags/{{ query }}/{{ i }}">{{ trigrams|get_item:i }}</a>
+            </li>
+            {% endifequal %}
+            {% endfor %}
+        </ul>
         {% endif %}
-        {% for i in page_obj.paginator.page_range %}
-        {% if page_obj.number == i %}
-        <li class="page-item active"><a class="page-link active" >{{ i }} <span class="sr-only">(current)</span></a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query  }}/{{ i }}">{{ i }}</a></li>
-        {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="/tags/{{ query}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-        {% endif %}
-    </ul>
-</hav>
-{% endif %}
+    </div>
+</nav>
+
 <script type="application/javascript">
 
     function getChecked() {
@@ -205,7 +239,7 @@
 
     $( function() {
         $('#button').click(() =>
-            window.location.href = '/tags/' + getChecked().join(',')
+            window.location.href = '/tags/' + getChecked().join(',') + ''
         )
     })
 
