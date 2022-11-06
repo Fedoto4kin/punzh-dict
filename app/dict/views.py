@@ -77,6 +77,12 @@ def search(request, query='', page=1):
 
 def tag_search(request, tags='', page=1):
 
+    content = type('Content', (object,),
+                {
+                    'page_obj': None,
+                    'trigrams_dict': None
+                })()
+
     test_list = set(tags.split(','))
     try:
         tag_ids = [int(x.strip()) for x in test_list]
@@ -90,16 +96,8 @@ def tag_search(request, tags='', page=1):
     dialect_tags = get_tags_by_type(4)
     other_tags = get_tags_by_type(5)
 
-#    print(list(set(tag_tags.values_list('pk', flat=True)) & set(tag_ids)))
-#    by_tags = search_by_tags(tag_ids, page)
-#    by_geo = search_by_tags(tag_ids, page)
-#    by_ling = search_by_tags(tag_ids, page)
-#    by_other = search_by_tags(tag_ids, page)
-#    by_dialect = search_by_tags(tag_ids, page)
-
- #   page_obj = search_by_tags_dumb(tag_ids, page)
     if len(tag_ids):
-        page_obj = search_by_tags_smart(
+        content = search_by_tags_smart(
             by_geo=list(set(geo_tags.values_list('pk', flat=True)) & set(tag_ids)),
             by_tags=list(set(tag_tags.values_list('pk', flat=True)) & set(tag_ids)),
             by_dialect=list(set(dialect_tags.values_list('pk', flat=True)) & set(tag_ids)),
@@ -107,8 +105,6 @@ def tag_search(request, tags='', page=1):
             by_other=list(set(other_tags.values_list('pk', flat=True)) & set(tag_ids)),
             page=page
         )
-    else:
-        page_obj = ()
 
     context = {
         "ABC": KRL_ABC,
@@ -123,7 +119,8 @@ def tag_search(request, tags='', page=1):
 
         },
         'query': ",".join(map(str, tag_ids)),
-        "page_obj": page_obj
+        "page_obj": content.page_obj,
+        "trigrams": content.trigrams_dict,
     }
     return render(request, 'tags.html', context)
 

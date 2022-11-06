@@ -174,6 +174,7 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
     articles_ids = Article.objects \
         .all() \
         .values_list('id', flat=True)
+    trigrams_dict = None
 
     if len(by_geo):
         articles_ids = search_by_ids(by_geo, articles_ids)
@@ -186,4 +187,42 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
     if len(by_other):
         articles_ids = search_by_ids(by_other, articles_ids, False)
 
-    return get_sorted_articles(articles_ids, page)
+    articles = sorted(Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=articles_ids).all(),
+                      key=lambda el: (
+                          sorted_by_krl(el, 'word'),
+                      )
+                      )
+    paginator = Paginator(articles, num_by_page)
+    page_obj = paginator.get_page(page)
+    ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
+
+    for idx in range(1, len(trigrams)-1):
+        n = 3
+        while True:
+            if n > len(articles[0::num_by_page][idx].word):
+                break
+            prev_ng = create_ngram(articles[0::num_by_page][idx-1].word, n)
+            next_ng = create_ngram(articles[0::num_by_page][idx+1].word, n)
+            ngrams[idx] = create_ngram(articles[0::num_by_page][idx].word, n)
+
+            if ngrams[idx][0:n] != prev_ng and ngrams[idx][0:n] != next_ng:
+                break
+            n += 1
+
+    for idx in range(0, len(ngrams)-1):
+        if idx+1 <= len(ngrams):
+            ngrams[idx] = ngrams[idx] + ' ·· ' + ngrams[idx+1]
+
+    if len(page_obj):
+        trigrams_dict = dict(
+            zip(
+                range(1, len(trigrams) + 1),
+                ngrams
+            )
+        )
+
+    return type('Content', (object,),
+                {
+                    'page_obj': page_obj,
+                    'trigrams_dict': trigrams_dict
+                })()
