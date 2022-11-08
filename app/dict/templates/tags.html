@@ -29,117 +29,111 @@
 
             <div id="collapseOne" class="collapse {% if not tagIds %}show{% endif %}" aria-labelledby="headingOne" data-parent="#accordion">
                 <div class="card-body">
-                    <table>
-                        <tr>
-                            <td class="p-2">
-                                <div class="form-check">
-                                    <h5>Грамматические пометы</h5>
-                                </div>
-                                {% for t in allTags.linguistic %}
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-check">
+                                <h5>Грамматические пометы</h5>
+                            </div>
+                            {% for t in allTags.linguistic %}
 
-                                <div class="form-check">
-                                    <label class="form-check-label" for="tag_{{t.id}}">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectTag"
-                                               value="{{t.id}}"
-                                               id="tag_{{t.id}}"
-                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
-                                        >
-                                        {% if t.level == 1 %} &hellip; {% endif %}{{t.name}}
-                                    </label>
-                                </div>
-                                {% endfor %}
-                                <br>
-                                {% for t in allTags.other %}
-                                <div class="form-check">
-                                    <label class="form-check-label" for="tag_{{t.id}}">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectTag"
-                                               value="{{t.id}}"
-                                               id="tag_{{t.id}}"
-                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
-                                        >
-                                        {{t.name}}
-                                    </label>
-                                </div>
-                                {% endfor %}
+                            <div class="form-check">
+                                <label class="form-check-label" for="tag_{{t.id}}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectTag"
+                                           value="{{t.id}}"
+                                           id="tag_{{t.id}}"
+                                           {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                    >
+                                    {% if t.level == 1 %} &hellip; {% endif %}{{t.name}}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            <br>
+                            {% for t in allTags.other %}
+                            <div class="form-check">
+                                <label class="form-check-label" for="tag_{{t.id}}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectTag"
+                                           value="{{t.id}}"
+                                           id="tag_{{t.id}}"
+                                           {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                    >
+                                    {{t.name}}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            <br>
+                        </div>
 
-                            </td>
-                            <td class="p-2">
+                         <div class="col-sm-6">
+                            <div class="form-check">
+                                <h5>Нормативно-стилистические<br>и экспрессивно-оценочные пометы</h5>
+                            </div>
 
-                                <div class="form-check">
-                                    <h5>Нормативно-стилистические<br>и экспрессивно-оценочные пометы</h5>
-                                </div>
+                            {% for t in allTags.tag %}
+                            <div class="form-check">
+                                <label class="form-check-label" for="tag_{{t.id}}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectTag"
+                                           value="{{t.id}}"
+                                           id="tag_{{t.id}}"
+                                           {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                    >
+                                    {{t.name}}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            <br>
+                            <div class="form-check">
+                                <h5>Ареальные пометы</h5>
+                            </div>
 
-                                {% for t in allTags.tag %}
-                                <div class="form-check">
-                                    <label class="form-check-label" for="tag_{{t.id}}">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectTag"
-                                               value="{{t.id}}"
-                                               id="tag_{{t.id}}"
-                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
-                                        >
-                                        {{t.name}}
-                                    </label>
-                                </div>
-                                {% endfor %}
-                                <hr>
-                                <div class="form-check">
-                                    <h5>Ареальные пометы</h5>
-                                </div>
+                            {% for t in allTags.geo %}
+                            <div class="form-check">
+                                <label class="form-check-label" for="tag_{{t.id}}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectTag"
+                                           value="{{t.id}}"
+                                           id="tag_{{t.id}}"
+                                           {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                    >
+                                    {{t.name}}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            <br>
+                            {% for t in allTags.dialect %}
+                            <div class="form-check">
+                                <label class="form-check-label" for="tag_{{t.id}}">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="selectTag"
+                                           value="{{t.id}}"
+                                           id="tag_{{t.id}}"
+                                           {% if t.id in tagIds %} checked {% else %} '' {% endif %}
+                                    >
+                                    {{t.name}}
+                                </label>
+                            </div>
+                            {% endfor %}
+                             <br>
+                         </div>
+                    </div>
 
-                                {% for t in allTags.geo %}
-                                <div class="form-check">
-                                    <label class="form-check-label" for="tag_{{t.id}}">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectTag"
-                                               value="{{t.id}}"
-                                               id="tag_{{t.id}}"
-                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
-                                        >
-                                        {{t.name}}
-                                    </label>
-                                </div>
-                                {% endfor %}
-                                <br>
-                                {% for t in allTags.dialect %}
-                                <div class="form-check">
-                                    <label class="form-check-label" for="tag_{{t.id}}">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectTag"
-                                               value="{{t.id}}"
-                                               id="tag_{{t.id}}"
-                                               {% if t.id in tagIds %} checked {% else %} '' {% endif %}
-                                        >
-                                        {{t.name}}
-                                    </label>
-                                </div>
-                                {% endfor %}
+                    <div class="row">
+                        <div class="form-group col-sm-12">
+                            <hr>
+                            <button class="btn btn-outline-secondary my-sm-0" type="submit" id="button">
+                                Найти все статьи c отметками
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2">
-                                <hr>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2">
-                                <div class="form-group col-sm-12">
-                                    <button class="btn btn-outline-secondary my-sm-0" type="submit" id="button">
-                                        Найти все статьи c отметками
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
                 </div>
             </div>
         </div>

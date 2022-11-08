@@ -128,29 +128,6 @@ def get_tags_by_type(type_id=None):
         return Tag.objects.filter(type=type_id).order_by('sorting')
     return Tag.objects.all()
 
-def search_by_tags_dumb(ids, page):
-
-    tags = Tag.objects.filter(id__in=ids).values_list('tag', flat=True)
-
-    queries = [Q(article_html__contains=value) for value in tags]
-    # Take one Q object from the list
-    query = queries.pop()
-
-    # Or the Q object with the ones remaining in the list
-    for item in queries:
-        query |= item
-
-    articles = sorted(Article.objects.extra(select={'sort_order': "0"})
-                      .filter(query),
-                      key=lambda el: (
-                          sorted_by_krl(el, 'word'),
-                      )
-                      )
-
-    paginator = Paginator(articles, num_by_page)
-    return paginator.get_page(page)
-
-
 def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
 
     def search_by_ids(ids, articles_ids, i=True):
