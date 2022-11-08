@@ -12,9 +12,11 @@ class Tag(models.Model):
         (5, 'Другое'),
     )
 
-    tag = models.CharField(max_length=255, unique=True, db_index=True,)
+    tag = models.CharField(max_length=255, db_index=True,)
     name = models.TextField()
     type = models.IntegerField(choices=TYPES)
+    sorting = models.IntegerField(db_index=True, null=True)
+    level = models.IntegerField(default=0,)
 
     class Meta:
         ordering = ['id']

@@ -11,7 +11,7 @@
     <div class="col-sm-12">
         {% for t in allTags.all %}
         {% if t.id in tagIds %}
-        <span class="badge badge-primary">{{t.name}} </span>
+        <span class="badge badge-primary">{{t.name}}</span>
         {% else %}{% endif %}
         {% endfor %}
     </div>
@@ -23,7 +23,7 @@
         <div class="card" >
             <div class="card-header" id="headingOne">
                 <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne"  role="button">
-                        Служебные отметки {% if tagIds %} <i class="fa fa-1x fa-check-square text-primary"></i> {% endif %}
+                    Служебные отметки {% if tagIds %} <i class="fa fa-1x fa-check-square text-primary"></i> {% endif %}
                 </h5>
             </div>
 
@@ -32,7 +32,11 @@
                     <table>
                         <tr>
                             <td class="p-2">
+                                <div class="form-check">
+                                    <h5>Грамматические пометы</h5>
+                                </div>
                                 {% for t in allTags.linguistic %}
+
                                 <div class="form-check">
                                     <label class="form-check-label" for="tag_{{t.id}}">
                                         <input class="form-check-input"
@@ -42,7 +46,7 @@
                                                id="tag_{{t.id}}"
                                                {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                         >
-                                        {{t.name}}
+                                        {% if t.level == 1 %} &hellip; {% endif %}{{t.name}}
                                     </label>
                                 </div>
                                 {% endfor %}
@@ -65,6 +69,10 @@
                             </td>
                             <td class="p-2">
 
+                                <div class="form-check">
+                                    <h5>Нормативно-стилистические<br>и экспрессивно-оценочные пометы</h5>
+                                </div>
+
                                 {% for t in allTags.tag %}
                                 <div class="form-check">
                                     <label class="form-check-label" for="tag_{{t.id}}">
@@ -80,6 +88,10 @@
                                 </div>
                                 {% endfor %}
                                 <hr>
+                                <div class="form-check">
+                                    <h5>Ареальные пометы</h5>
+                                </div>
+
                                 {% for t in allTags.geo %}
                                 <div class="form-check">
                                     <label class="form-check-label" for="tag_{{t.id}}">
@@ -142,7 +154,7 @@
         {% if page_obj.has_other_pages %}
         <div class="btn-group navbar-toggler ml-0 mr-auto">
             {% if page_obj.has_previous %}
-                <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+            <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
             {% endif %}
             <button class="btn-sm btn btn-link" type="button"
                     data-toggle="collapse"
@@ -153,7 +165,7 @@
                 {{ trigrams|get_item:page_obj.number }}
             </button>
             {% if page_obj.has_next %}
-                <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
+            <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
             {% endif %}
         </div>
         <ul class="pagination
@@ -193,7 +205,7 @@
         {% if page_obj.has_other_pages %}
         <div class="btn-group navbar-toggler ml-0 mr-auto">
             {% if page_obj.has_previous %}
-                <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+            <a class="btn btn-light btn-link"  href="/tags/{{ query }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
             {% endif %}
             <button class="btn-sm btn btn-link" type="button"
                     data-toggle="collapse"
@@ -204,7 +216,7 @@
                 {{ trigrams|get_item:page_obj.number }}
             </button>
             {% if page_obj.has_next %}
-                <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
+            <a class="btn btn-light  btn-link" href="/tags/{{ query }}/{{ page_obj.number|add:"+1" }}"><i class='fa fa-chevron-circle-right' ></i></a>
             {% endif %}
         </div>
         <ul class="pagination
