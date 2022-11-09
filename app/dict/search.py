@@ -128,6 +128,9 @@ def get_tags_by_type(type_id=None):
         return Tag.objects.filter(type=type_id).order_by('sorting')
     return Tag.objects.all()
 
+def get_tags_by_ids_distinct(ids):
+    return set(Tag.objects.filter(id__in=ids).values_list('name', flat=True))
+
 def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
 
     def search_by_ids(ids, articles_ids, i=True):

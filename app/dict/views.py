@@ -96,6 +96,8 @@ def tag_search(request, tags='', page=1):
     dialect_tags = get_tags_by_type(4)
     other_tags = get_tags_by_type(5)
 
+    tags_selected = get_tags_by_ids_distinct(tag_ids)
+
     if len(tag_ids):
         content = search_by_tags_smart(
             by_geo=list(set(geo_tags.values_list('pk', flat=True)) & set(tag_ids)),
@@ -109,6 +111,7 @@ def tag_search(request, tags='', page=1):
     context = {
         "ABC": KRL_ABC,
         "tagIds": tag_ids,
+        "tags_selected": tags_selected,
         "allTags": {
             'all': all_tags,
             'geo': geo_tags,

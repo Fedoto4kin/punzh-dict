@@ -9,10 +9,8 @@
 {% block content %}
 <div class="my-5 row">
     <div class="col-sm-12">
-        {% for t in allTags.all %}
-        {% if t.id in tagIds %}
-        <span class="badge badge-primary">{{t.name}}</span>
-        {% else %}{% endif %}
+        {% for t in tags_selected %}
+        <span class="badge badge-primary">{{t}}</span>
         {% endfor %}
     </div>
 </div>
