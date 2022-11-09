@@ -83,9 +83,9 @@ def tag_search(request, tags='', page=1):
                     'trigrams_dict': None
                 })()
 
-    test_list = set(tags.split(','))
+    tmp_list = set(tags.split(','))
     try:
-        tag_ids = [int(x.strip()) for x in test_list]
+        tag_ids = [int(x.strip()) for x in tmp_list]
     except:
         tag_ids = []
 
