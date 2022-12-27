@@ -160,5 +160,11 @@ class KrlHelpersTestCase(TestCase):
             {'newguo', 'nevguo', 'neuguo'}
         )
 
+    def test_gen_variants_with_parentheses(self):
+        self.assertEqual(
+            gen_word_variants('kahistun(nun)'),
+            {'kahistun', 'kahistunnun'}
+        )
+
 
     #todo: Add sorting by Krl test
