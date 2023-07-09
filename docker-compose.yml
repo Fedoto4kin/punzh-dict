@@ -20,7 +20,7 @@ services:
 
   db:
     container_name: punzh_db
-    image: postgres
+    image: postgres:14
     restart: "always"
       
     volumes:
@@ -49,3 +49,7 @@ services:
 networks:
   punzh-net:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.110.0/28
