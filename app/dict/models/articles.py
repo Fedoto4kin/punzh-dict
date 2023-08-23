@@ -1,12 +1,41 @@
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-
+from django.utils.html import format_html
 
 from .source import Source
 from ..helpers import gen_word_variants, r_gen_word_variants, create_ngram, KRL_ABC, normalization
 
-class Article(models.Model):
+
+class ArticleBase(models.Model):
+
+    article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
+    source = models.ForeignKey(
+        Source,
+        null=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Источник'
+    )
+    source_detalization = models.CharField(
+        default=None,
+        blank=True,
+        null=True,
+        max_length=255,
+        verbose_name='Уточнение источника'
+    )
+
+    @staticmethod
+    def get_krl_abc() -> str:
+        abc = ''
+        for l in KRL_ABC.replace('Ü', 'Y'):
+            abc += l + l.lower()
+        return abc
+
+    class Meta:
+        abstract = True
+
+
+class Article(ArticleBase):
 
     word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово (ориг.)')
     word_normalized = models.CharField(
@@ -16,36 +45,16 @@ class Article(models.Model):
         max_length=255,
         db_index=True,
         verbose_name='Коррекция заголовка')
-
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)
-    article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
-    source = models.ForeignKey(Source,
-                               null=True,
-                               on_delete=models.SET_NULL,
-                               verbose_name='Источник'
-                               )
-    source_detalization = models.CharField(
+    linked_article = models.ForeignKey(
+        'self',
         default=None,
-        blank=True,
         null=True,
-        max_length=255,
-        verbose_name='Уточнение источника')
-    linked_article = models.ForeignKey('self',
-                               default=None,
-                               null=True,
-                               blank=True,
-                               on_delete=models.SET_NULL,
-                               verbose_name='см.'
-                               )
-
-
-    @staticmethod
-    def get_krl_abc() -> str:
-        abc = ''
-        for l in KRL_ABC.replace('Ü', 'Y'):
-            abc += l + l.lower()
-        return abc
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='см.'
+    )
 
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
@@ -89,8 +98,20 @@ class Article(models.Model):
         ordering = ['word']
 
 
-class ArticleIndexWord(models.Model):
+class ArticleAddition(ArticleBase):
 
+    article = models.ForeignKey(Article, related_name='additions', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return format_html(self.article_html)
+
+    class Meta:
+        verbose_name = 'Аддендум'
+        verbose_name_plural = 'Дополнение к словарной статье'
+        ordering = ['-id']
+
+
+class ArticleIndexWord(models.Model):
     word = models.CharField(max_length=255, default=None, blank=True, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
 
@@ -102,7 +123,6 @@ class ArticleIndexWord(models.Model):
 
 
 class ArticleIndexTranslate(models.Model):
-
     rus_word = models.CharField(max_length=255,
                                 default=None,
                                 blank=True,
@@ -121,7 +141,6 @@ class ArticleIndexTranslate(models.Model):
 
 
 class ArticleIndexWordNormalization(models.Model):
-
     word = models.CharField(max_length=255, default=None, blank=True, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
 

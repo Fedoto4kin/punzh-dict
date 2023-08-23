@@ -8,6 +8,7 @@ from .search import *
 
 num_by_page = 18
 
+
 class AboutPageStaticView(TemplateView):
     template_name = 'staticPages/about.html'
 
@@ -45,6 +46,7 @@ def index(request, letter=None, page=1):
     }
     return render(request, 'article_list.html', context)
 
+
 def search_proc(request):
 
     query = request.GET.get('query', '')
@@ -53,6 +55,7 @@ def search_proc(request):
         return redirect('/search/' + urlquote(query.strip()))
     else:
         return render(request, 'search.html',  {"search": "true"})
+
 
 def search(request, query='', page=1):
 
@@ -75,10 +78,10 @@ def search(request, query='', page=1):
     }
     return render(request, 'search.html', context)
 
+
 def tag_search(request, tags='', page=1):
 
-    content = type('Content', (object,),
-                {
+    content = type('Content', (object,), {
                     'page_obj': None,
                     'trigrams_dict': None
                 })()
