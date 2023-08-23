@@ -129,7 +129,7 @@ def search_levenshtein(query: str):
 
 def get_tags_by_type(type_id=None) -> set:
     if type_id:
-        return Tag.objects.filter(type=type_id).order_by('sorting')
+        return Tag.objects.filter(type=type_id).order_by('sorting', 'name')
     return Tag.objects.all()
 
 
