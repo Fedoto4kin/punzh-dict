@@ -1,4 +1,4 @@
-{% load dict_extras %}
+    {% load dict_extras %}
 <div class="card bg-light mb-3 ml-1 mr-1">
     <div class="card-header">
         <h5 class="mb-0">
@@ -21,4 +21,17 @@
             <br><span class="badge"> {{ article.source_detalization }}</span>
         {%  endif %}
     </div>
+    {%  if article.additions.count %}
+        {% for addition in article.additions.all %}
+         <div class="card-body">
+            {{addition.article_html|make_link|nice|make_break|highlight_rus|safe}}
+        </div>
+        <div class="card-footer small {{ addition.source.css }}">
+        <span class="badge">{{ addition.source.title }}</span>
+        {%  if article.source_detalization %}
+            <br><span class="badge"> {{ addition.source_detalization }}</span>
+        {%  endif %}
+        </div>
+        {% endfor %}
+    {% endif %}
 </div>

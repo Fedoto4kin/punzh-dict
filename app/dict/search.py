@@ -10,7 +10,7 @@ from .models import *
 num_by_page = 18
 
 
-def search_by_pointer(letter, page):
+def search_by_pointer(letter: str, page: int) -> object:
 
     last_page_word = ''
     first_page_word = ''
@@ -63,9 +63,9 @@ def search_by_pointer(letter, page):
                 })()
 
 
-def get_sorted_articles(ids, page):
+def get_sorted_articles(ids: [], page: int) -> Paginator:
 
-    articles = sorted(Article.objects.extra(select={'sort_order': "0"}).filter(pk__in=ids).all(),
+    articles = sorted(Article.objects.prefetch_related('additions').extra(select={'sort_order': "0"}).filter(pk__in=ids).all(),
                       key=lambda el: (
                           sorted_by_krl(el, 'word'),
                       )
@@ -75,7 +75,7 @@ def get_sorted_articles(ids, page):
     return paginator.get_page(page)
 
 
-def search_by_translate_linked(query, page=1):
+def search_by_translate_linked(query: str, page=1) -> Paginator:
 
     query = query.replace('ё', 'е')
     ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
@@ -83,7 +83,7 @@ def search_by_translate_linked(query, page=1):
     return get_sorted_articles(list(chain(linked_ids, ids)), page)
 
 
-def search_by_translate(query, page=1):
+def search_by_translate(query: str, page=1) -> Paginator:
 
     query = query.replace('ё', 'е')
     ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
@@ -91,7 +91,7 @@ def search_by_translate(query, page=1):
     return get_sorted_articles(ids, page)
 
 
-def word_search(query, page):
+def word_search(query: str, page: int) -> Paginator:
 
     query = query.replace('š', 's') \
         .replace('č', 'c') \
@@ -103,52 +103,68 @@ def word_search(query, page):
     return get_sorted_articles(ids, page)
 
 
-def search_possible(query):
+def search_possible(query: str) -> set:
     return set(w.word for w in (set(search_trigram(query.lower())) & set(search_levenshtein(query.lower()))))
 
 
-def search_trigram(query):
+def search_trigram(query: str):
 
-    return  ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), ) \
+    return ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), ) \
         .filter(similarity__gt=0.2) \
         .order_by('-similarity', Length('word').asc())
 
 
-def search_levenshtein(query):
+def search_levenshtein(query: str):
 
-    return  ArticleIndexWordNormalization.objects.annotate(
+    return ArticleIndexWordNormalization.objects.annotate(
         lev_dist=Levenshtein(F('word'), query)
     ).filter(
         lev_dist__lte=2
     ) \
         .order_by('-lev_dist', Length('word').asc())
 
-def get_tags_by_type(type_id=None):
+
+def get_tags_by_type(type_id=None) -> set:
     if type_id:
         return Tag.objects.filter(type=type_id).order_by('sorting')
     return Tag.objects.all()
 
-def get_tags_by_ids_distinct(ids):
+
+def get_tags_by_ids_distinct(ids: []) -> set:
     return set(Tag.objects.filter(id__in=ids).values_list('name', flat=True))
 
-def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
 
-    def search_by_ids(ids, articles_ids, i=True):
+def search_by_tags_smart(by_geo: [],
+                         by_tags: [],
+                         by_ling: [],
+                         by_dialect: [],
+                         by_other: [],
+                         page: int) -> object:
+
+    def search_by_ids(ids: [], articles_ids: [], i=True) -> []:
 
         tags = Tag.objects.filter(id__in=ids).values_list('tag', flat=True)
         if i:
-            queries = [Q(article_html__contains='<i>' + value + '</i>') for value in tags]
+            queries = [
+                Q(article_html__contains='<i>' + value + '</i>')
+                | Q(additions__article_html__contains='<i>' + value + '</i>')
+                for value in tags
+            ]
         else:
-            queries = [Q(article_html__contains=value) for value in tags]
+            queries = [
+                Q(article_html__contains=value)
+                | Q(additions__article_html__contains=value)
+                for value in tags
+            ]
         # Take one Q object from the list
         query = queries.pop()
         # Or the Q object with the ones remaining in the list
         for item in queries:
             query |= item
-        articles = Article.objects \
+        articles_with_tags = Article.objects \
             .filter(query) \
             .values_list('id', flat=True)
-        found_articles = list(set(articles) & set(articles_ids))
+        found_articles = list(set(articles_with_tags) & set(articles_ids))
         return list(set(found_articles) & set(articles_ids))
 
     articles_ids = Article.objects \
@@ -172,6 +188,7 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
                           sorted_by_krl(el, 'word'),
                       )
                       )
+    # todo: make common method
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
     ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
