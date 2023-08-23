@@ -1,5 +1,4 @@
 from django.db import models
-from .articles import Article
 
 
 class Tag(models.Model):
@@ -15,7 +14,7 @@ class Tag(models.Model):
     tag = models.CharField(max_length=255, db_index=True,)
     name = models.TextField()
     type = models.IntegerField(choices=TYPES)
-    sorting = models.IntegerField(db_index=True, null=True)
+    sorting = models.IntegerField(db_index=True, null=True,)
     level = models.IntegerField(default=0,)
 
     class Meta:

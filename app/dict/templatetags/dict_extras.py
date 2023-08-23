@@ -31,8 +31,6 @@ def make_break(text):
     return re.sub(r'(◊)', r'<hr/>\1', text)
 
 
-
-
 # @register.filter
 # def make_link(word):
 #     return word.split(',')[0]
