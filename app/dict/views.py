@@ -78,6 +78,7 @@ def search(request, query='', page=1):
 
 
 def tag_search(request, tags='', page=1):
+
     content = type('Content', (object,), {
         'page_obj': None,
         'trigrams_dict': None
