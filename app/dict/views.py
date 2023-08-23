@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.utils.http import urlquote
 from django.views.generic import TemplateView
 
-
 from .helpers import *
 from .search import *
 
@@ -30,7 +29,6 @@ class TeamStaticView(TemplateView):
 
 
 def index(request, letter=None, page=1):
-
     if not letter:
         return render(request, 'index.html')
 
@@ -48,18 +46,18 @@ def index(request, letter=None, page=1):
 
 
 def search_proc(request):
-
     query = request.GET.get('query', '')
     if len(query.strip()):
         query = re.sub(r'[^\w\-\s\.\?]', '', query)
         return redirect('/search/' + urlquote(query.strip()))
     else:
-        return render(request, 'search.html',  {"search": "true"})
+        return render(request, 'search.html', {"search": "true"})
 
 
 def search(request, query='', page=1):
 
-    if re.match(r'[А-яЁё\s]', query):
+    query = query.strip()
+    if re.match(r'[.А-Яа-яЁё\s]', query):
         page_obj = search_by_translate_linked(query, page)
     else:
         query = query.replace(';', '').replace('’', '').replace(',', '')
@@ -80,11 +78,10 @@ def search(request, query='', page=1):
 
 
 def tag_search(request, tags='', page=1):
-
     content = type('Content', (object,), {
-                    'page_obj': None,
-                    'trigrams_dict': None
-                })()
+        'page_obj': None,
+        'trigrams_dict': None
+    })()
 
     tmp_list = set(tags.split(','))
     try:
@@ -129,4 +126,3 @@ def tag_search(request, tags='', page=1):
         "trigrams": content.trigrams_dict,
     }
     return render(request, 'tags.html', context)
-

@@ -77,8 +77,11 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
 
 def search_by_translate_linked(query: str, page=1) -> Paginator:
 
-    query = query.replace('ё', 'е')
-    ids = ArticleIndexTranslate.objects.filter(rus_word__istartswith=query).values_list('article_id', flat=True)
+    query = query.replace('ё', 'е') \
+        .replace('?', '%') \
+        .replace('.', '_')
+    print(query)
+    ids = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list('article_id', flat=True)
     linked_ids = Article.objects.filter(linked_article__in=ids).values_list('id', flat=True)
     return get_sorted_articles(list(chain(linked_ids, ids)), page)
 
