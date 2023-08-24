@@ -16,33 +16,20 @@ services:
     ports:
       - 80:8000
     networks:
-        - punzh-net
+      - punzh-net
 
   db:
     container_name: punzh_db
     image: postgres:14
     restart: "always"
-      
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
     volumes:
       - ./db:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=${PG_PASS}
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_DB=punzh_dict
-    networks:
-        - punzh-net
-
-  pgadmin:
-    container_name: punzh_pgadmin
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=fedoto4kin@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=${PG_PASSWORD:-12345}
-      - PGADMIN_CONFIG_SERVER_MODE=False
-    ports:
-      - "5050:80"
-    depends_on:
-      - "db"
     networks:
         - punzh-net
 
