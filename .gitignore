@@ -9,4 +9,6 @@ db.sqlite3
 media
 
 *.py[cod] 
-*$py.class 
+*$py.class
+
+.certbot
