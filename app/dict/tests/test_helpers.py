@@ -1,6 +1,7 @@
 from django.test import TestCase
 from ..helpers import *
 
+
 class KrlHelpersTestCase(TestCase):
 
     # N-GRAMS
@@ -166,5 +167,4 @@ class KrlHelpersTestCase(TestCase):
             {'kahistun', 'kahistunnun'}
         )
 
-
-    #todo: Add sorting by Krl test
+    # todo: Add sorting by Krl test

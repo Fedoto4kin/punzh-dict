@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils.http import urlquote
 from django.views.generic import TemplateView
@@ -8,24 +9,13 @@ from .search import *
 num_by_page = 18
 
 
-class AboutPageStaticView(TemplateView):
-    template_name = 'staticPages/about.html'
+class StaticView(TemplateView):
 
+    template_name = None
 
-class DialectsStaticView(TemplateView):
-    template_name = 'staticPages/dialects.html'
-
-
-class IntroStaticView(TemplateView):
-    template_name = 'staticPages/intro.html'
-
-
-class PunzhStaticView(TemplateView):
-    template_name = 'staticPages/punzh.html'
-
-
-class TeamStaticView(TemplateView):
-    template_name = 'staticPages/team.html'
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
 
 def index(request, letter=None, page=1):
@@ -55,7 +45,6 @@ def search_proc(request):
 
 
 def search(request, query='', page=1):
-
     query = query.strip()
     if re.match(r'[.А-Яа-яЁё\s]', query):
         page_obj = search_by_translate_linked(query, page)
@@ -78,7 +67,6 @@ def search(request, query='', page=1):
 
 
 def tag_search(request, tags='', page=1):
-
     content = type('Content', (object,), {
         'page_obj': None,
         'trigrams_dict': None
