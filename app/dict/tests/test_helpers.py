@@ -166,5 +166,4 @@ class KrlHelpersTestCase(TestCase):
             gen_word_variants('kahistun(nun)'),
             {'kahistun', 'kahistunnun'}
         )
-
     # todo: Add sorting by Krl test

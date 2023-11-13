@@ -5,7 +5,6 @@ KRL_ABC = 'ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ'
 
 
 def sorted_by_krl(article, field='first_trigram'):
-
     def prepare_word(word):
         return normalization(
             re.split(r'\s|,', word.replace('i̮a', 'ua'), maxsplit=1)[0]
@@ -20,7 +19,6 @@ def sorted_by_krl(article, field='first_trigram'):
 
 
 def r_gen_word_variants(word, _word) -> ():
-
     def r_proc(w, word):
         variants = []
         w = w.strip()
@@ -93,7 +91,6 @@ def r_gen_word_variants(word, _word) -> ():
                 for _ in w.split('|'):
                     variants += r_proc(_, _word)
 
-
     return set([
         i.strip().replace('’', '')
             .replace('||', '')
@@ -106,9 +103,7 @@ def r_gen_word_variants(word, _word) -> ():
 
 
 def gen_word_variants(word) -> ():
-
     def proc(w, word):
-
         variants = []
         w = w.strip()
 
@@ -172,10 +167,8 @@ def gen_word_variants(word) -> ():
         for i in variants
     ])
 
-def create_ngram(word, n):
 
+def create_ngram(word, n):
     word = normalization(word.lower().replace('’', ''))
     word = re.split(r'\s|,', word, maxsplit=1)
     return word[0][:n]
-
-

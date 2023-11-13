@@ -111,14 +111,12 @@ def search_possible(query: str) -> set:
 
 
 def search_trigram(query: str):
-
     return ArticleIndexWordNormalization.objects.annotate(similarity=TrigramSimilarity('word', query), ) \
         .filter(similarity__gt=0.2) \
         .order_by('-similarity', Length('word').asc())
 
 
 def search_levenshtein(query: str):
-
     return ArticleIndexWordNormalization.objects.annotate(
         lev_dist=Levenshtein(F('word'), query)
     ).filter(
