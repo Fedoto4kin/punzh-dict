@@ -1,0 +1,578 @@
+[
+{
+    "model": "dict.tag",
+    "pk": 1,
+    "fields": {
+        "tag": "Брус.",
+        "name": "Брусово",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 2,
+    "fields": {
+        "tag": "Козл.",
+        "name": "Козлово",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 3,
+    "fields": {
+        "tag": "Лесн.",
+        "name": "Лесное",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 4,
+    "fields": {
+        "tag": "Макс.",
+        "name": "Максатиха",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 5,
+    "fields": {
+        "tag": "Рамеш.",
+        "name": "Рамешки",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 6,
+    "fields": {
+        "tag": "Санд.",
+        "name": "Сандово",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 7,
+    "fields": {
+        "tag": "Сонк.",
+        "name": "Сонково",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 8,
+    "fields": {
+        "tag": "Трест.",
+        "name": "Трестна",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 9,
+    "fields": {
+        "tag": "Ксм.",
+        "name": "Кесьма",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 10,
+    "fields": {
+        "tag": "Мсв.",
+        "name": "Мосеевское",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 11,
+    "fields": {
+        "tag": "Тмш.",
+        "name": "Тимошкино",
+        "type": 1
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 13,
+    "fields": {
+        "tag": "a",
+        "name": "adjectivum, имя прилагательное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 14,
+    "fields": {
+        "tag": "adv",
+        "name": "adverbium, наречие",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 15,
+    "fields": {
+        "tag": "caus",
+        "name": "causativum, каузативный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 16,
+    "fields": {
+        "tag": "coll",
+        "name": "collectivum, собирательное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 17,
+    "fields": {
+        "tag": "com",
+        "name": "compositum, сложное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 18,
+    "fields": {
+        "tag": "comp",
+        "name": "comparativus, сравнительная степень",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 19,
+    "fields": {
+        "tag": "conj",
+        "name": "conjuctio, союз",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 20,
+    "fields": {
+        "tag": "def",
+        "name": "defectivum, неполная парадигма (склонения или спряжения)",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 21,
+    "fields": {
+        "tag": "demonstr",
+        "name": "demonstrativum, указательное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 22,
+    "fields": {
+        "tag": "descr",
+        "name": "descriptivum, описательный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 23,
+    "fields": {
+        "tag": "freq",
+        "name": "frequentativum, многократный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 24,
+    "fields": {
+        "tag": "imper",
+        "name": "imperativum, повелительное наклонение",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 25,
+    "fields": {
+        "tag": "particl",
+        "name": "particula, частица",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 26,
+    "fields": {
+        "tag": "pers",
+        "name": "personale, личное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 27,
+    "fields": {
+        "tag": "pl",
+        "name": "pluralis, множественное число",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 28,
+    "fields": {
+        "tag": "postp",
+        "name": "postpositio, послелог",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 29,
+    "fields": {
+        "tag": "prep",
+        "name": "prepositio, предлог",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 30,
+    "fields": {
+        "tag": "pron",
+        "name": "pronomen, местоимение",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 31,
+    "fields": {
+        "tag": "refl",
+        "name": "reflexivum, возвратный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 32,
+    "fields": {
+        "tag": "relat",
+        "name": "relativum, относительное местоимение",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 33,
+    "fields": {
+        "tag": "s",
+        "name": "substantivum, имя существительное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 34,
+    "fields": {
+        "tag": "sing",
+        "name": "singularis, единственное число",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 35,
+    "fields": {
+        "tag": "superl",
+        "name": "superlativus, превосходная степень",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 36,
+    "fields": {
+        "tag": "v",
+        "name": "verbum, глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 37,
+    "fields": {
+        "tag": "impers",
+        "name": "impersonale, безличный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 38,
+    "fields": {
+        "tag": "indef",
+        "name": "indefinitum, неопределенное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 39,
+    "fields": {
+        "tag": "indecl",
+        "name": "indeclination, несклоняемая форма",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 40,
+    "fields": {
+        "tag": "intens",
+        "name": "intensivum, слово в усилительном значении",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 41,
+    "fields": {
+        "tag": "interj",
+        "name": "interjectio, междометие",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 42,
+    "fields": {
+        "tag": "interr",
+        "name": "interrogativum, вопросительное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 43,
+    "fields": {
+        "tag": "mom",
+        "name": "momentativum, однократный глагол",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 44,
+    "fields": {
+        "tag": "num",
+        "name": "numerale, имя числительное",
+        "type": 2
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 46,
+    "fields": {
+        "tag": "бот.",
+        "name": "ботаника",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 47,
+    "fields": {
+        "tag": "бранн.",
+        "name": "бранное слово",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 48,
+    "fields": {
+        "tag": "груб.",
+        "name": "грубо",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 49,
+    "fields": {
+        "tag": "детск.",
+        "name": "на детском языке",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 50,
+    "fields": {
+        "tag": "зоол.",
+        "name": "зоология",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 51,
+    "fields": {
+        "tag": "ирон.",
+        "name": "иронически",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 52,
+    "fields": {
+        "tag": "миф.",
+        "name": "мифология",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 53,
+    "fields": {
+        "tag": "неодобр.",
+        "name": "неодобрительно",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 54,
+    "fields": {
+        "tag": "перен.",
+        "name": "переносно",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 55,
+    "fields": {
+        "tag": "поэт.",
+        "name": "поэтический",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 56,
+    "fields": {
+        "tag": "пренебр.",
+        "name": "пренебрежительно",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 57,
+    "fields": {
+        "tag": "примета",
+        "name": "примета",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 58,
+    "fields": {
+        "tag": "стр.",
+        "name": "строительство",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 59,
+    "fields": {
+        "tag": "с.-х.",
+        "name": "сельское хозяйство",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 60,
+    "fields": {
+        "tag": "техн.",
+        "name": "технический термин",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 61,
+    "fields": {
+        "tag": "ткац.",
+        "name": "ткацкое дело",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 62,
+    "fields": {
+        "tag": "флк.",
+        "name": "фольклор (пословицы, поговорки, загадки, сказки, причитания, частушки)",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 63,
+    "fields": {
+        "tag": "шутл.",
+        "name": "шутливо",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 64,
+    "fields": {
+        "tag": "этн.",
+        "name": "этнография",
+        "type": 3
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 66,
+    "fields": {
+        "tag": "всг.",
+        "name": "лексические параллели весьегонского говора",
+        "type": 4
+    }
+},
+{
+    "model": "dict.tag",
+    "pk": 67,
+    "fields": {
+        "tag": "◊",
+        "name": "фразиологизм",
+        "type": 5
+    }
+}
+]

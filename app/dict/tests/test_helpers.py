@@ -1,11 +1,11 @@
 from django.test import TestCase
 from ..helpers import *
 
+
 class KrlHelpersTestCase(TestCase):
 
     # N-GRAMS
     def test_ngram_1(self):
-
         self.assertEqual(
             'yö',
             create_ngram('yö, yöhyt', 3)
@@ -62,13 +62,13 @@ class KrlHelpersTestCase(TestCase):
 
     def test_get_variants_ves2(self):
         self.assertEqual(
-            gen_word_variants('mi̮ajäicä I'),
+            gen_word_variants('mi̮ajäičä I'),
             {'mi̮ajäicä', 'miajäicä'}
         )
 
     def test_get_variants_normal(self):
         self.assertEqual(
-            gen_word_variants('mus||ta, ~tan’e'),
+            gen_word_variants('muš||ta, ~tan’e'),
             {'musta', 'mustane'}
         )
 
@@ -131,7 +131,7 @@ class KrlHelpersTestCase(TestCase):
 
     def test_get_variants_complex_yw(self):
         self.assertEqual(
-            gen_word_variants('ühen|suwrun’e'),
+            gen_word_variants('ühen|šuwrun’e'),
             {'ühensuwrune', 'yhen', 'ühensuvrune',
              'yhensuvrune', 'yhensuwrune',
              'suvrune', 'yhensuurune',
@@ -149,4 +149,21 @@ class KrlHelpersTestCase(TestCase):
              'jalgamöwkküne', 'jalgamöykkyne'}
         )
 
-    #todo: Add sorting by Krl test
+    def test_get_variants_simple_w1(self):
+        self.assertEqual(
+            gen_word_variants('piwš||ta'),
+            {'piwsta', 'pivsta', 'piusta'}
+        )
+
+    def test_get_variants_simple_w2(self):
+        self.assertEqual(
+            gen_word_variants('n’ew||guo'),
+            {'newguo', 'nevguo', 'neuguo'}
+        )
+
+    def test_gen_variants_with_parentheses(self):
+        self.assertEqual(
+            gen_word_variants('kahistun(nun)'),
+            {'kahistun', 'kahistunnun'}
+        )
+    # todo: Add sorting by Krl test
