@@ -10,4 +10,3 @@ class Levenshtein(Func):
             search_term=search_term,
             **extras
         )
-

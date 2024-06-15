@@ -37,8 +37,8 @@ def r_gen_word_variants(word, _word) -> ():
         if _:
             variants.append(w.replace(_.group(), ''))
             w = w.replace('(', '').replace(')', '')
-
         variants.append(w)
+
         return variants
 
     def proc(w, word):
@@ -72,6 +72,7 @@ def r_gen_word_variants(word, _word) -> ():
             w = w.replace('(', '').replace(')', '')
 
         variants.append(w)
+
         return variants
 
     variants = []
@@ -175,6 +176,7 @@ def create_ngram(word, n):
 
     word = normalization(word.lower().replace('’', ''))
     word = re.split(r'\s|,', word, maxsplit=1)
+
     return word[0][:n]
 
 

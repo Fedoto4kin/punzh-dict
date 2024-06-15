@@ -1,4 +1,7 @@
-#COPY ME TO .env AND CHANGE
+# COPY ME TO .env AND CHANGE
 
 PG_PASS=very-secure-password
 PG_USER=user
+
+# MUST not be empty!
+DJANGO_SECRET_KEY=
