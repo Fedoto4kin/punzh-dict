@@ -1,0 +1,20 @@
+Requirements: docker docker-compose
+
+1. Clone repo
+
+2. cp env_sample .env
+
+3. Fill .env
+
+4. docker-compose build
+
+5. Create DB structure: docker-compose exec web python manage.py migrate
+
+4. fill data from fixures: 
+
+    docker-compose exec web python manage.py loaddata dict/fixtures/sources.json
+    docker-compose exec web python manage.py loaddata dict/fixtures/dict.json
+
+5. [optional] create django admin user 
+    python manage.py createsuperuser
+
