@@ -39,7 +39,7 @@ services:
 
   db:
     container_name: punzh_db
-    image: postgres
+    image: postgres:13
     restart: "always"
     ports:
       - ${POSTGRES_PORT:-5432}:5432
