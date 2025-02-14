@@ -45,6 +45,7 @@ services:
       - ${POSTGRES_PORT:-5432}:5432
     volumes:
       - ./db:/var/lib/postgresql/data
+      - ./images/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - POSTGRES_PASSWORD=${PG_PASS}
       - POSTGRES_USER=${PG_USER}      
