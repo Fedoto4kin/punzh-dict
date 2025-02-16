@@ -20,6 +20,6 @@ urlpatterns = [
     path('tags/<str:tags>/<int:page>', views.tag_search, name='tags'),
 
     path('', views.index, name='index'),
-    path('<letter>/', views.index, name='index'),  # TODO: filter letter one char in KRL
+    path('<letter>/', views.index, name='index'),
     path('<letter>/<int:page>', views.index, name='index'),
 ]
