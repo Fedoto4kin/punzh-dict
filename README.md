@@ -13,3 +13,7 @@ The current version contains all words of the original edition but is extended b
  
 
 ![Original book front](https://raw.githubusercontent.com/Fedoto4kin/punzh_dict/master/app/static/images/book_front.jpg)
+
+### Technical requirements 
+
+`docker-compose `

@@ -6,8 +6,6 @@ from django.views.generic import TemplateView
 from .helpers import *
 from .search import *
 
-num_by_page = 18
-
 
 class StaticView(TemplateView):
 
@@ -34,6 +32,7 @@ def index(request, letter=None, page=1):
     }
     return render(request, 'article_list.html', context)
 
+num_by_page = 18
 
 def search_proc(request):
     query = request.GET.get('query', '')
@@ -43,26 +42,46 @@ def search_proc(request):
     else:
         return render(request, 'search.html', {"search": "true"})
 
-
 def search(request, query='', page=1):
     query = query.strip()
-    if re.match(r'[.А-Яа-яЁё\s]', query):
-        page_obj = search_by_translate_linked(query, page)
-    else:
-        query = query.replace(';', '').replace('’', '').replace(',', '')
-        page_obj = word_search(query, page)
 
-    possible = []
-    if not len(page_obj.object_list):
-        possible = search_possible(query)
+    if re.match(r'[.А-Яа-яЁё\s]', query):
+        direction = 'rus'
+        translation_table = str.maketrans({
+            'ё': 'е',
+            '?': '%',
+            '.': '_'
+        })
+        query = query.translate(translation_table)
+        page_obj, found_count, possible = search_by_translate_linked(query, page)
+    else:
+        direction = 'krl'
+        translation_table = str.maketrans({
+            ';': '',
+            '’': '',
+            ',': '',
+            'š': 's',
+            'č': 'c',
+            'ž': 'z',
+            '?': '%',
+            '.': '_'
+        })
+        query = query.translate(translation_table)
+        page_obj, found_count = word_search(query, page)
+        possible = []
+        if not len(page_obj.object_list):
+            possible = search_possible(query)
 
     context = {
         "ABC": KRL_ABC,
         "query": query,
         "search": "true",
         "page_obj": page_obj,
-        "possible": possible
+        "possible": possible,
+        "found_count": found_count,
+        "direction": direction
     }
+
     return render(request, 'search.html', context)
 
 

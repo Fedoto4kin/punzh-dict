@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.utils.html import format_html
 
@@ -129,6 +130,7 @@ class ArticleIndexTranslate(models.Model):
                                 null=True,
                                 verbose_name='Перевод')
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    search_vector = SearchVectorField(null=True, blank=True)
 
     def __str__(self):
         return self.rus_word
