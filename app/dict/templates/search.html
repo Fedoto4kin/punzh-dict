@@ -40,7 +40,7 @@
     {% endif %}
 
    {% if found_count %}
-        <div class="row mt-">
+        <div class="row">
             <div class="col-12 text-center">
                 <p>Найдено {{ found_count|pluralize_words|safe }}</p>
             </div>
@@ -78,8 +78,8 @@
             </div>
         {% endif %}
         {% if possible %}
-            <div class="mt-4 alert alert-info alert-dismissible fade show" role="alert">
-                <h4 class="alert-heading">Похожие запросы, которые могут быть вам интересны и связаны с вашим:</h4>
+            <div class="mt-1 alert alert-info alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading">Похожие запросы, которые могут быть вам интересны и связаны с вашим:</h5>
                 <p>
                     {% for w in possible %}
                         <a href="/search/{{ w.rus_word }}" class="btn btn-link alert-link">{{ w.rus_word }}</a>
