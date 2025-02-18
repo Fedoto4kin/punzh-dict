@@ -52,8 +52,7 @@ def search(request, query='', page=1):
             '?': '%',
             '.': '_'
         })
-        query = query.translate(translation_table)
-        page_obj, found_count, possible = search_by_translate_linked(query, page)
+        page_obj, found_count, possible = search_by_translate_linked(query.translate(translation_table), page)
     else:
         direction = 'krl'
         translation_table = str.maketrans({
@@ -66,8 +65,7 @@ def search(request, query='', page=1):
             '?': '%',
             '.': '_'
         })
-        query = query.translate(translation_table)
-        page_obj, found_count = word_search(query, page)
+        page_obj, found_count = word_search(query.translate(translation_table), page)
         possible = []
         if not len(page_obj.object_list):
             possible = search_possible(query)
