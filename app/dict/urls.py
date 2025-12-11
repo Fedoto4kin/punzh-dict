@@ -1,3 +1,5 @@
+from django.views.static import serve
+from django.conf import settings
 from django.urls import path
 
 from . import views
@@ -18,7 +20,11 @@ urlpatterns = [
     path('tags/', views.tag_search, name='tags'),
     path('tags/<str:tags>', views.tag_search, name='tags'),
     path('tags/<str:tags>/<int:page>', views.tag_search, name='tags'),
-
+    path(
+        "yandex_33ad64467c0b0a09.html",
+        serve,
+        {"document_root": settings.STATIC_ROOT, "path": "yandex_33ad64467c0b0a09.html"}
+    ),
     path('', views.index, name='index'),
     path('<letter>/', views.index, name='index'),
     path('<letter>/<int:page>', views.index, name='index'),

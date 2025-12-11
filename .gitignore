@@ -12,3 +12,4 @@ media
 *$py.class
 
 .certbot
+app/staticfiles
