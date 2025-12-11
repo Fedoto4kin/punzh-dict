@@ -6,6 +6,13 @@
 <head>
     <meta charset="utf-8">
     <title>{% block title %}{% endblock %}</title>
+    <meta name="description"
+          content="Электронная версия «Словаря карельского языка (тверские говоры)» А. В. Пунжиной (1994), дополненная авторскими правками и новыми статьями. Поиск по 14 526 словарным статьям на карельском и русском языках.">
+    <meta name="keywords"
+          content="карельский язык, тверские говоры, тверской диалект, словарь, электронная версия, Пунжина, КарНЦ РАН, финно-угорские языки">
+
+    <meta http-equiv="Content-Language" content="krl, ru">
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>
@@ -19,6 +26,45 @@
     {% endblock %}
 
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Dictionary",
+            "name": "Словарь карельского языка (тверские говоры)",
+            "alternateName": "Electronic Dictionary of Karelian Language (Tver dialects)",
+            "description": "Электронная версия «Словаря карельского языка (тверские говоры)» А. В. Пунжиной (1994), дополненная авторскими правками и новыми статьями. Содержит 14 526 словарных статей с удобным поиском.",
+            "inLanguage": ["krl", "ru"],
+            "author": {
+                "@type": "Person",
+                "name": "Александра Васильевна Пунжина"
+            },
+            "contributor": {
+                "@type": "Person",
+                "name": "Федоточкин А. А.",
+                "description": "Разработчик программного обеспечения электронной версии словаря"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Карельский научный центр РАН",
+                "url": "https://krc.karelia.ru/"
+            },
+            "datePublished": "1994",
+            "dateModified": "2021",
+            "version": "Электронная переработанная версия",
+            "url": "https://example.com/",
+            "keywords": [
+                "карельский язык",
+                "тверские говоры",
+                "словарь",
+                "электронная версия",
+                "Пунжина",
+                "КарНЦ РАН",
+                "финно-угорские языки"
+            ]
+        }
+    </script>
 
     <!-- Yandex.Metrika counter -->
     <script type="text/javascript" >
