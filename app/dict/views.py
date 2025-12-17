@@ -17,16 +17,29 @@ class StaticView(TemplateView):
 
 
 def index(request, letter=None, page=1):
+
+    def _get404():
+        _context = {
+            "ABC": KRL_ABC,
+            "letter": letter.upper(),
+        }
+        return render(request, '404.html', _context, status=404)
+
     if not letter:
         return render(request, 'index.html')
 
+    if letter.upper() not in KRL_ABC:
+        return _get404()
+
     content = search_by_pointer(letter, page)
+    if page > content.page_obj.paginator.num_pages or page < 1:
+        print(page)
+        print(content.page_obj.paginator.num_pages)
+        return _get404()
+
     current_trigram = ''
-    print(len(content.trigrams_dict))
     if len(content.trigrams_dict) > 1:
         current_trigram = f' ({content.trigrams_dict.get(page)})'
-
-
     context = {
         "ABC": KRL_ABC,
         "letter": letter.upper(),
@@ -50,7 +63,6 @@ def search_proc(request):
 
 def search(request, query='', page=1):
     query = query.strip()
-
     if re.match(r'[.А-Яа-яЁё\s]', query):
         direction = 'rus'
         translation_table = str.maketrans({
@@ -75,7 +87,6 @@ def search(request, query='', page=1):
         possible = []
         if not len(page_obj.object_list):
             possible = search_possible(query)
-
     context = {
         "ABC": KRL_ABC,
         "query": query,
@@ -85,9 +96,7 @@ def search(request, query='', page=1):
         "found_count": found_count,
         "direction": direction
     }
-
     return render(request, 'search.html', context)
-
 
 def tag_search(request, tags='', page=1):
     content = type('Content', (object,), {
