@@ -147,3 +147,9 @@ def tag_search(request, tags='', page=1):
         "trigrams": content.trigrams_dict,
     }
     return render(request, 'tags.html', context)
+
+def page_not_found(request, exception=None):
+    context = {
+        "ABC": KRL_ABC,
+    }
+    return render(request, '404.html', context, status=404)

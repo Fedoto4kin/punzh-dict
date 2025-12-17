@@ -30,10 +30,9 @@ SECRET_KEY = env('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', True)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['punzhina.krc.karelia.ru', 'punzh.local', 'localhost', '127.0.0.1']
 
 # Application definition
-
 INSTALLED_APPS = [
     'bootstrap4',
     'dict.apps.DictConfig',
@@ -56,6 +55,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+handler404 = 'dict.views.page_not_found'
 
 ROOT_URLCONF = 'punzh.urls'
 
