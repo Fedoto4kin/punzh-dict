@@ -3,7 +3,7 @@
 {% load dict_extras %}
 
 {% block title %}
-    {{letter|upper}} - Словарь карельского языка
+    {{letter|upper}}{{ current_trigram }} - Словарь карельского языка
 {% endblock %}
 
 
@@ -61,7 +61,8 @@
         {% if page_obj.has_other_pages %}
         <div class="btn-group navbar-toggler ml-0 mr-auto">
             {% if page_obj.has_previous %}
-                <a class="btn btn-light btn-link"  href="/{{ letter }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
+                <a class="btn btn-light btn-link"
+                   href="/{{ letter }}/{{ page_obj.number|add:"-1"}}"><i class='fa fa-chevron-circle-left' ></i></a>
             {% endif %}
             <button class="btn-sm btn btn-link" type="button"
                     data-toggle="collapse"

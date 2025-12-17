@@ -21,6 +21,11 @@ def index(request, letter=None, page=1):
         return render(request, 'index.html')
 
     content = search_by_pointer(letter, page)
+    current_trigram = ''
+    print(len(content.trigrams_dict))
+    if len(content.trigrams_dict) > 1:
+        current_trigram = f' ({content.trigrams_dict.get(page)})'
+
 
     context = {
         "ABC": KRL_ABC,
@@ -29,6 +34,7 @@ def index(request, letter=None, page=1):
         "first_page_word": content.first_page_word,
         "trigrams": content.trigrams_dict,
         'page_obj': content.page_obj,
+        "current_trigram": current_trigram,
     }
     return render(request, 'article_list.html', context)
 
