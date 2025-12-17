@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}
+Страница не найдена - Словарь карельского языка
+{% endblock %}
+
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="display-1 text-muted">404</h1>
+            <h2 class="mb-4">Страница не найдена</h2>
+            <p class="lead mb-4">Запрашиваемая страница не существует или была перемещена.</p>
+            <div class="mb-4">
+                <div class="row">
+                    <div class="offset-md-3 col-md-6">
+                        {% block search %}
+                        {% include "searchForm.html" %}
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="row">
+                    <div class="offset-md-3 col-md-6">
+                        <p>Или выберите букву в алфавитном указателе:</p>
+                        <div class="d-flex flex-wrap justify-content-center">
+                            {% for l in ABC %}
+                            <a href="/{{ l }}" class="btn btn-outline-primary m-1">{{ l }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
