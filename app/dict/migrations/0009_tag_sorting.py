@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0008_auto_20221106_1236'),
+        ("dict", "0008_auto_20221106_1236"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tag',
-            name='sorting',
+            model_name="tag",
+            name="sorting",
             field=models.IntegerField(db_index=True, null=True),
         ),
     ]

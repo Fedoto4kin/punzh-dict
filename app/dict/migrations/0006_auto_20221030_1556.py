@@ -6,25 +6,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0005_auto_20221027_1558'),
+        ("dict", "0005_auto_20221027_1558"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='article',
-            options={'ordering': ['word'], 'verbose_name': 'Слово', 'verbose_name_plural': 'Слова'},
+            name="article",
+            options={
+                "ordering": ["word"],
+                "verbose_name": "Слово",
+                "verbose_name_plural": "Слова",
+            },
         ),
         migrations.CreateModel(
-            name='ArticleTag',
+            name="ArticleTag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tag', models.CharField(max_length=255)),
-                ('name', models.CharField(max_length=255)),
-                ('type', models.IntegerField(choices=[(1, 'Населенные пункты'), (2, 'Часть речи'), (2, 'Пометы')])),
-                ('articles', models.ManyToManyField(to='dict.Article')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("tag", models.CharField(max_length=255)),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "type",
+                    models.IntegerField(
+                        choices=[
+                            (1, "Населенные пункты"),
+                            (2, "Часть речи"),
+                            (2, "Пометы"),
+                        ]
+                    ),
+                ),
+                ("articles", models.ManyToManyField(to="dict.Article")),
             ],
             options={
-                'ordering': ['tag'],
+                "ordering": ["tag"],
             },
         ),
     ]

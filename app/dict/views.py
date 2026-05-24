@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.utils.http import urlquote
 from django.views.generic import TemplateView
 
@@ -23,10 +23,10 @@ def index(request, letter=None, page=1):
             "ABC": KRL_ABC,
             "letter": letter.upper(),
         }
-        return render(request, '404.html', _context, status=404)
+        return render(request, "404.html", _context, status=404)
 
     if not letter:
-        return render(request, 'index.html')
+        return render(request, "index.html")
 
     if letter.upper() not in KRL_ABC:
         return _get404()
@@ -37,52 +37,55 @@ def index(request, letter=None, page=1):
         print(content.page_obj.paginator.num_pages)
         return _get404()
 
-    current_trigram = ''
+    current_trigram = ""
     if len(content.trigrams_dict) > 1:
-        current_trigram = f' ({content.trigrams_dict.get(page)})'
+        current_trigram = f" ({content.trigrams_dict.get(page)})"
     context = {
         "ABC": KRL_ABC,
         "letter": letter.upper(),
         "last_page_word": content.last_page_word,
         "first_page_word": content.first_page_word,
         "trigrams": content.trigrams_dict,
-        'page_obj': content.page_obj,
+        "page_obj": content.page_obj,
         "current_trigram": current_trigram,
     }
-    return render(request, 'article_list.html', context)
+    return render(request, "article_list.html", context)
+
 
 num_by_page = 18
 
-def search_proc(request):
-    query = request.GET.get('query', '')
-    if len(query.strip()):
-        query = re.sub(r'[^\w\-\s\.\?]', '', query)
-        return redirect('/search/' + urlquote(query.strip()))
-    else:
-        return render(request, 'search.html', {"search": "true"})
 
-def search(request, query='', page=1):
-    query = query.strip()
-    if re.match(r'[.А-Яа-яЁё\s]', query):
-        direction = 'rus'
-        translation_table = str.maketrans({
-            'ё': 'е',
-            '?': '%',
-            '.': '_'
-        })
-        page_obj, found_count, possible = search_by_translate_linked(query.translate(translation_table), page)
+def search_proc(request):
+    query = request.GET.get("query", "")
+    if len(query.strip()):
+        query = re.sub(r"[^\w\-\s\.\?]", "", query)
+        return redirect("/search/" + urlquote(query.strip()))
     else:
-        direction = 'krl'
-        translation_table = str.maketrans({
-            ';': '',
-            '’': '',
-            ',': '',
-            'š': 's',
-            'č': 'c',
-            'ž': 'z',
-            '?': '%',
-            '.': '_'
-        })
+        return render(request, "search.html", {"search": "true"})
+
+
+def search(request, query="", page=1):
+    query = query.strip()
+    if re.match(r"[.А-Яа-яЁё\s]", query):
+        direction = "rus"
+        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
+        page_obj, found_count, possible = search_by_translate_linked(
+            query.translate(translation_table), page
+        )
+    else:
+        direction = "krl"
+        translation_table = str.maketrans(
+            {
+                ";": "",
+                "’": "",
+                ",": "",
+                "š": "s",
+                "č": "c",
+                "ž": "z",
+                "?": "%",
+                ".": "_",
+            }
+        )
         page_obj, found_count = word_search(query.translate(translation_table), page)
         possible = []
         if not len(page_obj.object_list):
@@ -94,17 +97,15 @@ def search(request, query='', page=1):
         "page_obj": page_obj,
         "possible": possible,
         "found_count": found_count,
-        "direction": direction
+        "direction": direction,
     }
-    return render(request, 'search.html', context)
+    return render(request, "search.html", context)
 
-def tag_search(request, tags='', page=1):
-    content = type('Content', (object,), {
-        'page_obj': None,
-        'trigrams_dict': None
-    })()
 
-    tmp_list = set(tags.split(','))
+def tag_search(request, tags="", page=1):
+    content = type("Content", (object,), {"page_obj": None, "trigrams_dict": None})()
+
+    tmp_list = set(tags.split(","))
     try:
         tag_ids = [int(x.strip()) for x in tmp_list]
     except:
@@ -121,12 +122,16 @@ def tag_search(request, tags='', page=1):
 
     if len(tag_ids):
         content = search_by_tags_smart(
-            by_geo=list(set(geo_tags.values_list('pk', flat=True)) & set(tag_ids)),
-            by_tags=list(set(tag_tags.values_list('pk', flat=True)) & set(tag_ids)),
-            by_dialect=list(set(dialect_tags.values_list('pk', flat=True)) & set(tag_ids)),
-            by_ling=list(set(linguistic_tags.values_list('pk', flat=True)) & set(tag_ids)),
-            by_other=list(set(other_tags.values_list('pk', flat=True)) & set(tag_ids)),
-            page=page
+            by_geo=list(set(geo_tags.values_list("pk", flat=True)) & set(tag_ids)),
+            by_tags=list(set(tag_tags.values_list("pk", flat=True)) & set(tag_ids)),
+            by_dialect=list(
+                set(dialect_tags.values_list("pk", flat=True)) & set(tag_ids)
+            ),
+            by_ling=list(
+                set(linguistic_tags.values_list("pk", flat=True)) & set(tag_ids)
+            ),
+            by_other=list(set(other_tags.values_list("pk", flat=True)) & set(tag_ids)),
+            page=page,
         )
 
     context = {
@@ -134,22 +139,22 @@ def tag_search(request, tags='', page=1):
         "tagIds": tag_ids,
         "tags_selected": tags_selected,
         "allTags": {
-            'all': all_tags,
-            'geo': geo_tags,
-            'linguistic': linguistic_tags,
-            'tag': tag_tags,
-            'dialect': dialect_tags,
-            'other': other_tags
-
+            "all": all_tags,
+            "geo": geo_tags,
+            "linguistic": linguistic_tags,
+            "tag": tag_tags,
+            "dialect": dialect_tags,
+            "other": other_tags,
         },
-        'query': ",".join(map(str, tag_ids)),
+        "query": ",".join(map(str, tag_ids)),
         "page_obj": content.page_obj,
         "trigrams": content.trigrams_dict,
     }
-    return render(request, 'tags.html', context)
+    return render(request, "tags.html", context)
+
 
 def page_not_found(request, exception=None):
     context = {
         "ABC": KRL_ABC,
     }
-    return render(request, '404.html', context, status=404)
+    return render(request, "404.html", context, status=404)

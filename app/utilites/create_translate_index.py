@@ -1,12 +1,13 @@
 import os
-import sys
 import re
+import sys
+
 import django
 from bs4 import BeautifulSoup as bs
 
-sys.path.append('../')
+sys.path.append("../")
 
-os.environ["DJANGO_SETTINGS_MODULE"] = 'punzh.settings'
+os.environ["DJANGO_SETTINGS_MODULE"] = "punzh.settings"
 django.setup()
 
 from dict.models import Article, ArticleIndexTranslate
@@ -14,12 +15,10 @@ from dict.models import Article, ArticleIndexTranslate
 
 def find_rus_translation(text):
 
-    text = re.sub(r'\(.*\)', '', text)
-    df = re.search(r'^([\-А-яЁё\s,.;]+)(?:;|$)', text)
+    text = re.sub(r"\(.*\)", "", text)
+    df = re.search(r"^([\-А-яЁё\s,.;]+)(?:;|$)", text)
     if df:
-        return df.group()\
-                  .strip()\
-                  .replace('ё', 'е')
+        return df.group().strip().replace("ё", "е")
 
 
 def split_by_li(html):
@@ -29,12 +28,12 @@ def split_by_li(html):
     if parent:
         for li in parent.find_all("li"):
             for tag in li.findAll():
-                tag.replace_with('')
+                tag.replace_with("")
             r.append(li)
         return r
 
     for tag in html.findAll():
-        tag.replace_with('')
+        tag.replace_with("")
 
     return [html]
 
@@ -47,17 +46,55 @@ def create_translation(article_html):
 def prepare_trans_list(t):
 
     l = []
-    l += re.split(r'[,;]', t)
+    l += re.split(r"[,;]", t)
 
     return l
 
+
 def prepare_trans_list_additional(t):
 
-    exclude = {'в', 'без', 'до', 'из', 'к', 'на', 'по', 'о', 'от', 'перед', 'при', 'через', 'с', 'у', 'и', 'или', 'не'
-               'нет', 'за', 'над', 'для', 'об', 'под', 'про', 'да', 'и',  'т.', 'д.',
-               'кого-л.', 'что-л.', 'каких-л.', 'что-л.', 'чему-л.', 'чем-л.', 'чего-л.', 'какую-л.', 'кем-л',
-               'какого-л.', 'куда-л.', 'кому-л.',
-               '-'}
+    exclude = {
+        "в",
+        "без",
+        "до",
+        "из",
+        "к",
+        "на",
+        "по",
+        "о",
+        "от",
+        "перед",
+        "при",
+        "через",
+        "с",
+        "у",
+        "и",
+        "или",
+        "не" "нет",
+        "за",
+        "над",
+        "для",
+        "об",
+        "под",
+        "про",
+        "да",
+        "и",
+        "т.",
+        "д.",
+        "кого-л.",
+        "что-л.",
+        "каких-л.",
+        "что-л.",
+        "чему-л.",
+        "чем-л.",
+        "чего-л.",
+        "какую-л.",
+        "кем-л",
+        "какого-л.",
+        "куда-л.",
+        "кому-л.",
+        "-",
+    }
     l = []
     l += t.split()
     if len(l) > 1:
@@ -67,12 +104,12 @@ def prepare_trans_list_additional(t):
         return []
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     for a in Article.objects.all():
 
         trans = []
-        data = bs(a.article_html, 'html.parser')
+        data = bs(a.article_html, "html.parser")
 
         for _ in split_by_li(data):
             t = find_rus_translation(_.text)
@@ -83,14 +120,17 @@ if __name__ == '__main__':
                         trans.append(___)
         # if len(trans) > 0:
         if None:
-            indx = (ArticleIndexTranslate(article=a, rus_word=var) for var in set(trans) if len(var) != 0)
+            indx = (
+                ArticleIndexTranslate(article=a, rus_word=var)
+                for var in set(trans)
+                if len(var) != 0
+            )
             ArticleIndexTranslate.objects.bulk_create(indx)
             print(a)
             print(trans)
-            print('---------------------------')
+            print("---------------------------")
 
         if len(trans) == 0:
-             print(a)
-             print(a.article_html)
-             print('---------------------------')
-
+            print(a)
+            print(a.article_html)
+            print("---------------------------")

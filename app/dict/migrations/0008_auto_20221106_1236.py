@@ -6,17 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0007_auto_20221030_1631'),
+        ("dict", "0007_auto_20221030_1631"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='tag',
-            name='articles',
+            model_name="tag",
+            name="articles",
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='type',
-            field=models.IntegerField(choices=[(1, 'Населенные пункты'), (2, 'Часть речи'), (3, 'Пометы'), (4, 'Говоры'), (5, 'Другое')]),
+            model_name="tag",
+            name="type",
+            field=models.IntegerField(
+                choices=[
+                    (1, "Населенные пункты"),
+                    (2, "Часть речи"),
+                    (3, "Пометы"),
+                    (4, "Говоры"),
+                    (5, "Другое"),
+                ]
+            ),
         ),
     ]

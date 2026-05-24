@@ -14,9 +14,13 @@ def drop_third_party_extension(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0002_auto_20220425_1546'),
+        ("dict", "0002_auto_20220425_1546"),
     ]
 
     operations = [
-        migrations.RunPython(create_third_party_extension, reverse_code=drop_third_party_extension, atomic=True)
+        migrations.RunPython(
+            create_third_party_extension,
+            reverse_code=drop_third_party_extension,
+            atomic=True,
+        )
     ]
