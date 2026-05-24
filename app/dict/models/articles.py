@@ -1,34 +1,37 @@
-from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
+from django.urls import reverse
 from django.utils.html import format_html
 
+from ..helpers import (
+    KRL_ABC,
+    create_ngram,
+    gen_word_variants,
+    normalization,
+    r_gen_word_variants,
+)
 from .source import Source
-from ..helpers import gen_word_variants, r_gen_word_variants, create_ngram, KRL_ABC, normalization
 
 
 class ArticleBase(models.Model):
 
-    article_html = models.TextField(default='', verbose_name='Словарная статья (html)')
+    article_html = models.TextField(default="", verbose_name="Словарная статья (html)")
     source = models.ForeignKey(
-        Source,
-        null=True,
-        on_delete=models.SET_NULL,
-        verbose_name='Источник'
+        Source, null=True, on_delete=models.SET_NULL, verbose_name="Источник"
     )
     source_detalization = models.CharField(
         default=None,
         blank=True,
         null=True,
         max_length=255,
-        verbose_name='Уточнение источника'
+        verbose_name="Уточнение источника",
     )
 
     @staticmethod
     def get_krl_abc() -> str:
-        abc = ''
-        for l in KRL_ABC.replace('Ü', 'Y'):
+        abc = ""
+        for l in KRL_ABC.replace("Ü", "Y"):
             abc += l + l.lower()
         return abc
 
@@ -38,28 +41,34 @@ class ArticleBase(models.Model):
 
 class Article(ArticleBase):
 
-    word = models.CharField(unique=True, max_length=255, db_index=True, verbose_name='Слово (ориг.)')
+    word = models.CharField(
+        unique=True, max_length=255, db_index=True, verbose_name="Слово (ориг.)"
+    )
     word_normalized = models.CharField(
         default=None,
         blank=True,
         null=True,
         max_length=255,
         db_index=True,
-        verbose_name='Коррекция заголовка')
+        verbose_name="Коррекция заголовка",
+    )
     first_letter = models.CharField(max_length=1, db_index=True)
     first_trigram = models.CharField(max_length=3)
     linked_article = models.ForeignKey(
-        'self',
+        "self",
         default=None,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        verbose_name='см.'
+        verbose_name="см.",
     )
 
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+        return reverse(
+            "admin:%s_%s_change" % (content_type.app_label, content_type.model),
+            args=(self.id,),
+        )
 
     def __str__(self):
         return normalization(self.word)
@@ -78,7 +87,10 @@ class Article(ArticleBase):
         if self.word_normalized:
             word = self.word_normalized
 
-        return set(w.strip().replace('’', '').split(" ", 1)[0] for w in normalization(word).split(','))
+        return set(
+            w.strip().replace("’", "").split(" ", 1)[0]
+            for w in normalization(word).split(",")
+        )
 
     def save(self, *args, **kwargs):
 
@@ -90,26 +102,31 @@ class Article(ArticleBase):
         ArticleIndexWord.objects.bulk_create(indx)
 
         ArticleIndexWordNormalization.objects.filter(article=self).delete()
-        indx = (ArticleIndexWordNormalization(article=self, word=var) for var in self.word_normalization_index())
+        indx = (
+            ArticleIndexWordNormalization(article=self, word=var)
+            for var in self.word_normalization_index()
+        )
         ArticleIndexWordNormalization.objects.bulk_create(indx)
 
     class Meta:
-        verbose_name = 'Слово'
-        verbose_name_plural = 'Слова'
-        ordering = ['word']
+        verbose_name = "Слово"
+        verbose_name_plural = "Слова"
+        ordering = ["word"]
 
 
 class ArticleAddition(ArticleBase):
 
-    article = models.ForeignKey(Article, related_name='additions', on_delete=models.CASCADE)
+    article = models.ForeignKey(
+        Article, related_name="additions", on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return format_html(self.article_html)
 
     class Meta:
-        verbose_name = 'Аддендум'
-        verbose_name_plural = 'Дополнение к словарной статье'
-        ordering = ['-id']
+        verbose_name = "Аддендум"
+        verbose_name_plural = "Дополнение к словарной статье"
+        ordering = ["-id"]
 
 
 class ArticleIndexWord(models.Model):
@@ -120,15 +137,16 @@ class ArticleIndexWord(models.Model):
         return self.word
 
     class Meta:
-        unique_together = ('word', 'article',)
+        unique_together = (
+            "word",
+            "article",
+        )
 
 
 class ArticleIndexTranslate(models.Model):
-    rus_word = models.CharField(max_length=255,
-                                default=None,
-                                blank=True,
-                                null=True,
-                                verbose_name='Перевод')
+    rus_word = models.CharField(
+        max_length=255, default=None, blank=True, null=True, verbose_name="Перевод"
+    )
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     search_vector = SearchVectorField(null=True, blank=True)
 
@@ -136,10 +154,13 @@ class ArticleIndexTranslate(models.Model):
         return self.rus_word
 
     class Meta:
-        unique_together = ('rus_word', 'article',)
-        verbose_name = 'Перевод'
-        verbose_name_plural = 'Переводы'
-        ordering = ['rus_word']
+        unique_together = (
+            "rus_word",
+            "article",
+        )
+        verbose_name = "Перевод"
+        verbose_name_plural = "Переводы"
+        ordering = ["rus_word"]
 
 
 class ArticleIndexWordNormalization(models.Model):
@@ -156,4 +177,7 @@ class ArticleIndexWordNormalization(models.Model):
         return super().__hash__()
 
     class Meta:
-        unique_together = ('word', 'article',)
+        unique_together = (
+            "word",
+            "article",
+        )

@@ -19,19 +19,16 @@ class ArticleAdditionInline(admin.StackedInline):
         (
             None,
             {
-                'fields': [
-                    'article_html',
-                    'source',
-                    'source_detalization',
+                "fields": [
+                    "article_html",
+                    "source",
+                    "source_detalization",
                 ]
-            }
+            },
         ),
     ]
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(
-                           attrs={'rows': 4,
-                                  'cols': 160
-                                  })},
+        models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
     }
 
     extra = 0
@@ -46,17 +43,33 @@ class SourceAdm(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdm(admin.ModelAdmin):
 
-    fields = ('_word', 'word_normalized', 'word',
-              'article_html', '_article_html', 'source',
-              'source_detalization', 'linked_article')
+    fields = (
+        "_word",
+        "word_normalized",
+        "word",
+        "article_html",
+        "_article_html",
+        "source",
+        "source_detalization",
+        "linked_article",
+    )
 
-    list_display = ('id', '_word', '_article_html',)
-    readonly_fields = ["_word", '_article_html', ]
+    list_display = (
+        "id",
+        "_word",
+        "_article_html",
+    )
+    readonly_fields = [
+        "_word",
+        "_article_html",
+    ]
 
-    sorting = ['-id', ]
+    sorting = [
+        "-id",
+    ]
 
-    search_fields = ('word',)
-    exclude = ("first_letter", "text_search", 'first_trigram')
+    search_fields = ("word",)
+    exclude = ("first_letter", "text_search", "first_trigram")
 
     inlines = [
         ArticleAdditionInline,
@@ -64,15 +77,14 @@ class ArticleAdm(admin.ModelAdmin):
     ]
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(
-                           attrs={'rows': 4,
-                                  'cols': 160
-                                  })},
+        models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
     }
 
     def get_search_results(self, request, queryset, search_term):
 
-        queryset, use_distinct = super(ArticleAdm, self).get_search_results(request, queryset, search_term)
+        queryset, use_distinct = super(ArticleAdm, self).get_search_results(
+            request, queryset, search_term
+        )
         try:
             search_term_as_int = int(search_term)
         except ValueError:
@@ -99,12 +111,15 @@ class ArticleAdm(admin.ModelAdmin):
     def _article_html(self, obj):
         return format_html(obj.article_html)
 
-    _article_html.short_description = 'Словарная статья'
+    _article_html.short_description = "Словарная статья"
 
     def _word(self, obj):
         if obj.word_normalized:
-            return format_html("<s>{word}</s> <b>{word_norm}</b>", word=normalization(obj.word),
-                               word_norm=obj.word_normalized)
+            return format_html(
+                "<s>{word}</s> <b>{word_norm}</b>",
+                word=normalization(obj.word),
+                word_norm=obj.word_normalized,
+            )
         return format_html("<b>{word}</b>", word=normalization(obj.word))
 
-    _word.short_description = 'Заголовок (в норм. орф.)'
+    _word.short_description = "Заголовок (в норм. орф.)"
