@@ -1,0 +1,32 @@
+services:
+  django:
+    container_name: punzh_web
+    build:
+      context: ./
+      dockerfile: images/django/Dockerfile
+    command: uwsgi --ini /app/uwsgi.ini
+    volumes:
+      - ./app:/app
+    expose:
+      - "3000"
+    depends_on:
+      - db
+    networks:
+      - punzh-internal
+
+  db:
+    container_name: punzh_db
+    image: postgres:13
+    volumes:
+      - ./db:/var/lib/postgresql/data
+      - ./images/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_PASSWORD=${PG_PASS}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_DB=punzh_dict
+    networks:
+      - punzh-internal
+
+networks:
+  punzh-internal:
+    driver: bridge
