@@ -9,6 +9,8 @@ services:
       - ./app:/app
     expose:
       - "3000"
+    ports:
+      - "${DJANGO_PORT}:3000" 
     depends_on:
       - db
     networks:
@@ -16,7 +18,7 @@ services:
 
   db:
     container_name: punzh_db
-    image: postgres:13
+    image: ankane/pgvector:latest
     volumes:
       - ./db:/var/lib/postgresql/data
       - ./images/init.sql:/docker-entrypoint-initdb.d/init.sql
