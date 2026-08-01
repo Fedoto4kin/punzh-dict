@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from itertools import chain
 
 from django.contrib.postgres.search import (
@@ -10,17 +11,57 @@ from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.db.models.functions import Length
 
-from .helpers import sorted_by_krl
-from .models import *
+from .helpers import build_pagination_hints, normalization, sorted_by_krl
+from .models import (
+    Article,
+    ArticleAddition,
+    ArticleIndexTranslate,
+    ArticleIndexWord,
+    ArticleIndexWordNormalization,
+    Tag,
+    ArticleLink,
+    Levenshtein,
+)
+
 
 num_by_page = 18
 
 
-def search_by_pointer(letter: str, page: int) -> object:
+@dataclass
+class Content:
+    """Container returned by the listing/search views."""
 
-    last_page_word = ""
-    first_page_word = ""
-    trigrams_dict = {}
+    page_obj: object = None
+    last_page_word: str = ""
+    first_page_word: str = ""
+    trigrams_dict: object = None
+
+
+# ------------------------------------------------------------
+#  Расширение списка статей через связи ArticleLink
+# ------------------------------------------------------------
+
+def expand_by_links(article_ids):
+    """
+    Возвращает множество статей, связанных с article_ids
+    в обе стороны.
+    """
+    outgoing = ArticleLink.objects.filter(
+        from_article_id__in=article_ids
+    ).values_list("to_article_id", flat=True)
+
+    incoming = ArticleLink.objects.filter(
+        to_article_id__in=article_ids
+    ).values_list("from_article_id", flat=True)
+
+    return set(article_ids) | set(outgoing) | set(incoming)
+
+
+# ------------------------------------------------------------
+#  Поиск по букве
+# ------------------------------------------------------------
+
+def search_by_pointer(letter: str, page: int) -> Content:
 
     articles = sorted(
         Article.objects.all().filter(first_letter=letter.upper()),
@@ -30,40 +71,25 @@ def search_by_pointer(letter: str, page: int) -> object:
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
 
-    ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
+    trigrams_dict = build_pagination_hints(articles, num_by_page)
 
-    for idx in range(1, len(trigrams) - 1):
-        n = 3
-        while True:
-            if n > len(articles[0::num_by_page][idx].word):
-                break
-            prev_ng = create_ngram(articles[0::num_by_page][idx - 1].word, n)
-            next_ng = create_ngram(articles[0::num_by_page][idx + 1].word, n)
-            ngrams[idx] = create_ngram(articles[0::num_by_page][idx].word, n)
-
-            if ngrams[idx][0:n] != prev_ng and ngrams[idx][0:n] != next_ng:
-                break
-            n += 1
-
-    for idx in range(0, len(ngrams) - 1):
-        if idx + 1 <= len(ngrams):
-            ngrams[idx] = ngrams[idx] + " ·· " + ngrams[idx + 1]
-
+    last_page_word = ""
+    first_page_word = ""
     if len(page_obj):
         last_page_word = normalization(page_obj[-1].word)
         first_page_word = normalization(page_obj[0].word)
-        trigrams_dict = dict(zip(range(1, len(trigrams) + 1), ngrams))
-    return type(
-        "Content",
-        (object,),
-        {
-            "page_obj": page_obj,
-            "last_page_word": last_page_word,
-            "first_page_word": first_page_word,
-            "trigrams_dict": trigrams_dict,
-        },
-    )()
 
+    return Content(
+        page_obj=page_obj,
+        last_page_word=last_page_word,
+        first_page_word=first_page_word,
+        trigrams_dict=trigrams_dict,
+    )
+
+
+# ------------------------------------------------------------
+#  Общий метод сортировки + пагинации
+# ------------------------------------------------------------
 
 def get_sorted_articles(ids: [], page: int) -> Paginator:
     articles = sorted(
@@ -78,18 +104,25 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
     return paginator.get_page(page), paginator.count
 
 
+# ------------------------------------------------------------
+#  Поиск по русскому переводу
+# ------------------------------------------------------------
+
 def search_by_translate_linked(query: str, page=1):
 
-    ids_ilike = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
-        "article_id", flat=True
-    )
+    # 1. ILIKE
+    ids_ilike = ArticleIndexTranslate.objects.filter(
+        rus_word__ilike=query
+    ).values_list("article_id", flat=True)
 
+    # 2. Fulltext
     words = query.split()
     search_query = SearchQuery(words[0], config="russian")
     for word in words[1:]:
         search_query |= SearchQuery(word, config="russian")
 
     search_vector = SearchVector("rus_word", config="russian")
+
     fulltext_results = (
         ArticleIndexTranslate.objects.annotate(
             rank=SearchRank(search_vector, search_query)
@@ -100,21 +133,32 @@ def search_by_translate_linked(query: str, page=1):
 
     fulltext_ids = fulltext_results.values_list("article_id", flat=True)
     fulltext_ids = set(fulltext_ids) - set(ids_ilike)
+
+    # 3. Объединяем
     all_ids = list(set(chain(ids_ilike, fulltext_ids)))
-    linked_ids = Article.objects.filter(linked_article__in=all_ids).values_list(
-        "id", flat=True
-    )
-    possible = list(chain(linked_ids, fulltext_ids))
 
+    # 4. Расширяем через связи ArticleLink
+    expanded_ids = expand_by_links(all_ids)
+
+    # 5. Для блока "возможно..."
     possible_translations = (
-        fulltext_results.filter(article_id__in=possible).values("rus_word").distinct()
+        fulltext_results.filter(article_id__in=expanded_ids)
+        .values("rus_word")
+        .distinct()
     )
 
-    page_obj, found_count = get_sorted_articles(ids_ilike, page)
-    print(page_obj)
+    # Если найдено хотя бы одно слово из пространства связей — выводим весь кластер
+    if expanded_ids:
+        page_obj, found_count = get_sorted_articles(expanded_ids, page)
+    else:
+        page_obj, found_count = get_sorted_articles(ids_ilike, page)
 
     return page_obj, found_count, list(possible_translations)
 
+
+# ------------------------------------------------------------
+#  Поиск по карельскому слову
+# ------------------------------------------------------------
 
 def word_search(query: str, page: int) -> Paginator:
     ids = ArticleIndexWord.objects.filter(word__ilike=query).values_list(
@@ -123,6 +167,10 @@ def word_search(query: str, page: int) -> Paginator:
 
     return get_sorted_articles(ids, page)
 
+
+# ------------------------------------------------------------
+#  Поиск возможных слов
+# ------------------------------------------------------------
 
 def search_possible(query: str) -> set:
 
@@ -152,6 +200,10 @@ def search_possible(query: str) -> set:
     )
 
 
+# ------------------------------------------------------------
+#  Поиск по тегам
+# ------------------------------------------------------------
+
 def get_tags_by_type(type_id=None) -> set:
     if type_id:
         return Tag.objects.filter(type=type_id).order_by("sorting", "name")
@@ -164,7 +216,7 @@ def get_tags_by_ids_distinct(ids: []) -> set:
 
 def search_by_tags_smart(
     by_geo: [], by_tags: [], by_ling: [], by_dialect: [], by_other: [], page: int
-) -> object:
+) -> Content:
 
     def search_by_ids(ids: [], articles_ids: [], i=True) -> []:
 
@@ -181,9 +233,7 @@ def search_by_tags_smart(
                 | Q(additions__article_html__contains=value)
                 for value in tags
             ]
-        # Take one Q object from the list
         query = queries.pop()
-        # Or the Q object with the ones remaining in the list
         for item in queries:
             query |= item
         articles_with_tags = Article.objects.filter(query).values_list("id", flat=True)
@@ -191,7 +241,6 @@ def search_by_tags_smart(
         return list(set(found_articles) & set(articles_ids))
 
     articles_ids = Article.objects.all().values_list("id", flat=True)
-    trigrams_dict = None
 
     if len(by_geo):
         articles_ids = search_by_ids(by_geo, articles_ids)
@@ -210,31 +259,10 @@ def search_by_tags_smart(
         .all(),
         key=lambda el: (sorted_by_krl(el, "word"),),
     )
-    # todo: make common method
+
     paginator = Paginator(articles, num_by_page)
     page_obj = paginator.get_page(page)
-    ngrams = trigrams = [create_ngram(a.word, 3) for a in articles[0::num_by_page]]
 
-    for idx in range(1, len(trigrams) - 1):
-        n = 3
-        while True:
-            if n > len(articles[0::num_by_page][idx].word):
-                break
-            prev_ng = create_ngram(articles[0::num_by_page][idx - 1].word, n)
-            next_ng = create_ngram(articles[0::num_by_page][idx + 1].word, n)
-            ngrams[idx] = create_ngram(articles[0::num_by_page][idx].word, n)
+    trigrams_dict = build_pagination_hints(articles, num_by_page)
 
-            if ngrams[idx][0:n] != prev_ng and ngrams[idx][0:n] != next_ng:
-                break
-            n += 1
-
-    for idx in range(0, len(ngrams) - 1):
-        if idx + 1 <= len(ngrams):
-            ngrams[idx] = ngrams[idx] + " ·· " + ngrams[idx + 1]
-
-    if len(page_obj):
-        trigrams_dict = dict(zip(range(1, len(trigrams) + 1), ngrams))
-
-    return type(
-        "Content", (object,), {"page_obj": page_obj, "trigrams_dict": trigrams_dict}
-    )()
+    return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
