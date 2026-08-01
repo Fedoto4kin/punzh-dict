@@ -1,10 +1,20 @@
-from django.http import HttpResponse
+import re
+from urllib.parse import quote
+
 from django.shortcuts import redirect, render
-from django.utils.http import urlquote
 from django.views.generic import TemplateView
 
-from .helpers import *
-from .search import *
+from .helpers import KRL_ABC
+from .search import (
+    Content,
+    get_tags_by_ids_distinct,
+    get_tags_by_type,
+    search_by_pointer,
+    search_by_tags_smart,
+    search_by_translate_linked,
+    search_possible,
+    word_search,
+)
 
 
 class StaticView(TemplateView):
@@ -33,8 +43,6 @@ def index(request, letter=None, page=1):
 
     content = search_by_pointer(letter, page)
     if page > content.page_obj.paginator.num_pages or page < 1:
-        print(page)
-        print(content.page_obj.paginator.num_pages)
         return _get404()
 
     current_trigram = ""
@@ -52,14 +60,11 @@ def index(request, letter=None, page=1):
     return render(request, "article_list.html", context)
 
 
-num_by_page = 18
-
-
 def search_proc(request):
     query = request.GET.get("query", "")
     if len(query.strip()):
         query = re.sub(r"[^\w\-\s\.\?]", "", query)
-        return redirect("/search/" + urlquote(query.strip()))
+        return redirect("/search/" + quote(query.strip()))
     else:
         return render(request, "search.html", {"search": "true"})
 
@@ -103,7 +108,7 @@ def search(request, query="", page=1):
 
 
 def tag_search(request, tags="", page=1):
-    content = type("Content", (object,), {"page_obj": None, "trigrams_dict": None})()
+    content = Content()
 
     tmp_list = set(tags.split(","))
     try:
