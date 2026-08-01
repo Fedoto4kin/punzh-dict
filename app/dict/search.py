@@ -38,6 +38,29 @@ class Content:
 
 
 # ------------------------------------------------------------
+#  Общий примитив: карельская сортировка + пагинация
+# ------------------------------------------------------------
+
+def sort_and_paginate(articles, page):
+    """
+    Karelian-collated in-memory sort + pagination, shared by every listing
+    view. `articles` is a filtered Article queryset (or any iterable); the
+    caller passes it already filtered and prefetched as needed.
+
+    Sorting must run in Python: sorted_by_krl relies on normalization(),
+    which is regex-based and cannot be expressed in SQL. The input keeps its
+    default DB ordering ("word"), so ties in the collation key resolve exactly
+    as before via Python's stable sort.
+
+    Returns (page_obj, sorted_articles); the sorted list is reused by callers
+    for build_pagination_hints.
+    """
+    sorted_articles = sorted(articles, key=lambda el: sorted_by_krl(el, "word"))
+    paginator = Paginator(sorted_articles, num_by_page)
+    return paginator.get_page(page), sorted_articles
+
+
+# ------------------------------------------------------------
 #  Расширение списка статей через связи ArticleLink
 # ------------------------------------------------------------
 
@@ -63,15 +86,10 @@ def expand_by_links(article_ids):
 
 def search_by_pointer(letter: str, page: int) -> Content:
 
-    articles = sorted(
-        Article.objects.all().filter(first_letter=letter.upper()),
-        key=lambda el: (sorted_by_krl(el, "word")),
-    )
+    articles = Article.objects.filter(first_letter=letter.upper())
+    page_obj, sorted_articles = sort_and_paginate(articles, page)
 
-    paginator = Paginator(articles, num_by_page)
-    page_obj = paginator.get_page(page)
-
-    trigrams_dict = build_pagination_hints(articles, num_by_page)
+    trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
 
     last_page_word = ""
     first_page_word = ""
@@ -92,16 +110,10 @@ def search_by_pointer(letter: str, page: int) -> Content:
 # ------------------------------------------------------------
 
 def get_sorted_articles(ids: [], page: int) -> Paginator:
-    articles = sorted(
-        Article.objects.prefetch_related("additions")
-        .extra(select={"sort_order": "0"})
-        .filter(pk__in=ids)
-        .all(),
-        key=lambda el: (sorted_by_krl(el, "word"),),
-    )
-    paginator = Paginator(articles, num_by_page)
+    articles = Article.objects.prefetch_related("additions").filter(pk__in=ids)
+    page_obj, _ = sort_and_paginate(articles, page)
 
-    return paginator.get_page(page), paginator.count
+    return page_obj, page_obj.paginator.count
 
 
 # ------------------------------------------------------------
@@ -253,16 +265,9 @@ def search_by_tags_smart(
     if len(by_other):
         articles_ids = search_by_ids(by_other, articles_ids, False)
 
-    articles = sorted(
-        Article.objects.extra(select={"sort_order": "0"})
-        .filter(pk__in=articles_ids)
-        .all(),
-        key=lambda el: (sorted_by_krl(el, "word"),),
-    )
+    articles = Article.objects.filter(pk__in=articles_ids)
+    page_obj, sorted_articles = sort_and_paginate(articles, page)
 
-    paginator = Paginator(articles, num_by_page)
-    page_obj = paginator.get_page(page)
-
-    trigrams_dict = build_pagination_hints(articles, num_by_page)
+    trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
 
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
