@@ -125,6 +125,70 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
 #  Поиск по русскому переводу
 # ------------------------------------------------------------
 
+_TOKEN_RE = re.compile(r"[а-яё\-]+", re.IGNORECASE)
+
+
+def _label_and_key_tokens(phrase, anchor_stem, stopwords):
+    toks = _TOKEN_RE.findall(phrase.lower())
+    label_toks = [t for t in toks if not t.startswith(anchor_stem)]
+    key_toks = [t for t in label_toks if t not in stopwords]
+    return label_toks, key_toks
+
+
+def split_by_coverage(candidates, page_blobs, anchor_stem, stopwords):
+    """
+    Classify suggestion phrases into narrowing tags relative to the anchor's
+    result set. There is no "similar" class: candidates come from the anchor's
+    own full-text hits, so every key is already inside the result set
+    (coverage >= 1). Similar/semantic neighbours are a separate mechanism
+    (fuzzy rescue / pgvector), not this function. See SPEC v2 §2, §0.
+
+    candidates : list of suggestion phrases (rus_word), e.g. "быстро ехать".
+    page_blobs : per-card joined lowercase translations of the anchor result
+                 set; N = len(page_blobs).
+    anchor_stem: stem of the anchor query; tokens starting with it are dropped
+                 from both label and key (e.g. "быстр").
+    stopwords  : set of tokens dropped from the KEY only (kept in the label).
+
+    LABEL = candidate minus anchor tokens (stopwords kept) -> what we show.
+    KEY   = label minus stopwords -> what we match on.
+    COVERAGE = number of cards whose blob contains at least one key token
+               as a substring.
+
+        0 < coverage < N  -> narrowing tag
+        coverage == N      -> dropped (covers everything == the anchor)
+        coverage == 0      -> dropped (unreachable from this source; a jump
+                                       out is served elsewhere)
+        empty key          -> dropped (nothing left to match on)
+
+    Returns narrowing: [{"label","key","coverage"}], deduped by key (first
+    label wins), sorted by ascending coverage.
+    """
+    blobs = [b.lower() for b in page_blobs]
+    N = len(blobs)
+
+    seen_keys = set()
+    narrowing = []
+
+    for phrase in candidates:
+        label_toks, key_toks = _label_and_key_tokens(phrase, anchor_stem, stopwords)
+        if not key_toks:
+            continue                                  # empty key -> drop
+        key = " ".join(key_toks)
+        if key in seen_keys:
+            continue                                  # dedup by key
+        seen_keys.add(key)
+
+        coverage = sum(1 for b in blobs if any(t in b for t in key_toks))
+        if coverage == 0 or coverage == N:
+            continue                                  # nothing to narrow -> drop
+
+        narrowing.append(
+            {"label": " ".join(label_toks), "key": key, "coverage": coverage}
+        )
+
+    narrowing.sort(key=lambda e: e["coverage"])
+    return narrowing
 
 def search_by_translate_linked(query: str, page=1):
 
