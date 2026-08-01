@@ -7,21 +7,45 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0014_auto_20250216_1829'),
+        ("dict", "0014_auto_20250216_1829"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ArticleLink',
+            name="ArticleLink",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('from_article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='links_from', to='dict.article', verbose_name='Статья-источник')),
-                ('to_article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='links_to', to='dict.article', verbose_name='Целевая статья')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "from_article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="links_from",
+                        to="dict.article",
+                        verbose_name="Статья-источник",
+                    ),
+                ),
+                (
+                    "to_article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="links_to",
+                        to="dict.article",
+                        verbose_name="Целевая статья",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Связь между статьями',
-                'verbose_name_plural': 'Связи между статьями',
-                'unique_together': {('from_article', 'to_article')},
+                "verbose_name": "Связь между статьями",
+                "verbose_name_plural": "Связи между статьями",
+                "unique_together": {("from_article", "to_article")},
             },
         ),
     ]

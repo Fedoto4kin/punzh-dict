@@ -14,6 +14,7 @@ from .search import (
     search_by_translate_linked,
     search_possible,
     word_search,
+    detect_direction,
 )
 
 
@@ -71,8 +72,8 @@ def search_proc(request):
 
 def search(request, query="", page=1):
     query = query.strip()
-    if re.match(r"[.А-Яа-яЁё\s]", query):
-        direction = "rus"
+    direction = detect_direction(query)
+    if direction == "rus":
         translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
         page_obj, found_count, possible = search_by_translate_linked(
             query.translate(translation_table), page

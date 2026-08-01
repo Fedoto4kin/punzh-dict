@@ -2,8 +2,8 @@ from django.db import migrations
 
 
 def migrate_linked_articles(apps, schema_editor):
-    Article = apps.get_model('dict', 'Article')
-    ArticleLink = apps.get_model('dict', 'ArticleLink')
+    Article = apps.get_model("dict", "Article")
+    ArticleLink = apps.get_model("dict", "ArticleLink")
 
     for article in Article.objects.all():
         if article.linked_article_id:
@@ -23,7 +23,7 @@ def migrate_linked_articles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0015_articlelink'),
+        ("dict", "0015_articlelink"),
     ]
 
     operations = [
