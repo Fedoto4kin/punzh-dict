@@ -181,3 +181,36 @@ def create_ngram(word, n):
     word = normalization(word.lower().replace("’", ""))
     word = re.split(r"\s|,", word, maxsplit=1)
     return word[0][:n]
+
+def build_pagination_hints(articles, per_page):
+    """
+    Build the " ·· " navigation hints shown between paginated pages.
+
+    For each page boundary take the first word of the page and find the
+    shortest n-gram prefix (n >= 3) that is unambiguous against the first
+    words of the neighbouring pages. Each hint is then joined with the
+    next one via " ·· ". Returns {page_number: hint}, or {} when empty.
+    """
+    page_first_words = articles[0::per_page]
+    if not page_first_words:
+        return {}
+
+    hints = [create_ngram(a.word, 3) for a in page_first_words]
+
+    # Disambiguate each inner boundary against its two neighbours
+    for idx in range(1, len(page_first_words) - 1):
+        n = 3
+        while n <= len(page_first_words[idx].word):
+            current = create_ngram(page_first_words[idx].word, n)
+            prev_ng = create_ngram(page_first_words[idx - 1].word, n)
+            next_ng = create_ngram(page_first_words[idx + 1].word, n)
+            hints[idx] = current
+            if current[:n] != prev_ng and current[:n] != next_ng:
+                break
+            n += 1
+
+    # Join each hint with the next page's hint (last one keeps no suffix)
+    for idx in range(len(hints) - 1):
+        hints[idx] = hints[idx] + " ·· " + hints[idx + 1]
+
+    return dict(zip(range(1, len(hints) + 1), hints))

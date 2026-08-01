@@ -181,3 +181,25 @@ class ArticleIndexWordNormalization(models.Model):
             "word",
             "article",
         )
+
+class ArticleLink(models.Model):
+    from_article = models.ForeignKey(
+        Article,
+        related_name="links_from",
+        on_delete=models.CASCADE,
+        verbose_name="Основная статья"
+    )
+    to_article = models.ForeignKey(
+        Article,
+        related_name="links_to",
+        on_delete=models.CASCADE,
+        verbose_name="Целевая статья"
+    )
+
+    class Meta:
+        unique_together = ("from_article", "to_article")
+        verbose_name = "Связь между статьями"
+        verbose_name_plural = "Связи между статьями"
+
+    def __str__(self):
+        return f"{self.from_article.word} см. {self.to_article.word}"
