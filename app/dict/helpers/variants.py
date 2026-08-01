@@ -187,10 +187,11 @@ def build_pagination_hints(articles, per_page):
     """
     Build the " ·· " navigation hints shown between paginated pages.
 
-    For each page boundary take the first word of the page and find the
-    shortest n-gram prefix (n >= 3) that is unambiguous against the first
-    words of the neighbouring pages. Each hint is then joined with the
-    next one via " ·· ". Returns {page_number: hint}, or {} when empty.
+    For each page take the 3-gram of its first word; inner boundaries are
+    disambiguated by extending the n-gram until it differs from both
+    neighbours. Each hint is joined with the next page's hint. The last page's
+    range is closed with the very last word of the whole list, unless that
+    would merely repeat the page's own start. Returns {page_number: hint}.
     """
     page_first_words = articles[0::per_page]
     if not page_first_words:
@@ -210,8 +211,15 @@ def build_pagination_hints(articles, per_page):
                 break
             n += 1
 
-    # Join each hint with the next page's hint (last one keeps no suffix)
+    # Join each hint with the next page's hint
     for idx in range(len(hints) - 1):
         hints[idx] = hints[idx] + " ·· " + hints[idx + 1]
+
+    # Close the last page's range with the very last word of the whole list,
+    # unless that would just repeat the page's own start (single-word last
+    # page, or a last page whose words share a 3-gram prefix).
+    last_ngram = create_ngram(articles[-1].word, 3)
+    if last_ngram != hints[-1]:
+        hints[-1] = hints[-1] + " ·· " + last_ngram
 
     return dict(zip(range(1, len(hints) + 1), hints))
