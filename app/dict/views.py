@@ -109,7 +109,7 @@ def search(request, query="", page=1):
         "direction": direction,
         "trigrams": trigrams,
     }
-    
+
     return render(request, "search.html", context)
 
 
