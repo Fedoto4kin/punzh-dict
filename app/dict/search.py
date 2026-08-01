@@ -127,42 +127,51 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
 
 _TOKEN_RE = re.compile(r"[а-яё\-]+", re.IGNORECASE)
 
+# Stop-words for the narrowing split (SPEC v2 §5): corpus buckets 1a (len<=2)
+# and 1b (dictionary abbreviations ending in -л). Static list.
+_STOP_1A = {
+    "в", "с", "на", "и", "из", "по", "от", "к", "со", "о", "за", "до", "во",
+    "не", "у", "то", "же", "ее", "ни", "да", "но", "ко", "а", "бы", "ли",
+    "их", "им", "та", "вы", "об", "ле", "те", "он", "мы",
+}
+_STOP_1B = {
+    "что-л", "чем-л", "чего-л", "кого-л", "чему-л", "куда-л", "кем-л",
+    "где-л", "кому-л", "какое-л", "какого-л", "каком-л", "откуда-л",
+    "каким-л", "какую-л", "каких-л", "какой-л", "какие-л", "чью-л",
+    "чьего-л", "какая-л",
+}
+STOPWORDS = _STOP_1A | _STOP_1B
 
-def _label_and_key_tokens(phrase, anchor_stem, stopwords):
+
+def _label_and_key_tokens(phrase, query_words, stopwords):
     toks = _TOKEN_RE.findall(phrase.lower())
-    label_toks = [t for t in toks if not t.startswith(anchor_stem)]
+    label_toks = [t for t in toks if t not in query_words]   # drop the query's own words
     key_toks = [t for t in label_toks if t not in stopwords]
     return label_toks, key_toks
 
 
-def split_by_coverage(candidates, page_blobs, anchor_stem, stopwords):
+def split_by_coverage(candidates, page_blobs, query_words, stopwords):
     """
     Classify suggestion phrases into narrowing tags relative to the anchor's
-    result set. There is no "similar" class: candidates come from the anchor's
-    own full-text hits, so every key is already inside the result set
-    (coverage >= 1). Similar/semantic neighbours are a separate mechanism
-    (fuzzy rescue / pgvector), not this function. See SPEC v2 §2, §0.
+    result set. No "similar" class (SPEC v2 §0, §2): candidates come from the
+    anchor's own full-text hits, so every key is inside the result set.
 
-    candidates : list of suggestion phrases (rus_word), e.g. "быстро ехать".
-    page_blobs : per-card joined lowercase translations of the anchor result
-                 set; N = len(page_blobs).
-    anchor_stem: stem of the anchor query; tokens starting with it are dropped
-                 from both label and key (e.g. "быстр").
-    stopwords  : set of tokens dropped from the KEY only (kept in the label).
+    candidates : suggestion phrases (rus_word), e.g. "быстро ехать".
+    page_blobs : per-card joined lowercase translations of the result set.
+    query_words: set of the query's own tokens, dropped from label and key by
+                 EXACT match. NOTE: morphological variants of the query
+                 (e.g. "быстрее" when the query is "быстро") are NOT removed —
+                 they leak into the label. Accepted for now; a stemmer would
+                 fix it (SPEC v2, deferred).
+    stopwords  : tokens dropped from the KEY only (kept in the label).
 
-    LABEL = candidate minus anchor tokens (stopwords kept) -> what we show.
-    KEY   = label minus stopwords -> what we match on.
-    COVERAGE = number of cards whose blob contains at least one key token
-               as a substring.
+    LABEL = candidate minus query words (stopwords kept) -> shown.
+    KEY   = label minus stopwords -> matched.
+    COVERAGE = cards whose blob contains at least one key token as a substring.
+      0 < coverage < N -> narrowing;  coverage in {0, N} or empty key -> dropped.
 
-        0 < coverage < N  -> narrowing tag
-        coverage == N      -> dropped (covers everything == the anchor)
-        coverage == 0      -> dropped (unreachable from this source; a jump
-                                       out is served elsewhere)
-        empty key          -> dropped (nothing left to match on)
-
-    Returns narrowing: [{"label","key","coverage"}], deduped by key (first
-    label wins), sorted by ascending coverage.
+    Returns narrowing: [{"label","key","coverage"}], deduped by key
+    (first label wins), sorted by ascending coverage.
     """
     blobs = [b.lower() for b in page_blobs]
     N = len(blobs)
@@ -171,26 +180,65 @@ def split_by_coverage(candidates, page_blobs, anchor_stem, stopwords):
     narrowing = []
 
     for phrase in candidates:
-        label_toks, key_toks = _label_and_key_tokens(phrase, anchor_stem, stopwords)
+        label_toks, key_toks = _label_and_key_tokens(phrase, query_words, stopwords)
         if not key_toks:
-            continue                                  # empty key -> drop
+            continue
         key = " ".join(key_toks)
         if key in seen_keys:
-            continue                                  # dedup by key
+            continue
         seen_keys.add(key)
 
         coverage = sum(1 for b in blobs if any(t in b for t in key_toks))
         if coverage == 0 or coverage == N:
-            continue                                  # nothing to narrow -> drop
+            continue
 
         narrowing.append(
             {"label": " ".join(label_toks), "key": key, "coverage": coverage}
         )
 
     narrowing.sort(key=lambda e: e["coverage"])
+
     return narrowing
 
-def search_by_translate_linked(query: str, page=1):
+
+def find_direct_hits(blobs_by_article, result_ids, links):
+    """
+    Direct hits (SPEC v2). An article qualifies two ways:
+      * base: every rus_word entry is a single token, no phrase (ruttoh ->
+        быстро, круто, скоро);
+      * inherited: it has NO translations of its own but is linked (either
+        direction) to at least one BASE direct hit (rutoldi -> "см. ruttoh").
+        Inheritance is ONE hop from a base direct hit only.
+
+    blobs_by_article: {article_id: [rus_word, ...]} for articles that have
+                      translations (empty-list keys count as no translation).
+    result_ids      : the full result set (ids).
+    links           : {article_id: set(neighbour_ids)} within the result set.
+
+    Returns set(article_id).
+    """
+    base_direct = set()
+    for aid, rus_words in blobs_by_article.items():
+        if not rus_words:
+            continue
+        all_single = True
+        for rw in rus_words:
+            if len(_TOKEN_RE.findall(rw.lower())) > 1:
+                all_single = False
+                break
+        if all_single:
+            base_direct.add(aid)
+
+    translationless = set(result_ids) - set(blobs_by_article.keys())
+    inherited = set()
+    for aid in translationless:
+        if links.get(aid, set()) & base_direct:
+            inherited.add(aid)
+
+    return base_direct | inherited
+
+
+def search_by_translate_linked(query: str, page=1, f=None):
 
     # 1. ILIKE
     ids_ilike = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
@@ -222,20 +270,59 @@ def search_by_translate_linked(query: str, page=1):
     # 4. Расширяем через связи ArticleLink
     expanded_ids = expand_by_links(all_ids)
 
-    # 5. Для блока "возможно..."
-    possible_translations = (
+    # 5. Кандидаты для сужающих тегов (SPEC v2, механизм 1)
+    candidates = list(
         fulltext_results.filter(article_id__in=expanded_ids)
-        .values("rus_word")
+        .values_list("rus_word", flat=True)
         .distinct()
     )
 
-    # Если найдено хотя бы одно слово из пространства связей — выводим весь кластер
-    if expanded_ids:
-        page_obj, found_count = get_sorted_articles(expanded_ids, page)
-    else:
-        page_obj, found_count = get_sorted_articles(ids_ilike, page)
+    # Множество, реально попавшее в выдачу
+    result_ids = expanded_ids if expanded_ids else set(ids_ilike)
 
-    return page_obj, found_count, list(possible_translations)
+    # page_blobs: переводы по каждой карточке выдачи, ОДНИМ запросом
+    blobs_by_article = {}
+    for aid, rus_word in ArticleIndexTranslate.objects.filter(
+        article_id__in=result_ids
+    ).values_list("article_id", "rus_word"):
+        if rus_word:
+            blobs_by_article.setdefault(aid, []).append(rus_word)
+    page_blobs = [" | ".join(v) for v in blobs_by_article.values()]
+
+    query_words = set(_TOKEN_RE.findall(query.lower()))
+    narrowing = split_by_coverage(candidates, page_blobs, query_words, STOPWORDS)
+
+    # Связи внутри выдачи (обе стороны) — для наследования "прямых" попаданий
+    links = {}
+    for fa, ta in ArticleLink.objects.filter(
+        from_article_id__in=result_ids, to_article_id__in=result_ids
+    ).values_list("from_article_id", "to_article_id"):
+        links.setdefault(fa, set()).add(ta)
+        links.setdefault(ta, set()).add(fa)
+    direct_ids = find_direct_hits(blobs_by_article, result_ids, links)
+
+    # Фильтр применяется ПОСЛЕ вычисления тегов/прямых (они всегда от полного
+    # якоря) и ДО пагинации, чтобы номера страниц и n-граммы совпадали с
+    # отфильтрованным набором.
+    filtered_ids = result_ids
+    if f == "exact":
+        filtered_ids = set(result_ids) & direct_ids
+    elif f:
+        # f — ключ уточняющего тега: оставить карточки, чей перевод содержит
+        # ЛЮБОЙ токен ключа (то же правило, что считало coverage).
+        f_tokens = _TOKEN_RE.findall(f.lower())
+        kept = set()
+        for aid, rus_words in blobs_by_article.items():
+            blob = " | ".join(rus_words).lower()
+            for tok in f_tokens:
+                if tok in blob:
+                    kept.add(aid)
+                    break
+        filtered_ids = set(result_ids) & kept
+
+    page_obj, found_count = get_sorted_articles(filtered_ids, page)
+
+    return page_obj, found_count, narrowing, direct_ids
 
 
 # ------------------------------------------------------------

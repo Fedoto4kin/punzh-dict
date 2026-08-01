@@ -7,121 +7,148 @@
 {% endblock %}
 
 {% block content %}
-    <div class="mt-5 mb-3 row">
-        <div class="col-lg-6">
-            {% block search %}
-            {% include "searchForm.html" %}
-            {% endblock %}
-        </div>
+<style>
+    .collapse-toggle .when-closed { display: none; }
+    .collapse-toggle.collapsed .when-open { display: none; }
+    .collapse-toggle.collapsed .when-closed { display: inline; }
+</style>
+<div class="mt-5 mb-3 row">
+    <div class="col-lg-6">
+        {% block search %}
+        {% include "searchForm.html" %}
+        {% endblock %}
     </div>
+</div>
 
-    {% if page_obj.has_other_pages %}
-    <nav class="navbar navbar-expand navbar-light row">
-        <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
-            {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-            {% else %}
-            <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
-            {% endif %}
-            {% for i in page_obj.paginator.page_range %}
-            {% if page_obj.number == i %}
-            <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
-            {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-            {% else %}
-            <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-
-   {% if found_count %}
-        <div class="row">
-            <div class="col-12 text-center">
-                <p>Найдено {{ found_count|pluralize_words|safe }}</p>
-            </div>
-        </div>
-   {% endif %}
-
-   {% if direction == 'krl' and not found_count %}
-        <div class="alert alert-secondary" role="alert">
-            <h4 class="alert-heading">Ничего не найдено.</h4>
-            {% if possible %}
-            <hr>
-            <h5>Возможно вы искали:</h5>
-            <p>
-                {% for w in possible %}
-                     <a href="/search/{{ w }}" class="btn btn-link alert-link">{{ w }}</a>
-                {% endfor %}
-            </p>
-            {% endif %}
-        </div>
-   {% endif %}
-
-    {% if direction == 'rus' %}
-        {% if not found_count %}
-            <div class="alert alert-secondary" role="alert">
-                <h4 class="alert-heading">Ничего не найдено.</h4>
-                 <hr>
-                    <p>
-                    <ul>
-                        <li>Попробуйте искать слово в основной форме(<i>кошки</i> <b>→</b> <i>кошка</i>)
-                            или поискать синонимы, гипонимы, гиперонимы и тп.  (<i>кот</i> <b>→</b> <i>кошка</i>);</li>
-                        <li>Попробовать поискать другие части речи с этим корнем (<i>кошачий</i> <b>→</b> <i>кошка</i>);</li>
-                        <li>Если вы ввели в поиск несколько слов: попробуйте поискать их отдельно.</li>
-                    </ul>
-                    </p>
-            </div>
+{% if page_obj.has_other_pages %}
+<nav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
         {% endif %}
-        {% if possible %}
-            <div class="mt-1 alert alert-info alert-dismissible fade show" role="alert">
-                <h5 class="alert-heading">Похожие запросы, которые могут быть вам интересны и связаны с вашим:</h5>
-                <p>
-                    {% for w in possible %}
-                        <a href="/search/{{ w.rus_word }}" class="btn btn-link alert-link">{{ w.rus_word }}</a>
-                    {% endfor %}
-                </p>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
         {% endif %}
-    {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 
-    <div class="row mt-4">
-        <div class="card-columns">
-            {% for a in page_obj %}
-                {% include "wordCard.html" with article=a %}
-            {% endfor %}
-        </div>
+{% if found_count %}
+<div class="row">
+    <div class="col-12 text-center">
+        <p>Найдено {{ found_count|pluralize_words|safe }}</p>
     </div>
+</div>
+{% endif %}
 
-    {% if page_obj.has_other_pages %}
-    <nav class="navbar navbar-expand navbar-light row">
-        <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
-            {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
-            {% else %}
-            <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
-            {% endif %}
-            {% for i in page_obj.paginator.page_range %}
-            {% if page_obj.number == i %}
-            <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
-            {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
-            {% else %}
-            <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-            {% endif %}
-        </ul>
-    </nav>
+{% if direction == 'krl' and not found_count %}
+<div class="alert alert-secondary" role="alert">
+    <h4 class="alert-heading">Ничего не найдено.</h4>
+    {% if possible %}
+    <hr>
+    <h5>Возможно вы искали:</h5>
+    <p>
+        {% for w in possible %}
+        <a href="/search/{{ w }}" class="btn btn-link alert-link">{{ w }}</a>
+        {% endfor %}
+    </p>
     {% endif %}
+</div>
+{% endif %}
+
+{% if direction == 'rus' %}
+{% if not found_count %}
+<div class="alert alert-secondary" role="alert">
+    <h4 class="alert-heading">Ничего не найдено.</h4>
+    <hr>
+    <p>
+    <ul>
+        <li>Попробуйте искать слово в основной форме(<i>кошки</i> <b>→</b> <i>кошка</i>)
+            или поискать синонимы, гипонимы, гиперонимы и тп.  (<i>кот</i> <b>→</b> <i>кошка</i>);</li>
+        <li>Попробовать поискать другие части речи с этим корнем (<i>кошачий</i> <b>→</b> <i>кошка</i>);</li>
+        <li>Если вы ввели в поиск несколько слов: попробуйте поискать их отдельно.</li>
+    </ul>
+    </p>
+</div>
+{% endif %}
+{% if narrowing or has_direct %}
+<div class="mt-1 alert alert-info" role="alert">
+    <div class="d-flex justify-content-between align-items-center">
+        <h5 class="alert-heading mb-0">
+            Уточнить запрос:
+            {% if active_label %}
+            <a href="/search/{{ query|urlencode }}/1" class="badge badge-primary align-middle text-white"
+               style="text-decoration:none" title="Снять фильтр">
+                {{ active_label }} &times;
+            </a>
+            {% endif %}
+        </h5>
+        <button class="btn btn-sm btn-link p-0 collapse-toggle collapsed" type="button"
+                data-toggle="collapse" data-target="#narrowingBox"
+                aria-expanded="false" aria-controls="narrowingBox">
+            <span class="when-open">свернуть</span>
+            <span class="when-closed">развернуть</span>
+        </button>
+    </div>
+    <div class="collapse" id="narrowingBox">
+        <p class="mt-2">
+            {% for tag in narrowing %}
+            <a href="/search/{{ query|urlencode }}/1?f={{ tag.key|urlencode }}"
+               class="btn btn-sm m-1 {% if active_f == tag.key %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ tag.label }}</a>
+            {% endfor %}
+        </p>
+        {% if has_direct %}
+        <hr>
+        <p class="mb-0">
+            <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
+               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>                 </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="row mt-4">
+    <div class="card-columns">
+        {% for a in page_obj %}
+        {% include "wordCard.html" with article=a %}
+        {% endfor %}
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 
 {% endblock %}

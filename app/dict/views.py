@@ -73,26 +73,32 @@ def search_proc(request):
 def search(request, query="", page=1):
     query = query.strip()
     direction = detect_direction(query)
+    f = request.GET.get("f") or None
+    active_label = None
     if direction == "rus":
         translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
-        page_obj, found_count, possible = search_by_translate_linked(
-            query.translate(translation_table), page
+        page_obj, found_count, narrowing, direct_ids = search_by_translate_linked(
+            query.translate(translation_table), page, f
         )
+        possible = []
+        # подпись активного фильтра для badge в заголовке
+        if f == "exact":
+            active_label = "точные соответствия"
+        elif f:
+            for tag in narrowing:
+                if tag["key"] == f:
+                    active_label = tag["label"]
+                    break
+            if active_label is None:
+                active_label = f
     else:
         direction = "krl"
         translation_table = str.maketrans(
-            {
-                ";": "",
-                "’": "",
-                ",": "",
-                "š": "s",
-                "č": "c",
-                "ž": "z",
-                "?": "%",
-                ".": "_",
-            }
+            {";": "", "’": "", ",": "", "š": "s", "č": "c", "ž": "z", "?": "%", ".": "_"}
         )
         page_obj, found_count = word_search(query.translate(translation_table), page)
+        narrowing = []
+        direct_ids = set()
         possible = []
         if not len(page_obj.object_list):
             possible = search_possible(query)
@@ -105,11 +111,14 @@ def search(request, query="", page=1):
         "search": "true",
         "page_obj": page_obj,
         "possible": possible,
+        "narrowing": narrowing,
+        "has_direct": bool(direct_ids),
+        "active_f": f,
+        "active_label": active_label,
         "found_count": found_count,
         "direction": direction,
         "trigrams": trigrams,
     }
-
     return render(request, "search.html", context)
 
 
