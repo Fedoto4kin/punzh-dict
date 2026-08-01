@@ -182,6 +182,7 @@ def create_ngram(word, n):
     word = re.split(r"\s|,", word, maxsplit=1)
     return word[0][:n]
 
+
 def build_pagination_hints(articles, per_page):
     """
     Build the " ·· " navigation hints shown between paginated pages.

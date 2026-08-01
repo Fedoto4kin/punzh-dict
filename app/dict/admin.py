@@ -26,7 +26,6 @@ class ArticleLinkReverseInline(admin.TabularInline):
     fields = ("from_article_link",)
     verbose_name = "Связь"
     verbose_name_plural = "На эту статью указывают"
-    
 
     def from_article_link(self, obj):
         url = obj.from_article.get_admin_url()
@@ -100,7 +99,7 @@ class ArticleAdm(admin.ModelAdmin):
     inlines = [
         ArticleAdditionInline,
         TranslateInline,
-        ArticleLinkInline, 
+        ArticleLinkInline,
         ArticleLinkReverseInline,
     ]
 
@@ -135,18 +134,15 @@ class ArticleAdm(admin.ModelAdmin):
     def linked_article_deprecated(self, obj):
         if obj.linked_article:
             return format_html(
-                "<span style='color:#999'>{}</span>",
-                obj.linked_article.word
+                "<span style='color:#999'>{}</span>", obj.linked_article.word
             )
         return format_html("<span style='color:#999'>—</span>")
-
 
     def _article_html(self, obj):
         return format_html(obj.article_html)
 
     _article_html.short_description = "Словарная статья"
     linked_article_deprecated.short_description = "См. (устарело)"
-
 
     def _word(self, obj):
         if obj.word_normalized:
@@ -158,4 +154,3 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<b>{word}</b>", word=normalization(obj.word))
 
     _word.short_description = "Заголовок (в норм. орф.)"
-

@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from itertools import chain
 
@@ -41,6 +42,7 @@ class Content:
 #  Общий примитив: карельская сортировка + пагинация
 # ------------------------------------------------------------
 
+
 def sort_and_paginate(articles, page):
     """
     Karelian-collated in-memory sort + pagination, shared by every listing
@@ -64,18 +66,19 @@ def sort_and_paginate(articles, page):
 #  Расширение списка статей через связи ArticleLink
 # ------------------------------------------------------------
 
+
 def expand_by_links(article_ids):
     """
     Возвращает множество статей, связанных с article_ids
     в обе стороны.
     """
-    outgoing = ArticleLink.objects.filter(
-        from_article_id__in=article_ids
-    ).values_list("to_article_id", flat=True)
+    outgoing = ArticleLink.objects.filter(from_article_id__in=article_ids).values_list(
+        "to_article_id", flat=True
+    )
 
-    incoming = ArticleLink.objects.filter(
-        to_article_id__in=article_ids
-    ).values_list("from_article_id", flat=True)
+    incoming = ArticleLink.objects.filter(to_article_id__in=article_ids).values_list(
+        "from_article_id", flat=True
+    )
 
     return set(article_ids) | set(outgoing) | set(incoming)
 
@@ -83,6 +86,7 @@ def expand_by_links(article_ids):
 # ------------------------------------------------------------
 #  Поиск по букве
 # ------------------------------------------------------------
+
 
 def search_by_pointer(letter: str, page: int) -> Content:
 
@@ -109,6 +113,7 @@ def search_by_pointer(letter: str, page: int) -> Content:
 #  Общий метод сортировки + пагинации
 # ------------------------------------------------------------
 
+
 def get_sorted_articles(ids: [], page: int) -> Paginator:
     articles = Article.objects.prefetch_related("additions").filter(pk__in=ids)
     page_obj, _ = sort_and_paginate(articles, page)
@@ -120,12 +125,13 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
 #  Поиск по русскому переводу
 # ------------------------------------------------------------
 
+
 def search_by_translate_linked(query: str, page=1):
 
     # 1. ILIKE
-    ids_ilike = ArticleIndexTranslate.objects.filter(
-        rus_word__ilike=query
-    ).values_list("article_id", flat=True)
+    ids_ilike = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
+        "article_id", flat=True
+    )
 
     # 2. Fulltext
     words = query.split()
@@ -172,6 +178,7 @@ def search_by_translate_linked(query: str, page=1):
 #  Поиск по карельскому слову
 # ------------------------------------------------------------
 
+
 def word_search(query: str, page: int) -> Paginator:
     ids = ArticleIndexWord.objects.filter(word__ilike=query).values_list(
         "article_id", flat=True
@@ -183,6 +190,7 @@ def word_search(query: str, page: int) -> Paginator:
 # ------------------------------------------------------------
 #  Поиск возможных слов
 # ------------------------------------------------------------
+
 
 def search_possible(query: str) -> set:
 
@@ -215,6 +223,7 @@ def search_possible(query: str) -> set:
 # ------------------------------------------------------------
 #  Поиск по тегам
 # ------------------------------------------------------------
+
 
 def get_tags_by_type(type_id=None) -> set:
     if type_id:
@@ -271,3 +280,18 @@ def search_by_tags_smart(
     trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
 
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
+
+
+def detect_direction(query: str) -> str:
+    """
+    Decide the search direction from the query text.
+
+    A query is Russian ('rus') if it contains any Cyrillic letter; otherwise
+    it is Karelian ('krl'), which is written in Latin script with diacritics.
+    Cyrillic presence anywhere is the signal — not the first character, and
+    punctuation/whitespace (including the '.'/'?' fuzzy-search syntax) never
+    affects the choice.
+    """
+    if re.search(r"[а-яё]", query, re.IGNORECASE):
+        return "rus"
+    return "krl"
