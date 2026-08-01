@@ -4,7 +4,7 @@ from urllib.parse import quote
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
 
-from .helpers import KRL_ABC
+from .helpers import KRL_ABC, build_pagination_hints
 from .search import (
     Content,
     get_tags_by_ids_distinct,
@@ -96,6 +96,9 @@ def search(request, query="", page=1):
         possible = []
         if not len(page_obj.object_list):
             possible = search_possible(query)
+    trigrams = build_pagination_hints(
+        page_obj.paginator.object_list, page_obj.paginator.per_page
+    )
     context = {
         "ABC": KRL_ABC,
         "query": query,
@@ -104,7 +107,9 @@ def search(request, query="", page=1):
         "possible": possible,
         "found_count": found_count,
         "direction": direction,
+        "trigrams": trigrams,
     }
+    
     return render(request, "search.html", context)
 
 
