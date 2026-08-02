@@ -16,7 +16,7 @@ from .search import (
     word_search,
     detect_direction,
 )
-
+from .models import Article
 
 class StaticView(TemplateView):
 
@@ -37,7 +37,11 @@ def index(request, letter=None, page=1):
         return render(request, "404.html", _context, status=404)
 
     if not letter:
-        return render(request, "index.html")
+        count = Article.objects.count()
+        
+        return render(request, "index.html", {
+            "articles_count": f"{count:,}".replace(",", "\u00a0")
+        })
 
     if letter.upper() not in KRL_ABC:
         return _get404()
