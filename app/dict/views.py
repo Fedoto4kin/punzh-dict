@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 from django.shortcuts import redirect, render
 from django.views.generic import TemplateView
+from django.http import JsonResponse
 
 from .helpers import KRL_ABC, build_pagination_hints
 from .search import (
@@ -15,8 +16,9 @@ from .search import (
     search_possible,
     word_search,
     detect_direction,
+    compatible_disable,
 )
-from .models import Article
+from .models import Article, ArticleIndexTag, Tag
 
 class StaticView(TemplateView):
 
@@ -38,7 +40,6 @@ def index(request, letter=None, page=1):
 
     if not letter:
         count = Article.objects.count()
-        
         return render(request, "index.html", {
             "articles_count": f"{count:,}".replace(",", "\u00a0")
         })
@@ -175,6 +176,14 @@ def tag_search(request, tags="", page=1):
         "trigrams": content.trigrams_dict,
     }
     return render(request, "tags.html", context)
+
+
+def tags_compatible(request, tags=""):
+    try:
+        selected = [int(x) for x in tags.split(",") if x.strip()]
+    except ValueError:
+        return JsonResponse({"disable": []})
+    return JsonResponse({"disable": compatible_disable(selected)})
 
 
 def page_not_found(request, exception=None):

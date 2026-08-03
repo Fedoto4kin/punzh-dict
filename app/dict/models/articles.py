@@ -182,6 +182,20 @@ class ArticleIndexWordNormalization(models.Model):
             "article",
         )
 
+class ArticleIndexTag(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    tag = models.ForeignKey(
+        "Tag", on_delete=models.CASCADE, verbose_name="Помета"
+    )
+
+    def __str__(self):
+        return self.tag.name
+
+    class Meta:
+        unique_together = ("article", "tag")
+        verbose_name = "Индекс помет статьи"
+        verbose_name_plural = "Индекс помет статей"
+
 
 class ArticleLink(models.Model):
     from_article = models.ForeignKey(
