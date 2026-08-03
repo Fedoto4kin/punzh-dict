@@ -7,12 +7,21 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  #tagFormula .tf-group {
+      display: inline-flex; align-items: center; flex-wrap: wrap;
+      gap: .25rem; padding: .15rem .4rem; margin: .15rem;
+      border: 1px solid #dee2e6; border-radius: .5rem;
+  }
+  #tagFormula .tf-or  { color: #6c757d; font-size: .8rem; margin: 0 .1rem; }
+  #tagFormula .tf-and { font-weight: 700; margin: 0 .35rem; }
+  .collapse-toggle .when-closed { display: none; }
+  .collapse-toggle.collapsed .when-open { display: none; }
+  .collapse-toggle.collapsed .when-closed { display: inline; }
+  .collapse-toggle .tgl { font-size: .8rem; font-weight: 400; color: #007bff; margin-left: .5rem; }
+</style>
 <div class="my-5 row">
-    <div class="col-sm-12">
-        {% for t in tags_selected %}
-        <span class="badge badge-primary">{{t}}</span>
-        {% endfor %}
-    </div>
+    <div class="col-sm-12" id="tagFormula"></div>
 </div>
 
 <div class="my-5 row">
@@ -20,8 +29,9 @@
     <div id="accordion" class="col-sm-12">
         <div class="card" >
             <div class="card-header" id="headingOne">
-                <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne"  role="button">
-                    Служебные отметки {% if tagIds %} <i class="fa fa-1x fa-check-square text-primary"></i> {% endif %}
+                <h5 class="mb-0 collapse-toggle d-flex justify-content-between align-items-center{% if tagIds %} collapsed{% endif %}" data-toggle="collapse" data-target="#collapseOne" aria-expanded="{% if tagIds %}false{% else %}true{% endif %}" aria-controls="collapseOne" role="button">
+                    <span>Служебные отметки {% if tagIds %} <i class="fa fa-1x fa-check-square text-primary"></i> {% endif %}</span>
+                    <span class="tgl"><span class="when-open">свернуть</span><span class="when-closed">развернуть</span></span>
                 </h5>
             </div>
 
@@ -41,6 +51,8 @@
                                            name="selectTag"
                                            value="{{t.id}}"
                                            id="tag_{{t.id}}"
+                                           data-type="{{t.type}}"
+                                           data-name="{{t.name}}"
                                            {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                     >
                                     {% if t.level == 1 %} &hellip; {% endif %}{{t.name}}
@@ -56,6 +68,8 @@
                                            name="selectTag"
                                            value="{{t.id}}"
                                            id="tag_{{t.id}}"
+                                           data-type="{{t.type}}"
+                                           data-name="{{t.name}}"
                                            {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                     >
                                     {{t.name}}
@@ -78,6 +92,8 @@
                                            name="selectTag"
                                            value="{{t.id}}"
                                            id="tag_{{t.id}}"
+                                           data-type="{{t.type}}"
+                                           data-name="{{t.name}}"
                                            {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                     >
                                     {{t.name}}
@@ -97,6 +113,8 @@
                                            name="selectTag"
                                            value="{{t.id}}"
                                            id="tag_{{t.id}}"
+                                           data-type="{{t.type}}"
+                                           data-name="{{t.name}}"
                                            {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                     >
                                     {{t.name}}
@@ -112,6 +130,8 @@
                                            name="selectTag"
                                            value="{{t.id}}"
                                            id="tag_{{t.id}}"
+                                           data-type="{{t.type}}"
+                                           data-name="{{t.name}}"
                                            {% if t.id in tagIds %} checked {% else %} '' {% endif %}
                                     >
                                     {{t.name}}
@@ -246,10 +266,73 @@
         return $.map($('input[name="selectTag"]:checked'), (elem) => elem.value )
     }
 
+    // ---- совместимость помёт (disable несовместимых) ----
+    let compatReq = 0;
+
+    function applyDisable(disableIds) {
+        const disableSet = new Set(disableIds.map(String));
+        $('input[name="selectTag"]').each(function () {
+            if (this.checked) { this.disabled = false; return; }
+            this.disabled = disableSet.has(this.value);
+        });
+    }
+
+    function refreshCompatibility() {
+        const selected = getChecked();
+        if (selected.length === 0) {
+            $('input[name="selectTag"]').prop('disabled', false);
+            return;
+        }
+        const my = ++compatReq;
+        fetch('/tags/compatible/' + selected.join(','))
+            .then((r) => r.json())
+            .then((data) => {
+                if (my !== compatReq) return;
+                applyDisable(data.disable || []);
+            })
+            .catch(() => {});
+    }
+
+    // ---- формула запроса: группа (тип) = badge через "или", группы через "и" ----
+    function renderFormula() {
+        const checked = $('input[name="selectTag"]:checked');
+        const $box = $('#tagFormula');
+        $box.empty();
+        if (checked.length === 0) return;
+
+        const order = [];
+        const groups = {};
+        checked.each(function () {
+            const tp = this.getAttribute('data-type');
+            const name = this.getAttribute('data-name');
+            if (!groups[tp]) { groups[tp] = []; order.push(tp); }
+            groups[tp].push(name);
+        });
+
+        order.forEach(function (tp, gi) {
+            if (gi > 0) $box.append($('<span class="tf-and"></span>').text('и'));
+            const $group = $('<span class="tf-group"></span>');
+            groups[tp].forEach(function (name, ni) {
+                if (ni > 0) $group.append($('<span class="tf-or"></span>').text('или'));
+                $group.append($('<span class="badge badge-primary"></span>').text(name));
+            });
+            $box.append($group);
+        });
+    }
+
     $( function() {
         $('#button').click(() =>
             window.location.href = '/tags/' + getChecked().join(',') + ''
-        )
+        );
+
+        $('input[name="selectTag"]').on('change', function () {
+            refreshCompatibility();
+            renderFormula();
+        });
+
+        // начальное состояние (страница открыта с уже выбранными пометами)
+        refreshCompatibility();
+        renderFormula();
     });
 
 </script>

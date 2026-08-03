@@ -19,6 +19,7 @@ from .models import (
     ArticleIndexTranslate,
     ArticleIndexWord,
     ArticleIndexWordNormalization,
+    ArticleIndexTag,
     Tag,
     ArticleLink,
     Levenshtein,
@@ -375,7 +376,6 @@ def search_possible(query: str) -> set:
 #  Поиск по тегам
 # ------------------------------------------------------------
 
-
 def get_tags_by_type(type_id=None) -> set:
     if type_id:
         return Tag.objects.filter(type=type_id).order_by("sorting", "name")
@@ -385,53 +385,94 @@ def get_tags_by_type(type_id=None) -> set:
 def get_tags_by_ids_distinct(ids: []) -> set:
     return set(Tag.objects.filter(id__in=ids).values_list("name", flat=True))
 
+def compatible_disable(selected):
+    """
+    Given selected tag ids (>=1), return the tag ids to DISABLE.
 
-def search_by_tags_smart(
-    by_geo: [], by_tags: [], by_ling: [], by_dialect: [], by_other: [], page: int
-) -> Content:
+    A candidate tag k of group G is AVAILABLE iff there is at least one article
+    matching (the selection WITHOUT group G) AND k. I.e. a tag is checked
+    against the OTHER groups' selection, not against the full current result:
+    within its own group tags combine by OR, but that OR must still intersect
+    (AND) the other groups. Otherwise k is disabled.
 
-    def search_by_ids(ids: [], articles_ids: [], i=True) -> []:
+    This correctly disables a second tag in an already-selected group when it
+    is incompatible with the other groups (e.g. selecting a dialect + one
+    stylistic pomета must still grey out stylistic pometы that never co-occur
+    with that dialect).
+    """
+    if not selected:
+        return []
 
-        tags = Tag.objects.filter(id__in=ids).values_list("tag", flat=True)
-        if i:
-            queries = [
-                Q(article_html__contains="<i>" + value + "</i>")
-                | Q(additions__article_html__contains="<i>" + value + "</i>")
-                for value in tags
-            ]
-        else:
-            queries = [
-                Q(article_html__contains=value)
-                | Q(additions__article_html__contains=value)
-                for value in tags
-            ]
-        query = queries.pop()
-        for item in queries:
-            query |= item
-        articles_with_tags = Article.objects.filter(query).values_list("id", flat=True)
-        found_articles = list(set(articles_with_tags) & set(articles_ids))
-        return list(set(found_articles) & set(articles_ids))
+    # тип каждого выбранного тега
+    sel_types = dict(
+        Tag.objects.filter(id__in=selected).values_list("id", "type")
+    )
+    selected_set = set(selected)
 
-    articles_ids = Article.objects.all().values_list("id", flat=True)
+    # base без каждой группы кешируем (групп мало)
+    base_cache = {}
 
-    if len(by_geo):
-        articles_ids = search_by_ids(by_geo, articles_ids)
-    if len(by_ling):
-        articles_ids = search_by_ids(by_ling, articles_ids)
-    if len(by_tags):
-        articles_ids = search_by_ids(by_tags, articles_ids)
-    if len(by_dialect):
-        articles_ids = search_by_ids(by_dialect, articles_ids)
-    if len(by_other):
-        articles_ids = search_by_ids(by_other, articles_ids, False)
+    def base_without_group(g):
+        if g not in base_cache:
+            sel_wo = [t for t in selected if sel_types.get(t) != g]
+            base_cache[g] = article_ids_by_tags(sel_wo)
+        return base_cache[g]
+
+    # статьи по каждому тегу-кандидату берём пачкой: tag_id -> set(article_id)
+    # (для всех тегов сразу, один запрос)
+    articles_by_tag = {}
+    for tid, aid in ArticleIndexTag.objects.values_list("tag_id", "article_id"):
+        articles_by_tag.setdefault(tid, set()).add(aid)
+
+    disable = []
+    for tid, ttype in Tag.objects.values_list("id", "type"):
+        if tid in selected_set:
+            continue
+        base = base_without_group(ttype)
+        arts = articles_by_tag.get(tid, set())
+        if not (base & arts):
+            disable.append(tid)
+    return disable
+
+def article_ids_by_tags(tag_ids):
+    """
+    Article ids matching a flat set of tag ids: OR within a Tag.type group,
+    AND between groups. Empty tag_ids -> all articles (no constraint).
+    Reads ArticleIndexTag. Returns set(article_id).
+    """
+    if not tag_ids:
+        return set(Article.objects.values_list("id", flat=True))
+
+    groups = {}
+    for tid, ttype in Tag.objects.filter(id__in=tag_ids).values_list("id", "type"):
+        groups.setdefault(ttype, []).append(tid)
+
+    result = None
+    for ttype, ids in groups.items():
+        matched = set(
+            ArticleIndexTag.objects.filter(tag_id__in=ids).values_list(
+                "article_id", flat=True
+            )
+        )
+        result = matched if result is None else (result & matched)
+    return result if result is not None else set()
+
+
+def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
+    all_tag_ids = (
+        list(by_geo) + list(by_tags) + list(by_ling) + list(by_dialect) + list(by_other)
+    )
+    articles_ids = article_ids_by_tags(all_tag_ids)
 
     articles = Article.objects.filter(pk__in=articles_ids)
     page_obj, sorted_articles = sort_and_paginate(articles, page)
-
     trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
 
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
 
+# ------------------------------------------------------------
+#  Определение направления поиска в словаре
+# ------------------------------------------------------------
 
 def detect_direction(query: str) -> str:
     """

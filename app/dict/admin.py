@@ -6,7 +6,15 @@ from django.forms import Textarea
 from django.utils.html import format_html
 
 from .helpers import normalization
-from .models import Article, ArticleAddition, ArticleIndexTranslate, ArticleLink, Source
+from .models import (
+    Article,
+    ArticleAddition,
+    ArticleIndexTag,
+    ArticleIndexTranslate,
+    ArticleLink,
+    Source,
+    Tag,
+)
 
 
 class ArticleLinkInline(admin.TabularInline):
@@ -60,6 +68,22 @@ class ArticleAdditionInline(admin.StackedInline):
     model = ArticleAddition
 
 
+class ArticleIndexTagInline(admin.TabularInline):
+    model = ArticleIndexTag
+    extra = 0
+    autocomplete_fields = ("tag",)
+    verbose_name = "Помета"
+    verbose_name_plural = "Пометы (служебные отметки)"
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        widget = formset.form.base_fields["tag"].widget
+        widget.can_add_related = False
+        widget.can_change_related = False
+        widget.can_delete_related = False
+        return formset
+
+
 @admin.register(Source)
 class SourceAdm(admin.ModelAdmin):
     exclude = ("css",)
@@ -99,6 +123,7 @@ class ArticleAdm(admin.ModelAdmin):
     inlines = [
         ArticleAdditionInline,
         TranslateInline,
+        ArticleIndexTagInline,
         ArticleLinkInline,
         ArticleLinkReverseInline,
     ]
@@ -154,3 +179,11 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<b>{word}</b>", word=normalization(obj.word))
 
     _word.short_description = "Заголовок (в норм. орф.)"
+
+
+@admin.register(Tag)
+class TagAdm(admin.ModelAdmin):
+    list_display = ("id", "name", "tag", "type")
+    list_filter = ("type",)
+    search_fields = ("name", "tag")
+    ordering = ("type", "sorting", "name")
