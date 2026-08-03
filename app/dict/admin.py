@@ -12,6 +12,7 @@ from .models import (
     ArticleIndexTag,
     ArticleIndexTranslate,
     ArticleLink,
+    SemanticField,
     Source,
     Tag,
 )
@@ -187,3 +188,11 @@ class TagAdm(admin.ModelAdmin):
     list_filter = ("type",)
     search_fields = ("name", "tag")
     ordering = ("type", "sorting", "name")
+
+
+@admin.register(SemanticField)
+class SemanticFieldAdm(admin.ModelAdmin):
+    list_display = ("id", "name", "parent", "sorting")
+    list_filter = ("parent",)
+    search_fields = ("name", "definition")
+    ordering = ("sorting", "name")
