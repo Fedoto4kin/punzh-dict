@@ -142,15 +142,21 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="form-group col-sm-12">
-                            <hr>
-                            <button class="btn btn-outline-secondary my-sm-0" type="submit" id="button">
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <hr>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-outline-primary my-sm-0" type="submit" id="button">
                                 Найти все статьи c отметками
                                 <i class="fas fa-search"></i>
                             </button>
+                            <button class="btn btn-outline-secondary my-sm-0 ml-2" id="resetTagsBtn">
+                                Сбросить все
+                                <i class="fas fa-undo"></i>
+                            </button>
                         </div>
                     </div>
+                </div>
 
                 </div>
             </div>
@@ -333,6 +339,12 @@
         // начальное состояние (страница открыта с уже выбранными пометами)
         refreshCompatibility();
         renderFormula();
+    });
+
+    $('#resetTagsBtn').click(function() {
+        $('input[name="selectTag"]').prop('checked', false);
+        refreshCompatibility(); // пересчитывает доступность чекбоксов
+        renderFormula();       // обновляет отображение формулы запроса
     });
 
 </script>
