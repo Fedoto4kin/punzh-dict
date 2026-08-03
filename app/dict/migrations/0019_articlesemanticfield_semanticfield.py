@@ -7,36 +7,92 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0018_auto_20260803_1213'),
+        ("dict", "0018_auto_20260803_1213"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SemanticField',
+            name="SemanticField",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(db_index=True, max_length=255, unique=True, verbose_name='Смысловое поле')),
-                ('definition', models.TextField(blank=True, default='', verbose_name='Определение')),
-                ('sorting', models.IntegerField(blank=True, db_index=True, null=True, verbose_name='Сортировка')),
-                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='children', to='dict.semanticfield', verbose_name='Родительское поле')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        db_index=True,
+                        max_length=255,
+                        unique=True,
+                        verbose_name="Смысловое поле",
+                    ),
+                ),
+                (
+                    "definition",
+                    models.TextField(
+                        blank=True, default="", verbose_name="Определение"
+                    ),
+                ),
+                (
+                    "sorting",
+                    models.IntegerField(
+                        blank=True, db_index=True, null=True, verbose_name="Сортировка"
+                    ),
+                ),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="children",
+                        to="dict.semanticfield",
+                        verbose_name="Родительское поле",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Смысловое поле',
-                'verbose_name_plural': 'Смысловые поля',
-                'ordering': ['sorting', 'name'],
+                "verbose_name": "Смысловое поле",
+                "verbose_name_plural": "Смысловые поля",
+                "ordering": ["sorting", "name"],
             },
         ),
         migrations.CreateModel(
-            name='ArticleSemanticField',
+            name="ArticleSemanticField",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.article')),
-                ('field', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.semanticfield', verbose_name='Смысловое поле')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="dict.article"
+                    ),
+                ),
+                (
+                    "field",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="dict.semanticfield",
+                        verbose_name="Смысловое поле",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Смысловое поле статьи',
-                'verbose_name_plural': 'Смысловые поля статей',
-                'unique_together': {('article', 'field')},
+                "verbose_name": "Смысловое поле статьи",
+                "verbose_name_plural": "Смысловые поля статей",
+                "unique_together": {("article", "field")},
             },
         ),
     ]

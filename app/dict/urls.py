@@ -34,7 +34,6 @@ urlpatterns = [
     path("search/", views.search_proc, name="search_proc"),
     path("search/<str:query>", views.search, name="search"),
     path("search/<str:query>/<int:page>", views.search, name="search"),
-
     path("tags/", views.tag_search, name="tags"),
     path("tags/compatible/<str:tags>", views.tags_compatible, name="tags_compatible"),
     path("tags/<str:tags>", views.tag_search, name="tags"),

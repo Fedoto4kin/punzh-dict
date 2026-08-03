@@ -27,9 +27,12 @@ class CompatibleDisableTestCase(TestCase):
 
         for art, tag in [
             (self.a, self.l1),
-            (self.b, self.l1), (self.b, self.g1),
-            (self.c, self.l2), (self.c, self.g1),
-            (self.d, self.l1), (self.d, self.t1),
+            (self.b, self.l1),
+            (self.b, self.g1),
+            (self.c, self.l2),
+            (self.c, self.g1),
+            (self.d, self.l1),
+            (self.d, self.t1),
             (self.e, self.g2),
         ]:
             ArticleIndexTag.objects.create(article=art, tag=tag)
@@ -88,7 +91,8 @@ class CompatibleDisableTestCase(TestCase):
             base = article_ids_by_tags(sel_wo)
             with_k = article_ids_by_tags(sel_wo + [tid])
             self.assertEqual(
-                0, len(with_k),
+                0,
+                len(with_k),
                 msg=f"tag {tid} disabled but (selection w/o its group) + it is non-empty",
             )
 

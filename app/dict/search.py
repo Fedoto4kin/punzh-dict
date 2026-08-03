@@ -131,22 +131,70 @@ _TOKEN_RE = re.compile(r"[а-яё\-]+", re.IGNORECASE)
 # Stop-words for the narrowing split (SPEC v2 §5): corpus buckets 1a (len<=2)
 # and 1b (dictionary abbreviations ending in -л). Static list.
 _STOP_1A = {
-    "в", "с", "на", "и", "из", "по", "от", "к", "со", "о", "за", "до", "во",
-    "не", "у", "то", "же", "ее", "ни", "да", "но", "ко", "а", "бы", "ли",
-    "их", "им", "та", "вы", "об", "ле", "те", "он", "мы",
+    "в",
+    "с",
+    "на",
+    "и",
+    "из",
+    "по",
+    "от",
+    "к",
+    "со",
+    "о",
+    "за",
+    "до",
+    "во",
+    "не",
+    "у",
+    "то",
+    "же",
+    "ее",
+    "ни",
+    "да",
+    "но",
+    "ко",
+    "а",
+    "бы",
+    "ли",
+    "их",
+    "им",
+    "та",
+    "вы",
+    "об",
+    "ле",
+    "те",
+    "он",
+    "мы",
 }
 _STOP_1B = {
-    "что-л", "чем-л", "чего-л", "кого-л", "чему-л", "куда-л", "кем-л",
-    "где-л", "кому-л", "какое-л", "какого-л", "каком-л", "откуда-л",
-    "каким-л", "какую-л", "каких-л", "какой-л", "какие-л", "чью-л",
-    "чьего-л", "какая-л",
+    "что-л",
+    "чем-л",
+    "чего-л",
+    "кого-л",
+    "чему-л",
+    "куда-л",
+    "кем-л",
+    "где-л",
+    "кому-л",
+    "какое-л",
+    "какого-л",
+    "каком-л",
+    "откуда-л",
+    "каким-л",
+    "какую-л",
+    "каких-л",
+    "какой-л",
+    "какие-л",
+    "чью-л",
+    "чьего-л",
+    "какая-л",
 }
 STOPWORDS = _STOP_1A | _STOP_1B
 
 
 def _label_and_key_tokens(phrase, query_words, stopwords):
     toks = _TOKEN_RE.findall(phrase.lower())
-    label_toks = [t for t in toks if t not in query_words]   # drop the query's own words
+    label_toks = [t for t in toks if t not in query_words]  # drop the query's own words
     key_toks = [t for t in label_toks if t not in stopwords]
     return label_toks, key_toks
 
@@ -376,6 +424,7 @@ def search_possible(query: str) -> set:
 #  Поиск по тегам
 # ------------------------------------------------------------
 
+
 def get_tags_by_type(type_id=None) -> set:
     if type_id:
         return Tag.objects.filter(type=type_id).order_by("sorting", "name")
@@ -384,6 +433,7 @@ def get_tags_by_type(type_id=None) -> set:
 
 def get_tags_by_ids_distinct(ids: []) -> set:
     return set(Tag.objects.filter(id__in=ids).values_list("name", flat=True))
+
 
 def compatible_disable(selected):
     """
@@ -404,9 +454,7 @@ def compatible_disable(selected):
         return []
 
     # тип каждого выбранного тега
-    sel_types = dict(
-        Tag.objects.filter(id__in=selected).values_list("id", "type")
-    )
+    sel_types = dict(Tag.objects.filter(id__in=selected).values_list("id", "type"))
     selected_set = set(selected)
 
     # base без каждой группы кешируем (групп мало)
@@ -433,6 +481,7 @@ def compatible_disable(selected):
         if not (base & arts):
             disable.append(tid)
     return disable
+
 
 def article_ids_by_tags(tag_ids):
     """
@@ -470,9 +519,11 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
 
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
 
+
 # ------------------------------------------------------------
 #  Определение направления поиска в словаре
 # ------------------------------------------------------------
+
 
 def detect_direction(query: str) -> str:
     """

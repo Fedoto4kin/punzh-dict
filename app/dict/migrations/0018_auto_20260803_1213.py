@@ -7,17 +7,25 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0017_auto_20260803_1021'),
+        ("dict", "0017_auto_20260803_1021"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='tag',
-            options={'ordering': ['id'], 'verbose_name': 'Помета', 'verbose_name_plural': 'Пометы'},
+            name="tag",
+            options={
+                "ordering": ["id"],
+                "verbose_name": "Помета",
+                "verbose_name_plural": "Пометы",
+            },
         ),
         migrations.AlterField(
-            model_name='articleindextag',
-            name='tag',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.tag', verbose_name='Помета'),
+            model_name="articleindextag",
+            name="tag",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="dict.tag",
+                verbose_name="Помета",
+            ),
         ),
     ]

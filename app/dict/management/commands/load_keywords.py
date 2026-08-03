@@ -79,7 +79,9 @@ class Command(BaseCommand):
                     buffer.append(ArticleKeyword(article_id=aid, word=w))
                     n_words += 1
                     if len(buffer) >= options["batch"]:
-                        ArticleKeyword.objects.bulk_create(buffer, ignore_conflicts=True)
+                        ArticleKeyword.objects.bulk_create(
+                            buffer, ignore_conflicts=True
+                        )
                         buffer = []
             if buffer:
                 ArticleKeyword.objects.bulk_create(buffer, ignore_conflicts=True)

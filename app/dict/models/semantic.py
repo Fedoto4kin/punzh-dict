@@ -53,9 +53,7 @@ class ArticleSemanticField(models.Model):
     Многозначность допустима: у статьи может быть несколько полей.
     """
 
-    article = models.ForeignKey(
-        "Article", on_delete=models.CASCADE
-    )
+    article = models.ForeignKey("Article", on_delete=models.CASCADE)
     field = models.ForeignKey(
         SemanticField, on_delete=models.CASCADE, verbose_name="Смысловое поле"
     )
@@ -85,7 +83,9 @@ class ArticleKeyword(models.Model):
     """
 
     article = models.ForeignKey("Article", on_delete=models.CASCADE)
-    word = models.CharField(max_length=255, db_index=True, verbose_name="Ключевое слово")
+    word = models.CharField(
+        max_length=255, db_index=True, verbose_name="Ключевое слово"
+    )
 
     def __str__(self):
         return self.word

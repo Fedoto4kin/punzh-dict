@@ -27,9 +27,12 @@ class TagSearchTestCase(TestCase):
 
         links = [
             (self.a, self.l1),
-            (self.b, self.l1), (self.b, self.g1),
-            (self.c, self.l2), (self.c, self.g1),
-            (self.d, self.l1), (self.d, self.t1),
+            (self.b, self.l1),
+            (self.b, self.g1),
+            (self.c, self.l2),
+            (self.c, self.g1),
+            (self.d, self.l1),
+            (self.d, self.t1),
             (self.e, self.g2),
         ]
         for art, tag in links:
@@ -40,41 +43,67 @@ class TagSearchTestCase(TestCase):
 
     def test_single_tag_single_group(self):
         content = search_by_tags_smart(
-            by_geo=[], by_tags=[], by_ling=[self.l1.id], by_dialect=[], by_other=[], page=1
+            by_geo=[],
+            by_tags=[],
+            by_ling=[self.l1.id],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual({"art_a", "art_b", "art_d"}, self._words(content))
 
     def test_or_within_group(self):
         content = search_by_tags_smart(
-            by_geo=[], by_tags=[], by_ling=[self.l1.id, self.l2.id],
-            by_dialect=[], by_other=[], page=1
+            by_geo=[],
+            by_tags=[],
+            by_ling=[self.l1.id, self.l2.id],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual({"art_a", "art_b", "art_c", "art_d"}, self._words(content))
 
     def test_and_between_groups(self):
         content = search_by_tags_smart(
-            by_geo=[self.g1.id], by_tags=[], by_ling=[self.l1.id],
-            by_dialect=[], by_other=[], page=1
+            by_geo=[self.g1.id],
+            by_tags=[],
+            by_ling=[self.l1.id],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual({"art_b"}, self._words(content))
 
     def test_and_between_groups_empty(self):
         content = search_by_tags_smart(
-            by_geo=[self.g2.id], by_tags=[], by_ling=[self.l1.id],
-            by_dialect=[], by_other=[], page=1
+            by_geo=[self.g2.id],
+            by_tags=[],
+            by_ling=[self.l1.id],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual(set(), self._words(content))
 
     def test_three_conditions_empty(self):
         # l1 & g1 & t1: art_b has l1,g1 but not t1; art_d has l1,t1 but not g1.
         content = search_by_tags_smart(
-            by_geo=[self.g1.id], by_tags=[self.t1.id], by_ling=[self.l1.id],
-            by_dialect=[], by_other=[], page=1
+            by_geo=[self.g1.id],
+            by_tags=[self.t1.id],
+            by_ling=[self.l1.id],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual(set(), self._words(content))
 
     def test_pometa_group(self):
         content = search_by_tags_smart(
-            by_geo=[], by_tags=[self.t1.id], by_ling=[], by_dialect=[], by_other=[], page=1
+            by_geo=[],
+            by_tags=[self.t1.id],
+            by_ling=[],
+            by_dialect=[],
+            by_other=[],
+            page=1,
         )
         self.assertEqual({"art_d"}, self._words(content))
