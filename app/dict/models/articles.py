@@ -182,11 +182,10 @@ class ArticleIndexWordNormalization(models.Model):
             "article",
         )
 
+
 class ArticleIndexTag(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
-    tag = models.ForeignKey(
-        "Tag", on_delete=models.CASCADE, verbose_name="Помета"
-    )
+    tag = models.ForeignKey("Tag", on_delete=models.CASCADE, verbose_name="Помета")
 
     def __str__(self):
         return self.tag.name

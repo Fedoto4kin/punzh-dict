@@ -7,26 +7,49 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0016_auto_20260801_1249'),
+        ("dict", "0016_auto_20260801_1249"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='articlelink',
-            name='from_article',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='links_from', to='dict.article', verbose_name='Основная статья'),
+            model_name="articlelink",
+            name="from_article",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="links_from",
+                to="dict.article",
+                verbose_name="Основная статья",
+            ),
         ),
         migrations.CreateModel(
-            name='ArticleIndexTag',
+            name="ArticleIndexTag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.article')),
-                ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.tag')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="dict.article"
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="dict.tag"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Индекс помет статьи',
-                'verbose_name_plural': 'Индекс помет статей',
-                'unique_together': {('article', 'tag')},
+                "verbose_name": "Индекс помет статьи",
+                "verbose_name_plural": "Индекс помет статей",
+                "unique_together": {("article", "tag")},
             },
         ),
     ]

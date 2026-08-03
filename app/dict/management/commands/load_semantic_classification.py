@@ -20,7 +20,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--file", required=True, help="Путь к json классификации.")
         parser.add_argument(
-            "--batch", type=int, default=1000,
+            "--batch",
+            type=int,
+            default=1000,
             help="Размер пачки bulk_create (по умолчанию 1000).",
         )
 
@@ -39,9 +41,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Статей в json: {len(assignments)}")
 
         # справочник имя->id одним запросом
-        field_id_by_name = dict(
-            SemanticField.objects.values_list("name", "id")
-        )
+        field_id_by_name = dict(SemanticField.objects.values_list("name", "id"))
 
         # id статей из json (ключи — строки)
         article_ids = []
@@ -59,14 +59,12 @@ class Command(BaseCommand):
         buffer = []
         n_links = 0
         n_articles = 0
-        missing_fields = {}   # имя поля -> сколько раз встретилось, но нет в справочнике
+        missing_fields = {}  # имя поля -> сколько раз встретилось, но нет в справочнике
         missing_articles = 0
 
         with transaction.atomic():
             # жёстко: снять привязки только для статей из json
-            ArticleSemanticField.objects.filter(
-                article_id__in=existing
-            ).delete()
+            ArticleSemanticField.objects.filter(article_id__in=existing).delete()
 
             for aid_str, field_names in assignments.items():
                 try:
@@ -82,9 +80,7 @@ class Command(BaseCommand):
                     if fid is None:
                         missing_fields[name] = missing_fields.get(name, 0) + 1
                         continue
-                    buffer.append(
-                        ArticleSemanticField(article_id=aid, field_id=fid)
-                    )
+                    buffer.append(ArticleSemanticField(article_id=aid, field_id=fid))
                     n_links += 1
                     if len(buffer) >= options["batch"]:
                         ArticleSemanticField.objects.bulk_create(
@@ -92,9 +88,7 @@ class Command(BaseCommand):
                         )
                         buffer = []
             if buffer:
-                ArticleSemanticField.objects.bulk_create(
-                    buffer, ignore_conflicts=True
-                )
+                ArticleSemanticField.objects.bulk_create(buffer, ignore_conflicts=True)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -102,9 +96,7 @@ class Command(BaseCommand):
             )
         )
         if missing_articles:
-            self.stdout.write(
-                f"Пропущено статей (нет в БД): {missing_articles}"
-            )
+            self.stdout.write(f"Пропущено статей (нет в БД): {missing_articles}")
         if missing_fields:
             self.stdout.write("Поля из json, которых НЕТ в справочнике (пропущены):")
             for name, cnt in sorted(missing_fields.items(), key=lambda x: -x[1]):

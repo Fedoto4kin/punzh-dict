@@ -20,6 +20,7 @@ from .search import (
 )
 from .models import Article, ArticleIndexTag, Tag
 
+
 class StaticView(TemplateView):
 
     template_name = None
@@ -40,9 +41,11 @@ def index(request, letter=None, page=1):
 
     if not letter:
         count = Article.objects.count()
-        return render(request, "index.html", {
-            "articles_count": f"{count:,}".replace(",", "\u00a0")
-        })
+        return render(
+            request,
+            "index.html",
+            {"articles_count": f"{count:,}".replace(",", "\u00a0")},
+        )
 
     if letter.upper() not in KRL_ABC:
         return _get404()
@@ -99,7 +102,16 @@ def search(request, query="", page=1):
     else:
         direction = "krl"
         translation_table = str.maketrans(
-            {";": "", "’": "", ",": "", "š": "s", "č": "c", "ž": "z", "?": "%", ".": "_"}
+            {
+                ";": "",
+                "’": "",
+                ",": "",
+                "š": "s",
+                "č": "c",
+                "ž": "z",
+                "?": "%",
+                ".": "_",
+            }
         )
         page_obj, found_count = word_search(query.translate(translation_table), page)
         narrowing = []

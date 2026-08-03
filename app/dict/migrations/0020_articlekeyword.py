@@ -7,21 +7,39 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0019_articlesemanticfield_semanticfield'),
+        ("dict", "0019_articlesemanticfield_semanticfield"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ArticleKeyword',
+            name="ArticleKeyword",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('word', models.CharField(db_index=True, max_length=255, verbose_name='Ключевое слово')),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dict.article')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "word",
+                    models.CharField(
+                        db_index=True, max_length=255, verbose_name="Ключевое слово"
+                    ),
+                ),
+                (
+                    "article",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="dict.article"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Ключевое слово статьи',
-                'verbose_name_plural': 'Ключевые слова статей',
-                'unique_together': {('article', 'word')},
+                "verbose_name": "Ключевое слово статьи",
+                "verbose_name_plural": "Ключевые слова статей",
+                "unique_together": {("article", "word")},
             },
         ),
     ]

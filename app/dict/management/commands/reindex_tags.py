@@ -13,7 +13,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--batch", type=int, default=500,
+            "--batch",
+            type=int,
+            default=500,
             help="Сколько связей накапливать перед bulk_create (по умолчанию 500).",
         )
 

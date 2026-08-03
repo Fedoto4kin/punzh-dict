@@ -24,7 +24,9 @@ class SearchFilterTestCase(TestCase):
 
         # ehatta: phrase "быстро ехать" -> narrowing tag "ехать"
         self.ehatta = Article.objects.create(word="ehatta")
-        ArticleIndexTranslate.objects.create(article=self.ehatta, rus_word="быстро ехать")
+        ArticleIndexTranslate.objects.create(
+            article=self.ehatta, rus_word="быстро ехать"
+        )
 
         # rutoldi: NO translations, linked to ruttoh -> inherited direct hit
         self.rutoldi = Article.objects.create(word="rutoldi")
@@ -46,9 +48,7 @@ class SearchFilterTestCase(TestCase):
             "быстро", 1, "exact"
         )
         self.assertEqual(2, found_count)
-        self.assertEqual(
-            {"ruttoh", "rutoldi"}, {a.word for a in page_obj.object_list}
-        )
+        self.assertEqual({"ruttoh", "rutoldi"}, {a.word for a in page_obj.object_list})
         # теги остаются полными (фильтр не пересчитывает якорь)
         self.assertEqual({"пробежать", "ехать"}, {t["key"] for t in narrowing})
 
