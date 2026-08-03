@@ -326,6 +326,13 @@
         });
     }
 
+    // кнопка сброса: активна только если выбран хотя бы один чекбокс.
+    // Всегда видима (никакого show/hide) — меняется лишь disabled.
+    function refreshResetBtn() {
+        const any = $('input[name="selectTag"]:checked').length > 0;
+        $('#resetTagsBtn').prop('disabled', !any);
+    }
+
     $( function() {
         $('#button').click(() =>
             window.location.href = '/tags/' + getChecked().join(',') + ''
@@ -334,17 +341,20 @@
         $('input[name="selectTag"]').on('change', function () {
             refreshCompatibility();
             renderFormula();
+            refreshResetBtn();
         });
 
-        // начальное состояние (страница открыта с уже выбранными пометами)
+        $('#resetTagsBtn').click(function () {
+            $('input[name="selectTag"]').prop('checked', false);
+            refreshCompatibility(); // пересчитывает доступность чекбоксов
+            renderFormula();        // обновляет формулу запроса
+            refreshResetBtn();      // после сброса выбранных нет -> disabled
+        });
+
+        // начальное состояние (в т.ч. если страница открыта с выбранными пометами)
         refreshCompatibility();
         renderFormula();
-    });
-
-    $('#resetTagsBtn').click(function() {
-        $('input[name="selectTag"]').prop('checked', false);
-        refreshCompatibility(); // пересчитывает доступность чекбоксов
-        renderFormula();       // обновляет отображение формулы запроса
+        refreshResetBtn();
     });
 
 </script>
