@@ -32,6 +32,16 @@ DEBUG = env.bool("DEBUG", True)
 
 ALLOWED_HOSTS = ["punzhina.krc.karelia.ru", "punzh.local", "localhost", "127.0.0.1"]
 
+# --- AI-поиск (рантайм): классификация запроса через шлюз Timeweb ---
+# Дефолты заданы, чтобы отсутствие ключа НЕ роняло приложение: при пустом ключе
+# или недоступности шлюза AI-поиск тихо откатывается на лексический поиск.
+TIMEWEB_AI_API_KEY = env("TIMEWEB_AI_API_KEY", default="")
+TIMEWEB_AI_BASE_URL = env("TIMEWEB_AI_BASE_URL", default="https://api.timeweb.ai/v1")
+# Разбор запроса поиска — YandexGPT (русский). Классификация нового слова —
+# DeepSeek (консистентно с пакетной разметкой 16k).
+TIMEWEB_AI_MODEL_QUERY = env("TIMEWEB_AI_MODEL_QUERY", default="yandex/yandexgpt-lite")
+TIMEWEB_AI_MODEL_CLASSIFY = env("TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-v4-flash")
+
 # Application definition
 INSTALLED_APPS = [
     "bootstrap4",
