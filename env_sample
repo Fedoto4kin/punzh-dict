@@ -4,3 +4,8 @@ PG_PASS=very-secure-password
 PG_USER=user
 
 DJANGO_SECRET_KEY=
+
+TIMEWEB_AI_API_KEY=punzh-dict-search
+TIMEWEB_AI_BASE_URL=https://api.timeweb.ai/v1
+TIMEWEB_AI_MODEL_QUERY=yandex/yandexgpt-lite       # разбор запроса поиска
+TIMEWEB_AI_MODEL_CLASSIFY=deepseek/deepseek-v4-flash  # классификация нового слова
