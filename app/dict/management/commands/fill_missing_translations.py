@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from dict.helpers import normalization
-from dict.models import Article, ArticleIndexTranslate
+from dict.models import Article, ArticleIndexTranslate, ArticleLink
 
 
 # Split a single input line into several translations at ";" (and, optionally,
@@ -84,11 +84,26 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         split_comma = opts["split_comma"]
 
-        # 1) articles with NO translation at all
+        # 1) articles with NO translation at all, EXCLUDING «см.» references
+        # (their meaning lives in the donor — no translation to enter by hand).
+        # A reference = has linked_article set, OR appears as from_article in
+        # ArticleLink (the "X см. Y" side). Being a donor (to_article) is NOT a
+        # reason to hide it. Textual "см." in html without a real link is left
+        # in the queue and shown as an ordinary article (per operator's choice).
         with_tr = ArticleIndexTranslate.objects.values_list(
             "article_id", flat=True
         ).distinct()
-        qs = Article.objects.exclude(id__in=with_tr)
+        ref_ids = set(
+            Article.objects.filter(linked_article__isnull=False).values_list(
+                "id", flat=True
+            )
+        )
+        ref_ids |= set(
+            ArticleLink.objects.values_list("from_article_id", flat=True)
+        )
+        self.stdout.write(f"Исключено статей-отсылок (см.): {len(ref_ids)}")
+
+        qs = Article.objects.exclude(id__in=with_tr).exclude(id__in=ref_ids)
         qs = qs.order_by("word" if opts["order"] == "word" else "id")
         if opts["limit"]:
             qs = qs[: opts["limit"]]
