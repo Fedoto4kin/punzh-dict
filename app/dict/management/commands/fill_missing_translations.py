@@ -1,4 +1,5 @@
 import re
+import sys
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -11,6 +12,17 @@ from dict.models import Article, ArticleIndexTranslate, ArticleLink
 # a plain "," — off by default because commas legitimately appear inside a
 # gloss). Whitespace is collapsed the same way we cleaned the import artifacts.
 SPLIT_RE = re.compile(r"\s*;\s*")
+
+# html-content markers of articles that carry no own meaning and must be kept
+# OUT of the manual-translation queue (their links are to be repaired later):
+#   1) a cross-reference «см.» rendered as an italic помета  <i>см.</i>
+#      (matched as the italic marker, NOT bare "см", to avoid catching
+#       illustrations with "смех", "смотреть", "5 см." etc.);
+#   2) a derived grammatical form "от <карельское слово>" — "от" as a standalone
+#      token followed by a LATIN word (the base lemma). Russian "от" in an
+#      illustration is followed by Cyrillic, so it does not match.
+SEE_RE = re.compile(r"<i>\s*см\.?\s*</i>", re.IGNORECASE)
+DERIV_RE = re.compile(r"(?:^|[\s>])от\s+[A-Za-zÀ-ÿ]", re.IGNORECASE)
 
 
 class Command(BaseCommand):
@@ -45,6 +57,27 @@ class Command(BaseCommand):
         )
 
     # --- helpers -------------------------------------------------------------
+
+    def _ask(self, prompt):
+        # Read a line as raw bytes straight from stdin and decode UTF-8 ourselves.
+        # Going through input()/GNU-readline breaks in containers with a non-UTF-8
+        # locale: readline mangles multibyte input, giving either surrogates
+        # (which then blow up on DB write) or a UnicodeDecodeError on the read
+        # itself. Reading sys.stdin.buffer sidesteps readline and the locale.
+        sys.stdout.write(prompt)
+        sys.stdout.flush()
+        raw = sys.stdin.buffer.readline()
+        if raw == b"":
+            raise EOFError
+        line = raw.decode("utf-8", "replace").rstrip("\r\n")
+        # Strip stray control bytes (e.g. a layout/compose-switch keystroke that
+        # the terminal injects into stdin) and the U+FFFD replacement char left
+        # by any undecodable byte — they are never part of a translation and on
+        # prod they break the DB write.
+        line = "".join(
+            ch for ch in line if ch == "\t" or (ord(ch) >= 32 and ch != "\ufffd")
+        )
+        return line
 
     def _clean(self, s):
         return re.sub(r"\s+", " ", s).strip()
@@ -105,10 +138,31 @@ class Command(BaseCommand):
 
         qs = Article.objects.exclude(id__in=with_tr).exclude(id__in=ref_ids)
         qs = qs.order_by("word" if opts["order"] == "word" else "id")
-        if opts["limit"]:
-            qs = qs[: opts["limit"]]
 
-        total = qs.count()
+        # html-level exclusion: textual «см.» references without a real link, and
+        # derived grammatical forms "от <lemma>". Both are repaired separately —
+        # not by entering translations here.
+        ids = []
+        n_see = 0
+        n_deriv = 0
+        for aid, html in qs.values_list("id", "article_html"):
+            html = html or ""
+            if SEE_RE.search(html):
+                n_see += 1
+                continue
+            if DERIV_RE.search(html):
+                n_deriv += 1
+                continue
+            ids.append(aid)
+        self.stdout.write(
+            f"Исключено по html: «см.» без ссылки — {n_see}, "
+            f"деривации «от <слово>» — {n_deriv}."
+        )
+
+        if opts["limit"]:
+            ids = ids[: opts["limit"]]
+
+        total = len(ids)
         if not total:
             self.stdout.write(self.style.SUCCESS("Статей без перевода нет. Нечего делать."))
             return
@@ -124,9 +178,7 @@ class Command(BaseCommand):
         done = 0
         added = 0
         skipped = 0
-        # Materialize ids up front: we mutate translations as we go, and we do
-        # not want the queryset to shift under us mid-session.
-        ids = list(qs.values_list("id", flat=True))
+        # ids is already materialized above (after html-level filtering).
 
         for idx, aid in enumerate(ids, start=1):
             try:
@@ -149,7 +201,7 @@ class Command(BaseCommand):
                 self.stdout.write("-" * 72)
 
                 try:
-                    line = input("Перевод(ы) / пусто=пропуск / u=отмена / q=выход: ")
+                    line = self._ask("Перевод(ы) / пусто=пропуск / u=отмена / q=выход: ")
                 except (EOFError, KeyboardInterrupt):
                     self.stdout.write("\nВыход.")
                     self._summary(done, added, skipped)
