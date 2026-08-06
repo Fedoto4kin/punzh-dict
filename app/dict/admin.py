@@ -93,14 +93,35 @@ class SourceAdm(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdm(admin.ModelAdmin):
 
-    fields = (
-        "_word",
-        "word_normalized",
-        "word",
-        "article_html",
-        "_article_html",
-        "source",
-        "source_detalization",
+    # NOTE: Django admin always renders ALL fieldsets first and ALL inlines
+    # afterwards, so inlines cannot be placed *between* form fields natively.
+    # We split the fields into a "head" and a "tail" fieldset; a small JS
+    # snippet (see the Media class below) moves the "tail" group down so it
+    # sits right after the editorial inlines, giving the desired field order.
+    fieldsets = (
+        (
+            None,
+            {
+                "classes": ("field-head",),
+                "fields": (
+                    "_word",            # Заголовок (в норм. орф.)
+                    "word_normalized",  # Коррекция заголовка
+                    "word",             # Слово (ориг.)
+                ),
+            },
+        ),
+        (
+            None,
+            {
+                "classes": ("field-tail",),
+                "fields": (
+                    "article_html",         # Словарная статья (html)
+                    "_article_html",        # Словарная статья (rendered)
+                    "source",               # Источник
+                    "source_detalization",  # Уточнение источника
+                ),
+            },
+        ),
     )
 
     list_display = (
@@ -121,17 +142,22 @@ class ArticleAdm(admin.ModelAdmin):
     search_fields = ("word",)
     exclude = ("first_letter", "text_search", "first_trigram")
 
+    # Order matters: the reorder JS expects the four editorial inlines first
+    # (indexes 0..3) and moves the "tail" fieldset to right after index 3.
     inlines = [
-        ArticleAdditionInline,
-        TranslateInline,
-        ArticleIndexTagInline,
-        ArticleLinkInline,
-        ArticleLinkReverseInline,
+        TranslateInline,           # 0 - Переводы
+        ArticleIndexTagInline,     # 1 - Пометы (служебные отметки)
+        ArticleLinkInline,         # 2 - Смотрите также
+        ArticleLinkReverseInline,  # 3 - На эту статью указывают
+        ArticleAdditionInline,     # 4 - Дополнения (not in the requested list)
     ]
 
     formfield_overrides = {
         models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
     }
+
+    class Media:
+        js = ("admin/js/article_field_reorder.js",)
 
     def get_search_results(self, request, queryset, search_term):
 
