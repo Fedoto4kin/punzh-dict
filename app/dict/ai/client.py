@@ -33,10 +33,12 @@ def _get_client():
         return None
     try:
         from openai import OpenAI
+
         _client = OpenAI(
             api_key=api_key,
-            base_url=getattr(settings, "TIMEWEB_AI_BASE_URL",
-                             "https://api.timeweb.ai/v1"),
+            base_url=getattr(
+                settings, "TIMEWEB_AI_BASE_URL", "https://api.timeweb.ai/v1"
+            ),
         )
         return _client
     except Exception as e:  # noqa: BLE001

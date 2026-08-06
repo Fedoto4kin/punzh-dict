@@ -30,8 +30,10 @@ class Command(BaseCommand):
             self.stdout.write(f"🔑 Ключ: {masked}")
         else:
             self.stdout.write(self.style.ERROR("❌ TIMEWEB_AI_API_KEY пуст."))
-            self.stdout.write("   AI-поиск будет работать в режиме fallback "
-                              "(обычный лексический поиск).")
+            self.stdout.write(
+                "   AI-поиск будет работать в режиме fallback "
+                "(обычный лексический поиск)."
+            )
             return
         self.stdout.write(f"🌐 base_url: {base}")
         self.stdout.write(f"🤖 model (запрос): {model_q}")
@@ -39,8 +41,9 @@ class Command(BaseCommand):
 
         # 2. доступность клиента
         if not ai_client.is_available():
-            self.stdout.write(self.style.ERROR(
-                "❌ Клиент не поднялся (см. лог). Fallback."))
+            self.stdout.write(
+                self.style.ERROR("❌ Клиент не поднялся (см. лог). Fallback.")
+            )
             return
         self.stdout.write("✅ Клиент инициализирован.")
 
@@ -52,8 +55,11 @@ class Command(BaseCommand):
             model=model_q,
         )
         if r_q is None:
-            self.stdout.write(self.style.ERROR(
-                f"❌ Модель разбора ({model_q}) не ответила. Проверь имя модели."))
+            self.stdout.write(
+                self.style.ERROR(
+                    f"❌ Модель разбора ({model_q}) не ответила. Проверь имя модели."
+                )
+            )
         else:
             self.stdout.write(self.style.SUCCESS(f"✅ query OK: {r_q}"))
 
@@ -64,13 +70,19 @@ class Command(BaseCommand):
             model=model_c,
         )
         if r_c is None:
-            self.stdout.write(self.style.ERROR(
-                f"❌ Модель классификации ({model_c}) не ответила. Проверь имя модели."))
+            self.stdout.write(
+                self.style.ERROR(
+                    f"❌ Модель классификации ({model_c}) не ответила. Проверь имя модели."
+                )
+            )
         else:
             self.stdout.write(self.style.SUCCESS(f"✅ classify OK: {r_c}"))
 
         if r_q is not None and r_c is not None:
             self.stdout.write(self.style.SUCCESS("✅ Обе модели доступны через шлюз."))
         else:
-            self.stdout.write(self.style.WARNING(
-                "⚠ Не все модели ответили — соответствующая функция уйдёт в fallback."))
+            self.stdout.write(
+                self.style.WARNING(
+                    "⚠ Не все модели ответили — соответствующая функция уйдёт в fallback."
+                )
+            )

@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dict', '0020_articlekeyword'),
+        ("dict", "0020_articlekeyword"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tag',
-            name='type',
-            field=models.IntegerField(choices=[(1, 'Населенные пункты'), (2, 'Часть речи'), (3, 'Стилистические пометы'), (4, 'Говоры'), (5, 'Фразеологизмы')]),
+            model_name="tag",
+            name="type",
+            field=models.IntegerField(
+                choices=[
+                    (1, "Населенные пункты"),
+                    (2, "Часть речи"),
+                    (3, "Стилистические пометы"),
+                    (4, "Говоры"),
+                    (5, "Фразеологизмы"),
+                ]
+            ),
         ),
     ]

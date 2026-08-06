@@ -131,9 +131,7 @@ class Command(BaseCommand):
                 "id", flat=True
             )
         )
-        ref_ids |= set(
-            ArticleLink.objects.values_list("from_article_id", flat=True)
-        )
+        ref_ids |= set(ArticleLink.objects.values_list("from_article_id", flat=True))
         self.stdout.write(f"Исключено статей-отсылок (см.): {len(ref_ids)}")
 
         qs = Article.objects.exclude(id__in=with_tr).exclude(id__in=ref_ids)
@@ -164,7 +162,9 @@ class Command(BaseCommand):
 
         total = len(ids)
         if not total:
-            self.stdout.write(self.style.SUCCESS("Статей без перевода нет. Нечего делать."))
+            self.stdout.write(
+                self.style.SUCCESS("Статей без перевода нет. Нечего делать.")
+            )
             return
 
         self.stdout.write(
@@ -201,7 +201,9 @@ class Command(BaseCommand):
                 self.stdout.write("-" * 72)
 
                 try:
-                    line = self._ask("Перевод(ы) / пусто=пропуск / u=отмена / q=выход: ")
+                    line = self._ask(
+                        "Перевод(ы) / пусто=пропуск / u=отмена / q=выход: "
+                    )
                 except (EOFError, KeyboardInterrupt):
                     self.stdout.write("\nВыход.")
                     self._summary(done, added, skipped)
@@ -220,7 +222,11 @@ class Command(BaseCommand):
                             id__in=last_created
                         ).delete()
                         added -= len(last_created)
-                        self.stdout.write(self.style.WARNING(f"Отменено записей: {len(last_created)}."))
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Отменено записей: {len(last_created)}."
+                            )
+                        )
                         last_created = []
                         # stay on the same article for another attempt
                         continue
@@ -235,7 +241,9 @@ class Command(BaseCommand):
 
                 translations = self._parse(line, split_comma)
                 if not translations:
-                    self.stdout.write("Пусто после очистки — введите ещё раз или пусто для пропуска.")
+                    self.stdout.write(
+                        "Пусто после очистки — введите ещё раз или пусто для пропуска."
+                    )
                     continue
 
                 created = self._save(article, translations)
