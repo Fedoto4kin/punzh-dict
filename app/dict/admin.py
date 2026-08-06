@@ -104,9 +104,9 @@ class ArticleAdm(admin.ModelAdmin):
             {
                 "classes": ("field-head",),
                 "fields": (
-                    "_word",            # Заголовок (в норм. орф.)
+                    "_word",  # Заголовок (в норм. орф.)
                     "word_normalized",  # Коррекция заголовка
-                    "word",             # Слово (ориг.)
+                    "word",  # Слово (ориг.)
                 ),
             },
         ),
@@ -115,9 +115,9 @@ class ArticleAdm(admin.ModelAdmin):
             {
                 "classes": ("field-tail",),
                 "fields": (
-                    "article_html",         # Словарная статья (html)
-                    "_article_html",        # Словарная статья (rendered)
-                    "source",               # Источник
+                    "article_html",  # Словарная статья (html)
+                    "_article_html",  # Словарная статья (rendered)
+                    "source",  # Источник
                     "source_detalization",  # Уточнение источника
                 ),
             },
@@ -145,11 +145,11 @@ class ArticleAdm(admin.ModelAdmin):
     # Order matters: the reorder JS expects the four editorial inlines first
     # (indexes 0..3) and moves the "tail" fieldset to right after index 3.
     inlines = [
-        TranslateInline,           # 0 - Переводы
-        ArticleIndexTagInline,     # 1 - Пометы (служебные отметки)
-        ArticleLinkInline,         # 2 - Смотрите также
+        TranslateInline,  # 0 - Переводы
+        ArticleIndexTagInline,  # 1 - Пометы (служебные отметки)
+        ArticleLinkInline,  # 2 - Смотрите также
         ArticleLinkReverseInline,  # 3 - На эту статью указывают
-        ArticleAdditionInline,     # 4 - Дополнения (not in the requested list)
+        ArticleAdditionInline,  # 4 - Дополнения (not in the requested list)
     ]
 
     formfield_overrides = {
