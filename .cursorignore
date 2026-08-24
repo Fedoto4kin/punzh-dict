@@ -1,0 +1,52 @@
+# === Python / Django cache ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# === Virtual environments ===
+venv/
+.env/
+.env.bak
+.env.local
+
+# === IDE / project metadata ===
+.idea/
+.vscode/
+*.code-workspace
+
+# === Build / packaging (на будущее) ===
+build/
+dist/
+*.egg-info/
+*.egg
+
+# === Docker / infra ===
+docker-compose.yml
+docker-compose-prod.yml
+docker-compose.internal.yml
+init-letsencrypt.sh
+
+# === Static assets (Django admin, FontAwesome, etc.) ===
+static/
+staticfiles/
+
+# === Database volume ===
+db/
+
+# === Logs ===
+*.log
+logs/
+log/
+
+# === Large data / fixtures / exports ===
+app/dict/fixtures/
+app/agents/data/
+data/
+datasets/
+exports/
+backups/
+
+# === Secrets / env ===
+.env
+env_sample

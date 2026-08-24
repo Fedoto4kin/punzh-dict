@@ -12,5 +12,5 @@ media
 *$py.class
 
 .certbot
-app/staticfile
+app/staticfiles
 app/agents/data/
