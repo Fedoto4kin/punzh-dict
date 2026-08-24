@@ -9,7 +9,8 @@
 //
 // After load we move ".field-tail" to sit right after the reverse-links
 // inline ("На эту статью указывают", #links_to-group). Semantic-field inline
-// is absent on add, so we must not rely on a fixed inline index.
+// is absent on add and lives last on change, so we must not rely on a
+// fixed inline index.
 //
 // Target order (change form; on add the ontology block is omitted):
 //
@@ -18,14 +19,14 @@
 //   Слово (ориг.)
 //   Переводы
 //   Пометы (служебные отметки)
-//   Смысловые поля (онтология)    (change only)
 //   Смотрите также
 //   На эту статью указывают
 //   Словарная статья (html)       <- tail fieldset moved here
 //   Словарная статья
 //   Источник
 //   Уточнение источника
-//   Дополнения                    (trails at the very bottom)
+//   Дополнения
+//   Смысловые поля (онтология)    (change only, very bottom)
 
 document.addEventListener('DOMContentLoaded', function () {
     var tail = document.querySelector('fieldset.field-tail');

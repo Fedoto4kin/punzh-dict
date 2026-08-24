@@ -59,3 +59,15 @@ class ArticleLinkReverseInlineTestCase(TestCase):
         from_html = html.split('id="links_from-group"', 1)[1].split("</fieldset>", 1)[0]
         self.assertIn("admin-autocomplete", from_html)
         self.assertIn("Смотрите также", from_html)
+
+    def test_semantic_fields_inline_is_last_on_change_form(self):
+        self.client.force_login(self.user)
+        response = self.client.get(f"/admin/dict/article/{self.source.pk}/change/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertGreater(
+            html.find('id="semantic_assignments-group"'),
+            html.find('id="additions-group"'),
+        )
+        add_html = self.client.get("/admin/dict/article/add/").content.decode()
+        self.assertNotIn('id="semantic_assignments-group"', add_html)

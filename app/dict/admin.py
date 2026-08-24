@@ -187,15 +187,15 @@ class ArticleAdm(admin.ModelAdmin):
     exclude = ("first_letter",)
 
     # Order matters: the reorder JS parks the "tail" fieldset after
-    # "На эту статью указывают". Semantic fields are omitted on add
-    # (get_inlines), so indexes differ between add and change.
+    # "На эту статью указывают". Semantic fields sit last (change only;
+    # omitted on add via get_inlines).
     inlines = [
         TranslateInline,  # Переводы
         ArticleIndexTagInline,  # Пометы (служебные отметки)
-        ArticleSemanticFieldInline,  # Смысловые поля (readonly, change only)
         ArticleLinkInline,  # Смотрите также
         ArticleLinkReverseInline,  # На эту статью указывают
-        ArticleAdditionInline,  # Дополнения (not in the requested list)
+        ArticleAdditionInline,  # Дополнения
+        ArticleSemanticFieldInline,  # Смысловые поля (readonly, change only)
     ]
 
     def get_inlines(self, request, obj):
@@ -270,7 +270,6 @@ class TagAdm(admin.ModelAdmin):
 @admin.register(SemanticField)
 class SemanticFieldAdm(admin.ModelAdmin):
     list_display = ("id", "name", "parent", "sorting", "article_count", "site_link")
-    list_filter = ("parent",)
     search_fields = ("name", "definition")
     ordering = ("sorting", "name")
     readonly_fields = ("name", "definition", "parent", "sorting")
