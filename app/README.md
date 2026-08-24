@@ -14,13 +14,11 @@ docker compose -f docker-compose.internal.yml exec -w /app django \
   -o /app/dict/fixtures/dict_seed.json
 ```
 
-`dict_seed.json` is stored in **Git LFS**. After dump, commit only the LFS pointer (~130 bytes), never the raw JSON. On every clone (including the production server):
+`dict_seed.json` is stored in **Git LFS**. The machine that commits the dump needs `git-lfs` (`apt install git-lfs && git lfs install`). Then:
 
 ```bash
-git lfs install
-cp .githooks/pre-commit .git/hooks/pre-commit
 git add --renormalize app/dict/fixtures/dict_seed.json
-# git cat-file -s :app/dict/fixtures/dict_seed.json  → should be ~130, not ~28M
+# git cat-file -s :app/dict/fixtures/dict_seed.json  → ~130 bytes, not ~28M
 ```
 
 #### Load fixtures 

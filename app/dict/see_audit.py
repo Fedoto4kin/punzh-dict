@@ -4,8 +4,10 @@ import re
 
 KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
-HOMONYM = r"(?:\s+(?:\d+|[IVXivx]{1,5}))*"
-HOMONYM_REQ = r"(?:\s+(?:\d+|[IVXivx]{1,5}))+"
+# римский номер — отдельный токен (I, II), не префикс слова (v в voijettu)
+_ROMAN = r"(?:[IVX]{1,5}|[ivx]{1,5})(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮])"
+HOMONYM = rf"(?:\s+(?:\d+|{_ROMAN}))*"
+HOMONYM_REQ = rf"(?:\s+(?:\d+|{_ROMAN}))+"
 COMMA_SEP = r"\s*,\s*"
 
 # как make_link: канон только кириллица + точка внутри <i>
@@ -153,10 +155,20 @@ def html_see_lemmas(html):
     ]
 
 
+def fold_lemma(word):
+    """Свернуть лемму для сверки: без ||, | и апострофов."""
+    if not word:
+        return ""
+    w = word.lower().replace("||", "").replace("|", "")
+    for ch in "’'`ʼʹ":
+        w = w.replace(ch, "")
+    return w
+
+
 def html_see_mentions(html, target_words):
     """Есть ли в html отсылка см./ср. на одно из слов цели."""
-    lemmas = {lemma.lower() for lemma in html_see_lemmas(html)}
-    targets = {w.lower() for w in target_words if w}
+    lemmas = {fold_lemma(lemma) for lemma in html_see_lemmas(html)} - {""}
+    targets = {fold_lemma(w) for w in target_words if w} - {""}
     return bool(lemmas & targets)
 
 
@@ -217,7 +229,9 @@ SEE_LIST = re.compile(
 _SEE_TOKEN = re.compile(
     "("
     + KARELIAN
-    + r")((?:\s+(?:\d+|[IVXivx]{1,5}))*)|("
+    + r")((?:\s+(?:\d+|"
+    + _ROMAN
+    + r"))*)|("
     + COMMA_SEP
     + r"|\s*;\s*)"
 )
@@ -253,6 +267,13 @@ def lookup_articles(lemma, exclude_id=None):
         .values_list("article_id", flat=True)
         .distinct()
     )
+    folded = fold_lemma(lemma)
+    if not ids and folded and folded != lemma.lower():
+        ids = list(
+            ArticleIndexWord.objects.filter(word__iexact=folded)
+            .values_list("article_id", flat=True)
+            .distinct()
+        )
     if not ids:
         ids = list(krl_article_ids(lemma)[:20])
     qs = Article.objects.filter(pk__in=ids)

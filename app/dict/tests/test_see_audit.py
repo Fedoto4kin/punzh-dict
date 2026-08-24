@@ -107,6 +107,16 @@ class SeeAuditTest(SimpleTestCase):
                 self.assertNotIn(f'href="/search/{illus}"', html)
                 self.assertIn(illus, html)
 
+    def test_semicolon_illustration_starting_with_v(self):
+        src = (
+            "<b>bat’inka</b> <i>s</i> <i>см.</i> bot’inka; "
+            "jallašša voijettu gutal’inalla ~t"
+        )
+        self.assertEqual(html_see_lemmas(src), ["bot’inka"])
+        html = link_see_lemmas(src)
+        self.assertIn('<a href="/search/bot’inka">bot’inka</a>', html)
+        self.assertNotIn("jallašša</a>", html)
+
     def test_link_comma_list(self):
         html = link_see_lemmas("<i>ср.</i> koinpid’äja, kod’ikaš")
         self.assertIn('<a href="/search/koinpid’äja">koinpid’äja</a>', html)
@@ -118,6 +128,11 @@ class SeeAuditTest(SimpleTestCase):
         self.assertTrue(html_see_mentions(html, ["ruttoh", "rutto||h"]))
         self.assertFalse(html_see_mentions(html, ["abie"]))
         self.assertFalse(html_see_mentions("<i>freq</i> от marawttua", ["marawttua"]))
+
+    def test_mentions_folds_pipes_and_apostrophes(self):
+        html = "<i>см.</i> ehät’t’iä"
+        self.assertTrue(html_see_mentions(html, ["ehät’||t’iä", "ehättiä"]))
+        self.assertTrue(html_see_mentions(html, ["ehät’t’iä"]))
 
     def test_comma_list_skips_homonym_numbers(self):
         c = classify_html("<i>см.</i> mado 2, šano 1")
