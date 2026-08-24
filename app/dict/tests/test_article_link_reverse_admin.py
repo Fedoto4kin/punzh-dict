@@ -54,6 +54,8 @@ class ArticleLinkReverseInlineTestCase(TestCase):
         html = response.content.decode()
         self.assertIn("#links_from-group .tabular td.original p", html)
         self.assertIn("#links_to-group .tabular td.original p", html)
+        self.assertIn("#semantic_assignments-group .tabular td.original p", html)
+        self.assertIn("#articleindextranslate_set-group .tabular td.original p", html)
         from_html = html.split('id="links_from-group"', 1)[1].split("</fieldset>", 1)[0]
         self.assertIn("admin-autocomplete", from_html)
         self.assertIn("Смотрите также", from_html)
