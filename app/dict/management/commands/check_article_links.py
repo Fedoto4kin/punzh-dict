@@ -1,12 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from dict.models import Article, ArticleLink
-from dict.see_audit import (
-    article_index_words,
-    html_see_lemmas,
-    html_see_mentions,
-    lookup_articles,
-)
+from dict.see_audit import html_see_lemmas, lookup_articles, scan_see_links
 
 
 class Command(BaseCommand):
@@ -50,6 +45,7 @@ class Command(BaseCommand):
             lemmas = html_see_lemmas(html)
             outgoing = links_by_from.get(art.id, [])
             linked_ids = {lnk.to_article_id for lnk in outgoing}
+            scan = scan_see_links(art, outgoing)
 
             if len(lemmas) > 1:
                 covered = []
@@ -64,25 +60,14 @@ class Command(BaseCommand):
                 if open_lemmas:
                     multi_gap.append((art, lemmas, covered, open_lemmas, outgoing))
 
-            for lemma in lemmas:
-                found = lookup_articles(lemma, art.id)
-                ids = [a.id for a in found]
-                if not found:
-                    unresolved.append((art, lemma))
-                elif len(found) > 1:
-                    if not (set(ids) & linked_ids):
-                        ambiguous.append((art, lemma, found))
-                else:
-                    tgt = found[0]
-                    if tgt.id not in linked_ids:
-                        missing.append((art, lemma, tgt))
-
-            for lnk in outgoing:
-                if html_see_mentions(html, article_index_words(lnk.to_article)):
-                    continue
+            for row in scan["unique_missing"]:
+                missing.append((art, row["lemma"], row["target"]))
+            for row in scan["unresolved"]:
+                unresolved.append((art, row["lemma"]))
+            for row in scan["homonym"]:
+                ambiguous.append((art, row["lemma"], row["found"]))
+            for lnk in scan["extra"]:
                 extra.append((art, lnk))
-                # если однозначный резолв другой статьи — ещё и «цель не та»
-                # уже покрыто extra; wrong — лемма есть, связь на другое
             for lemma in lemmas:
                 found = lookup_articles(lemma, art.id)
                 if len(found) != 1:

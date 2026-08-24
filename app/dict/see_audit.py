@@ -227,13 +227,7 @@ SEE_LIST = re.compile(
     rf")(\s*[;,]?)?"
 )
 _SEE_TOKEN = re.compile(
-    "("
-    + KARELIAN
-    + r")((?:\s+(?:\d+|"
-    + _ROMAN
-    + r"))*)|("
-    + COMMA_SEP
-    + r"|\s*;\s*)"
+    "(" + KARELIAN + r")((?:\s+(?:\d+|" + _ROMAN + r"))*)|(" + COMMA_SEP + r"|\s*;\s*)"
 )
 
 
@@ -255,6 +249,38 @@ def link_see_lemmas(html):
         return f"<i>{mark}</i> {''.join(bits)}{tail_sep}"
 
     return SEE_LIST.sub(repl, html)
+
+
+def article_headword_keys(article):
+    """
+    Формы основного заголовка (до запятой), без нарезки сложений по «|».
+    «riw||gu, ~gun’e» → riwgu, riugu, rivgu; «riwgu|meččä» → riwgumeččä…
+    """
+    from dict.helpers.variants import gen_word_variants
+
+    keys = set()
+
+    def add_glued(raw):
+        if not raw:
+            return
+        glued = raw.replace("||", "").replace("|", "").strip()
+        if not glued:
+            return
+        keys.add(fold_lemma(glued))
+        for v in gen_word_variants(glued):
+            folded = fold_lemma(v)
+            if folded:
+                keys.add(folded)
+
+    add_glued((article.word or "").split(",")[0])
+    if getattr(article, "word_normalized", None):
+        add_glued(article.word_normalized.split(",")[0])
+    return {k for k in keys if k}
+
+
+def lemma_matches_headword(article, lemma):
+    folded = fold_lemma(lemma)
+    return bool(folded) and folded in article_headword_keys(article)
 
 
 def lookup_articles(lemma, exclude_id=None):
@@ -279,7 +305,12 @@ def lookup_articles(lemma, exclude_id=None):
     qs = Article.objects.filter(pk__in=ids)
     if exclude_id:
         qs = qs.exclude(pk=exclude_id)
-    return list(qs.order_by("word"))
+    found = list(qs.order_by("word"))
+    # «см. riwgu» не должно цеплять сложения bad’ja|riwgu, если есть riw||gu
+    primary = [a for a in found if lemma_matches_headword(a, lemma)]
+    if primary:
+        return primary
+    return found
 
 
 def article_index_words(article):
@@ -292,3 +323,39 @@ def article_index_words(article):
         if w:
             words.add(w)
     return words
+
+
+def scan_see_links(article, outgoing):
+    """
+    Сверка лемм «см./ср.» в HTML с исходящими ArticleLink.
+    Деривации «от» не входят. HTML не меняет.
+    """
+    html = article.article_html or ""
+    lemmas = html_see_lemmas(html)
+    linked_ids = {lnk.to_article_id for lnk in outgoing}
+    unique_missing = []
+    unresolved = []
+    homonym = []
+    for lemma in lemmas:
+        found = lookup_articles(lemma, article.id)
+        ids = {a.id for a in found}
+        if not found:
+            unresolved.append({"lemma": lemma, "found": []})
+        elif len(found) > 1:
+            if not (ids & linked_ids):
+                homonym.append({"lemma": lemma, "found": found})
+        else:
+            tgt = found[0]
+            if tgt.id not in linked_ids:
+                unique_missing.append({"lemma": lemma, "target": tgt})
+    extra = []
+    for lnk in outgoing:
+        if html_see_mentions(html, article_index_words(lnk.to_article)):
+            continue
+        extra.append(lnk)
+    return {
+        "unique_missing": unique_missing,
+        "unresolved": unresolved,
+        "homonym": homonym,
+        "extra": extra,
+    }

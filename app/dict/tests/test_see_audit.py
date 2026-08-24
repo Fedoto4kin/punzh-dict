@@ -1,6 +1,9 @@
+from types import SimpleNamespace
+
 from django.test import SimpleTestCase
 
 from dict.see_audit import (
+    article_headword_keys,
     classify_html,
     html_see_lemmas,
     html_see_mentions,
@@ -134,6 +137,15 @@ class SeeAuditTest(SimpleTestCase):
         self.assertTrue(html_see_mentions(html, ["ehät’||t’iä", "ehättiä"]))
         self.assertTrue(html_see_mentions(html, ["ehät’t’iä"]))
 
+    def test_headword_keys_glue_double_pipe_not_compound_tail(self):
+        simple = SimpleNamespace(word="riw||gu, ~gun’e", word_normalized=None)
+        compound = SimpleNamespace(word="humala|riwgu", word_normalized=None)
+        keys = article_headword_keys(simple)
+        self.assertIn("riwgu", keys)
+        self.assertIn("riugu", keys)
+        self.assertNotIn("riwgu", article_headword_keys(compound))
+        self.assertIn("humalariwgu", article_headword_keys(compound))
+
     def test_comma_list_skips_homonym_numbers(self):
         c = classify_html("<i>см.</i> mado 2, šano 1")
         self.assertEqual(c["comma_list"][0]["lemmas"], ["mado", "šano"])
@@ -151,7 +163,7 @@ class SeeAuditTest(SimpleTestCase):
         self.assertEqual(c["comma_list"][0]["lemmas"], ["kappa", "n’el’l’ikkö"])
         html = link_see_lemmas(src)
         self.assertIn('<a href="/search/kappa">kappa</a> I 2', html)
-        self.assertIn("<a href=\"/search/n’el’l’ikkö\">n’el’l’ikkö</a> 1", html)
+        self.assertIn('<a href="/search/n’el’l’ikkö">n’el’l’ikkö</a> 1', html)
         self.assertIn("; ", html)
         self.assertTrue(html.rstrip().endswith(";"))
         self.assertNotIn('href="/search/I"', html)
