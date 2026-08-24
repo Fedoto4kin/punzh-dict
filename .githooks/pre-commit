@@ -1,0 +1,24 @@
+#!/bin/sh
+# Reject dict_seed.json if Git LFS is missing and the raw JSON would enter git.
+set -eu
+
+file="app/dict/fixtures/dict_seed.json"
+
+if ! git diff --cached --name-only -- "$file" | grep -qx "$file"; then
+    exit 0
+fi
+
+if ! command -v git-lfs >/dev/null 2>&1; then
+    echo "error: git-lfs is required to commit $file" >&2
+    echo "install git-lfs, then: git lfs install && git add --renormalize $file" >&2
+    exit 1
+fi
+
+size=$(git cat-file -s ":$file")
+if [ "$size" -gt 500 ]; then
+    echo "error: $file is $size bytes in the index; it must be a Git LFS pointer (~130 bytes)." >&2
+    echo "git lfs is not filtering this file. On this machine run:" >&2
+    echo "  git lfs install" >&2
+    echo "  git add --renormalize $file" >&2
+    exit 1
+fi

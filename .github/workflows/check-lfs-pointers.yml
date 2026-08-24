@@ -1,0 +1,22 @@
+name: Check LFS pointers
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  dict-seed-is-pointer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: dict_seed.json must be a Git LFS pointer
+        run: |
+          f=app/dict/fixtures/dict_seed.json
+          first=$(head -n 1 "$f")
+          if [ "$first" != "version https://git-lfs.github.com/spec/v1" ]; then
+            echo "Expected a Git LFS pointer, not the fixture JSON."
+            echo "First line: $first"
+            ls -l "$f"
+            echo "On the machine that committed this file: git lfs install && git add --renormalize $f"
+            exit 1
+          fi
