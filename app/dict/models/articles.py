@@ -6,6 +6,7 @@ from django.utils.html import format_html
 
 from ..helpers import (
     KRL_ABC,
+    compact_article_html,
     gen_word_variants,
     normalization,
     r_gen_word_variants,
@@ -36,6 +37,10 @@ class ArticleBase(models.Model):
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        self.article_html = compact_article_html(self.article_html)
+        super().save(*args, **kwargs)
 
 
 class Article(ArticleBase):

@@ -1,5 +1,3 @@
-import re
-
 from django.contrib import admin
 from django.db import models
 from django.db.models import Count
@@ -19,6 +17,42 @@ from .models import (
     Tag,
 )
 from .search import krl_article_ids
+
+# CodeMirror 5 (CDN) — HTML source highlighting in admin, no WYSIWYG.
+CODEMIRROR_VERSION = "5.65.16"
+CODEMIRROR_CDN = (
+    f"https://cdnjs.cloudflare.com/ajax/libs/codemirror/{CODEMIRROR_VERSION}"
+)
+
+
+class HtmlSourceWidget(Textarea):
+    def __init__(self, attrs=None):
+        default = {"rows": 8, "cols": 160, "class": "article-html-source"}
+        if attrs:
+            extra_class = attrs.get("class", "")
+            merged = {**default, **attrs}
+            merged["class"] = f"{default['class']} {extra_class}".strip()
+            attrs = merged
+        else:
+            attrs = default
+        super().__init__(attrs=attrs)
+
+    class Media:
+        css = {
+            "all": (
+                f"{CODEMIRROR_CDN}/codemirror.min.css",
+                "admin/css/article_html_editor.css",
+            )
+        }
+        js = (
+            f"{CODEMIRROR_CDN}/codemirror.min.js",
+            f"{CODEMIRROR_CDN}/mode/xml/xml.min.js",
+            f"{CODEMIRROR_CDN}/mode/javascript/javascript.min.js",
+            f"{CODEMIRROR_CDN}/mode/css/css.min.js",
+            f"{CODEMIRROR_CDN}/mode/htmlmixed/htmlmixed.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.11/beautify-html.min.js",
+            "admin/js/article_html_editor.js",
+        )
 
 
 class ArticleLinkInline(admin.TabularInline):
@@ -79,7 +113,7 @@ class ArticleAdditionInline(admin.StackedInline):
         ),
     ]
     formfield_overrides = {
-        models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
+        models.TextField: {"widget": HtmlSourceWidget()},
     }
 
     extra = 0
@@ -207,7 +241,7 @@ class ArticleAdm(admin.ModelAdmin):
         return inlines
 
     formfield_overrides = {
-        models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
+        models.TextField: {"widget": HtmlSourceWidget()},
     }
 
     class Media:

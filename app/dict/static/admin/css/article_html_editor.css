@@ -1,0 +1,23 @@
+.form-row .CodeMirror,
+.inline-related .CodeMirror {
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+  font-size: 13px;
+  min-height: 10em;
+  height: auto;
+  max-width: 100%;
+}
+
+.form-row .CodeMirror-scroll,
+.inline-related .CodeMirror-scroll {
+  min-height: 10em;
+}
+
+.article-html-toolbar {
+  margin: 0 0 6px;
+}
+
+.article-html-toolbar .article-html-format {
+  padding: 4px 10px;
+  font-size: 12px;
+}
