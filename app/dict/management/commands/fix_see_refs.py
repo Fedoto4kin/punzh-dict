@@ -3,8 +3,8 @@ import sys
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from dict.models import Article, ArticleIndexWord, ArticleLink
-from dict.see_audit import classify_html, is_crooked, propose_html_fix
+from dict.models import Article, ArticleLink
+from dict.see_audit import classify_html, is_crooked, lookup_articles, propose_html_fix
 
 
 class Command(BaseCommand):
@@ -74,19 +74,7 @@ class Command(BaseCommand):
         return line
 
     def _lookup(self, lemma, exclude_id):
-        ids = list(
-            ArticleIndexWord.objects.filter(word__iexact=lemma)
-            .values_list("article_id", flat=True)
-            .distinct()
-        )
-        if not ids:
-            from dict.search import krl_article_ids
-
-            ids = list(krl_article_ids(lemma)[:20])
-        articles = list(
-            Article.objects.filter(pk__in=ids).exclude(pk=exclude_id).order_by("word")
-        )
-        return articles
+        return lookup_articles(lemma, exclude_id)
 
     def _lemmas(self, html):
         c = classify_html(html)

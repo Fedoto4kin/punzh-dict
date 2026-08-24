@@ -89,3 +89,26 @@ class SeeAuditTest(SimpleTestCase):
         self.assertTrue(html_see_mentions(html, ["ruttoh", "rutto||h"]))
         self.assertFalse(html_see_mentions(html, ["abie"]))
         self.assertFalse(html_see_mentions("<i>freq</i> от marawttua", ["marawttua"]))
+
+    def test_comma_list_skips_homonym_numbers(self):
+        c = classify_html("<i>см.</i> mado 2, šano 1")
+        self.assertEqual(c["comma_list"][0]["lemmas"], ["mado", "šano"])
+
+    def test_link_skips_homonym_numbers(self):
+        html = link_see_lemmas("<i>см.</i> mado 2, šano 1;")
+        self.assertIn('<a href="/search/mado">mado</a> 2', html)
+        self.assertIn('<a href="/search/šano">šano</a> 1', html)
+        self.assertNotIn('href="/search/2"', html)
+        self.assertNotIn(">2</a>", html)
+
+    def test_semicolon_list_with_roman_and_arabic(self):
+        src = "<i>ср.</i> kappa I 2; n’el’l’ikkö 1;"
+        c = classify_html(src)
+        self.assertEqual(c["comma_list"][0]["lemmas"], ["kappa", "n’el’l’ikkö"])
+        html = link_see_lemmas(src)
+        self.assertIn('<a href="/search/kappa">kappa</a> I 2', html)
+        self.assertIn("<a href=\"/search/n’el’l’ikkö\">n’el’l’ikkö</a> 1", html)
+        self.assertIn("; ", html)
+        self.assertTrue(html.rstrip().endswith(";"))
+        self.assertNotIn('href="/search/I"', html)
+        self.assertNotIn('href="/search/2"', html)

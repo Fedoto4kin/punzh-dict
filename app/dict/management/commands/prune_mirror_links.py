@@ -1,17 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from dict.models import ArticleIndexWord, ArticleLink
-from dict.see_audit import html_see_mentions
-
-
-def _index_words(article):
-    words = {article.word}
-    for w in ArticleIndexWord.objects.filter(article=article).values_list(
-        "word", flat=True
-    ):
-        if w:
-            words.add(w)
-    return words
+from dict.models import ArticleLink
+from dict.see_audit import article_index_words, html_see_mentions
 
 
 def classify_mirror_pair(link_ab, link_ba):
@@ -20,8 +10,8 @@ def classify_mirror_pair(link_ab, link_ba):
     Возвращает (drop_ab, drop_ba) булевы.
     """
     a, b = link_ab.from_article, link_ab.to_article
-    a_mentions_b = html_see_mentions(a.article_html or "", _index_words(b))
-    b_mentions_a = html_see_mentions(b.article_html or "", _index_words(a))
+    a_mentions_b = html_see_mentions(a.article_html or "", article_index_words(b))
+    b_mentions_a = html_see_mentions(b.article_html or "", article_index_words(a))
     drop_ba = a_mentions_b and not b_mentions_a
     drop_ab = b_mentions_a and not a_mentions_b
     return drop_ab, drop_ba, a_mentions_b, b_mentions_a

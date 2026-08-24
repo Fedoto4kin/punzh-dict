@@ -3,12 +3,15 @@
 import re
 
 KARELIAN = r"[A-Za-z’ÜüÄäÖöŠšČčŽži̮]+"
+# омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
+HOMONYM = r"(?:\s+(?:\d+|[IVXivx]{1,5}))*"
+SEE_SEP = r"\s*[,;]\s*"
 
 # как make_link: канон только кириллица + точка внутри <i>
-CANON = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN});?")
+CANON = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN}){HOMONYM}")
 ITALIC = re.compile(r"<i>([^<]*)</i>", re.IGNORECASE)
-# после канона — ещё леммы через запятую
-COMMA_TAIL = re.compile(rf"\s*,\s*({KARELIAN})")
+# после канона — ещё леммы через запятую или точку с запятой
+COMMA_TAIL = re.compile(rf"{SEE_SEP}({KARELIAN}){HOMONYM}")
 DERIV_TAGGED = re.compile(
     rf"<i>\s*(freq|caus|mom|refl)\s*</i>\s+от\s+({KARELIAN})",
     re.IGNORECASE,
@@ -200,23 +203,60 @@ def propose_html_fix(html):
     return BARE_SEE.sub(repl_bare, html)
 
 
-SEE_LIST = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN}(?:\s*,\s*{KARELIAN})*)(;?)")
-_SEE_TOKEN = re.compile(rf"({KARELIAN})|(\s*,\s*)")
+SEE_ITEM = rf"{KARELIAN}{HOMONYM}"
+SEE_LIST = re.compile(
+    rf"<i>(см\.|ср\.)</i>\s+({SEE_ITEM}(?:{SEE_SEP}{SEE_ITEM})*)({SEE_SEP})?"
+)
+_SEE_TOKEN = re.compile(
+    "(" + KARELIAN + r")((?:\s+(?:\d+|[IVXivx]{1,5}))*)|(" + SEE_SEP + ")"
+)
 
 
 def link_see_lemmas(html):
-    """Обернуть каждое слово после «см./ср.», в том числе через запятую."""
+    """Обернуть каждое слово после «см./ср.»; номера омонимов не трогать."""
     html = html or ""
 
     def repl(m):
-        mark, blob, semi = m.group(1), m.group(2), m.group(3)
+        mark, blob, tail_sep = m.group(1), m.group(2), m.group(3) or ""
         bits = []
         for token in _SEE_TOKEN.finditer(blob):
-            word, sep = token.group(1), token.group(2)
+            word, hom, sep = token.group(1), token.group(2), token.group(3)
             if word:
                 bits.append(f'<a href="/search/{word}">{word}</a>')
+                if hom:
+                    bits.append(hom)
             else:
                 bits.append(sep)
-        return f"<i>{mark}</i> {''.join(bits)}{semi}"
+        return f"<i>{mark}</i> {''.join(bits)}{tail_sep}"
 
     return SEE_LIST.sub(repl, html)
+
+
+def lookup_articles(lemma, exclude_id=None):
+    """Статьи по лемме (индекс заголовка, иначе krl ilike)."""
+    from dict.models import Article, ArticleIndexWord
+    from dict.search import krl_article_ids
+
+    ids = list(
+        ArticleIndexWord.objects.filter(word__iexact=lemma)
+        .values_list("article_id", flat=True)
+        .distinct()
+    )
+    if not ids:
+        ids = list(krl_article_ids(lemma)[:20])
+    qs = Article.objects.filter(pk__in=ids)
+    if exclude_id:
+        qs = qs.exclude(pk=exclude_id)
+    return list(qs.order_by("word"))
+
+
+def article_index_words(article):
+    from dict.models import ArticleIndexWord
+
+    words = {article.word}
+    for w in ArticleIndexWord.objects.filter(article=article).values_list(
+        "word", flat=True
+    ):
+        if w:
+            words.add(w)
+    return words
