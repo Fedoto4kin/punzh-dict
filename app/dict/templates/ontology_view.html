@@ -3,7 +3,7 @@
 {% load dict_extras %}
 
 {% block title %}
-{{ field.name }} - Смысловые поля - Словарь карельского языка
+{{ field.name }} - Онтология - Словарь карельского языка
 {% endblock %}
 
 {% block content %}
@@ -14,9 +14,9 @@
   .collapse-toggle .tgl { font-size: .8rem; font-weight: 400; color: #007bff; margin-left: .5rem; }
 </style>
 <div class="row mt-5 mb-3">
-    <div class="col-lg-8">
+    <div class="col-12">
         <p class="mb-1">
-            <a href="{% url 'ontology' %}">Все смысловые поля</a>
+            <a href="{% url 'ontology' %}">Онтология</a>
         </p>
         <h2>{{ field.name }}</h2>
         {% if field.definition %}
