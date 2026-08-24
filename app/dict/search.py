@@ -72,8 +72,8 @@ def sort_and_paginate(articles, page):
 
 def expand_by_links(article_ids):
     """
-    Возвращает множество статей, связанных с article_ids
-    в обе стороны.
+    Кластер по направленным ArticleLink: исходящие и входящие концы
+    одной дуги. Обратная строка B→A в БД не нужна — достаточно A→B.
     """
     outgoing = ArticleLink.objects.filter(from_article_id__in=article_ids).values_list(
         "to_article_id", flat=True

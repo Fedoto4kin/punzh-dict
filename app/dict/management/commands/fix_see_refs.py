@@ -10,8 +10,9 @@ from dict.see_audit import classify_html, is_crooked, propose_html_fix
 class Command(BaseCommand):
     help = (
         "Интерактивная правка кривых «см./ср.» в HTML и создание ArticleLink. "
-        "Очередь — статьи, где маркер без <i>, без точки, с латиницей или с "
-        "пробелами внутри <i>. "
+        "По умолчанию очередь — кривой маркер (без <i>, точки, латиница). "
+        "--comma: списки лемм через запятую без полного набора связей. "
+        "--apply-unique: создать однозначные связи без вопросов. "
         "Команды: пустая строка — пропуск; y — принять HTML и связь; "
         "h — только HTML; t <id|слово> — цель связи; u — отмена последнего "
         "сохранения; q — выход. "
@@ -43,6 +44,22 @@ class Command(BaseCommand):
             dest="ids",
             help="Только эти id (можно повторять).",
         )
+        parser.add_argument(
+            "--comma",
+            action="store_true",
+            help=(
+                "Очередь — канонические «см./ср.» со списком лемм через запятую, "
+                "у которых не все ArticleLink ещё есть. HTML обычно не трогаем."
+            ),
+        )
+        parser.add_argument(
+            "--apply-unique",
+            action="store_true",
+            help=(
+                "Без вопросов создать связи для однозначно найденных лемм "
+                "(неоднозначные пропускаются). Удобно с --comma."
+            ),
+        )
 
     def _ask(self, prompt):
         sys.stdout.write(prompt)
@@ -67,9 +84,7 @@ class Command(BaseCommand):
 
             ids = list(krl_article_ids(lemma)[:20])
         articles = list(
-            Article.objects.filter(pk__in=ids)
-            .exclude(pk=exclude_id)
-            .order_by("word")
+            Article.objects.filter(pk__in=ids).exclude(pk=exclude_id).order_by("word")
         )
         return articles
 
@@ -83,15 +98,48 @@ class Command(BaseCommand):
                 seen.append(lemma)
         return seen
 
+    def _existing_to_ids(self, article_id):
+        return set(
+            ArticleLink.objects.filter(from_article_id=article_id).values_list(
+                "to_article_id", flat=True
+            )
+        )
+
+    def _gap(self, article):
+        """Недостающие однозначные цели и нерезолвнувшиеся леммы."""
+        lemmas = self._lemmas(propose_html_fix(article.article_html or ""))
+        existing = self._existing_to_ids(article.id)
+        unique_missing = []
+        unresolved = []
+        seen = set()
+        for lemma in lemmas:
+            found = self._lookup(lemma, article.id)
+            if len(found) == 1:
+                tgt = found[0]
+                if tgt.id not in existing and tgt.id not in seen:
+                    unique_missing.append(tgt)
+                    seen.add(tgt.id)
+            else:
+                unresolved.append((lemma, found))
+        return unique_missing, unresolved
+
     def _collect_ids(self, opts):
         qs = Article.objects.all()
         if opts["ids"]:
             qs = qs.filter(pk__in=opts["ids"])
         qs = qs.order_by("word" if opts["order"] == "word" else "id")
         ids = []
-        for aid, html in qs.values_list("id", "article_html"):
-            if is_crooked(html or ""):
-                ids.append(aid)
+        comma = opts["comma"]
+        for art in qs.only("id", "article_html", "word").iterator(chunk_size=200):
+            html = art.article_html or ""
+            if comma:
+                if not classify_html(html)["comma_list"]:
+                    continue
+                unique_missing, unresolved = self._gap(art)
+                if unique_missing or unresolved:
+                    ids.append(art.id)
+            elif is_crooked(html):
+                ids.append(art.id)
         if opts["limit"]:
             ids = ids[: opts["limit"]]
         return ids
@@ -118,15 +166,22 @@ class Command(BaseCommand):
             ArticleLink.objects.filter(id__in=created_link_ids).delete()
 
     def handle(self, *args, **opts):
+        comma = opts["comma"]
         ids = self._collect_ids(opts)
         total = len(ids)
         if not total:
-            self.stdout.write(self.style.SUCCESS("Кривых «см./ср.» нет."))
+            msg = (
+                "Списков через запятую без полного набора связей нет."
+                if comma
+                else "Кривых «см./ср.» нет."
+            )
+            self.stdout.write(self.style.SUCCESS(msg))
             return
 
+        label = "списков через запятую" if comma else "кривых маркеров"
         self.stdout.write(
             self.style.WARNING(
-                f"Кривых маркеров: {total}. "
+                f"{label.capitalize()}: {total}. "
                 f"Пусто — пропуск, y — HTML+связь, h — только HTML, "
                 f"t <id|слово> — цель, u — отмена, q — выход."
             )
@@ -137,21 +192,60 @@ class Command(BaseCommand):
                 art = Article.objects.get(pk=aid)
                 proposed = propose_html_fix(art.article_html or "")
                 lemmas = self._lemmas(proposed)
+                existing = self._existing_to_ids(art.id)
                 self.stdout.write("\n" + "=" * 72)
                 self.stdout.write(f"id={art.id}  {art.word}")
-                self.stdout.write(f"было: {art.article_html}")
-                self.stdout.write(f"станет: {proposed}")
+                if not comma:
+                    self.stdout.write(f"было: {art.article_html}")
+                    self.stdout.write(f"станет: {proposed}")
+                else:
+                    self.stdout.write(art.article_html or "")
                 for lemma in lemmas:
                     found = self._lookup(lemma, art.id)
                     if len(found) == 1:
                         t = found[0]
-                        self.stdout.write(f"  связь: {lemma} -> #{t.id} {t.word}")
+                        flag = "уже есть" if t.id in existing else "создать"
+                        self.stdout.write(
+                            f"  связь: {lemma} -> #{t.id} {t.word}  [{flag}]"
+                        )
                     elif not found:
                         self.stdout.write(f"  связь: {lemma} -> НЕ НАЙДЕНА")
                     else:
                         self.stdout.write(
                             f"  связь: {lemma} -> {len(found)} кандидатов"
                         )
+            return
+
+        if opts["apply_unique"]:
+            done_links = 0
+            skipped = 0
+            for aid in ids:
+                article = Article.objects.get(pk=aid)
+                unique_missing, unresolved = self._gap(article)
+                if unique_missing:
+                    proposed = propose_html_fix(article.article_html or "")
+                    _, link_ids = self._save(
+                        article,
+                        proposed,
+                        unique_missing,
+                        html_only=False,
+                    )
+                    done_links += len(link_ids)
+                    self.stdout.write(
+                        f"#{article.id} {article.word}: +{len(link_ids)} связей"
+                    )
+                if unresolved:
+                    skipped += 1
+                    names = ", ".join(l for l, _ in unresolved)
+                    self.stdout.write(
+                        f"#{article.id} {article.word}: пропуск неоднозначных: {names}"
+                    )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Итог: связей создано — {done_links}, "
+                    f"статей с неоднозначными леммами — {skipped}."
+                )
+            )
             return
 
         done_html = 0
@@ -164,7 +258,7 @@ class Command(BaseCommand):
                 article = Article.objects.get(pk=aid)
             except Article.DoesNotExist:
                 continue
-            if not is_crooked(article.article_html or ""):
+            if not comma and not is_crooked(article.article_html or ""):
                 continue
 
             override = None
@@ -198,9 +292,7 @@ class Command(BaseCommand):
                             self.stdout.write(f"    #{t.id}  {t.word}")
                 if override is not None:
                     unique_targets.append(override)
-                    self.stdout.write(
-                        f"цель вручную: #{override.id} {override.word}"
-                    )
+                    self.stdout.write(f"цель вручную: #{override.id} {override.word}")
                 by_id = {}
                 for t in unique_targets:
                     by_id[t.id] = t
@@ -226,7 +318,9 @@ class Command(BaseCommand):
                 if low == "u":
                     if last_undo:
                         self._undo(*last_undo)
-                        self.stdout.write(self.style.WARNING("Последнее сохранение отменено."))
+                        self.stdout.write(
+                            self.style.WARNING("Последнее сохранение отменено.")
+                        )
                         last_undo = None
                     else:
                         self.stdout.write("Отменять нечего.")
@@ -237,7 +331,9 @@ class Command(BaseCommand):
                     self.stdout.write("Пропущено.")
                     break
 
-                if low.startswith("t ") or (low.startswith("t") and len(low) > 1 and low[1] == " "):
+                if low.startswith("t ") or (
+                    low.startswith("t") and len(low) > 1 and low[1] == " "
+                ):
                     query = cmd[1:].strip()
                     if not query:
                         self.stdout.write("t <id или слово>")

@@ -134,6 +134,25 @@ def classify_html(html):
     return out
 
 
+SEE_LEMMA_SOURCES = frozenset({"canon", "comma", "bare"})
+
+
+def html_see_lemmas(html):
+    """Леммы после см./ср. (без дериваций «от»)."""
+    return [
+        lemma
+        for lemma, src in classify_html(html)["lemmas"]
+        if src in SEE_LEMMA_SOURCES
+    ]
+
+
+def html_see_mentions(html, target_words):
+    """Есть ли в html отсылка см./ср. на одно из слов цели."""
+    lemmas = {lemma.lower() for lemma in html_see_lemmas(html)}
+    targets = {w.lower() for w in target_words if w}
+    return bool(lemmas & targets)
+
+
 CROOKED_KEYS = ("no_period", "mixed_script", "spaced", "bare")
 
 
@@ -179,3 +198,25 @@ def propose_html_fix(html):
         return f"<i>{mark}</i> {m.group(2)}"
 
     return BARE_SEE.sub(repl_bare, html)
+
+
+SEE_LIST = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN}(?:\s*,\s*{KARELIAN})*)(;?)")
+_SEE_TOKEN = re.compile(rf"({KARELIAN})|(\s*,\s*)")
+
+
+def link_see_lemmas(html):
+    """Обернуть каждое слово после «см./ср.», в том числе через запятую."""
+    html = html or ""
+
+    def repl(m):
+        mark, blob, semi = m.group(1), m.group(2), m.group(3)
+        bits = []
+        for token in _SEE_TOKEN.finditer(blob):
+            word, sep = token.group(1), token.group(2)
+            if word:
+                bits.append(f'<a href="/search/{word}">{word}</a>')
+            else:
+                bits.append(sep)
+        return f"<i>{mark}</i> {''.join(bits)}{semi}"
+
+    return SEE_LIST.sub(repl, html)

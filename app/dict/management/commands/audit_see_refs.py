@@ -41,9 +41,7 @@ class Command(BaseCommand):
             if w
         }
         known |= {
-            w.lower()
-            for w in Article.objects.values_list("word", flat=True)
-            if w
+            w.lower() for w in Article.objects.values_list("word", flat=True) if w
         }
 
         hits = {k: 0 for k in BUCKETS}
@@ -58,10 +56,7 @@ class Command(BaseCommand):
             scanned += 1
             blobs = [art.article_html or ""]
             blobs.extend(add.article_html or "" for add in art.additions.all())
-            merged = {
-                k: []
-                for k in list(BUCKETS) + ["lemmas"]
-            }
+            merged = {k: [] for k in list(BUCKETS) + ["lemmas"]}
             for html in blobs:
                 c = classify_html(html)
                 for k in BUCKETS:
@@ -94,9 +89,7 @@ class Command(BaseCommand):
             ("прочее «от lemma»", "deriv_loose"),
         ]
         for title, key in rows:
-            self.stdout.write(
-                f"  {title:<36} {hits[key]:6d}  {len(articles[key]):6d}"
-            )
+            self.stdout.write(f"  {title:<36} {hits[key]:6d}  {len(articles[key]):6d}")
         self.stdout.write(
             f"  {'лемма не в индексе заголовков':<36} {unresolved:6d}  "
             f"{len(unresolved_arts):6d}"

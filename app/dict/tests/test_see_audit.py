@@ -2,7 +2,9 @@ from django.test import SimpleTestCase
 
 from dict.see_audit import (
     classify_html,
+    html_see_mentions,
     is_see_marker,
+    link_see_lemmas,
     marker_issues,
     propose_html_fix,
 )
@@ -40,9 +42,7 @@ class SeeAuditTest(SimpleTestCase):
     def test_comma_list(self):
         c = classify_html("<i>ср.</i> koinpid’äja, kod’ikaš")
         self.assertEqual(len(c["comma_list"]), 1)
-        self.assertEqual(
-            c["comma_list"][0]["lemmas"], ["koinpid’äja", "kod’ikaš"]
-        )
+        self.assertEqual(c["comma_list"][0]["lemmas"], ["koinpid’äja", "kod’ikaš"])
 
     def test_deriv_tagged(self):
         html = "<b>marawt||ella</b> <i>v</i> <i>freq</i> от marawttua; kanat"
@@ -72,3 +72,20 @@ class SeeAuditTest(SimpleTestCase):
     def test_propose_idempotent_canon(self):
         src = "<i>см.</i> abie; <i>ср.</i> abevus"
         self.assertEqual(propose_html_fix(src), src)
+
+    def test_link_single_lemma(self):
+        html = link_see_lemmas("<i>см.</i> ruttoh; foo")
+        self.assertIn('<a href="/search/ruttoh">ruttoh</a>', html)
+        self.assertIn("foo", html)
+
+    def test_link_comma_list(self):
+        html = link_see_lemmas("<i>ср.</i> koinpid’äja, kod’ikaš")
+        self.assertIn('<a href="/search/koinpid’äja">koinpid’äja</a>', html)
+        self.assertIn('<a href="/search/kod’ikaš">kod’ikaš</a>', html)
+        self.assertIn(", ", html)
+
+    def test_html_see_mentions(self):
+        html = "<i>см.</i> ruttoh; foo"
+        self.assertTrue(html_see_mentions(html, ["ruttoh", "rutto||h"]))
+        self.assertFalse(html_see_mentions(html, ["abie"]))
+        self.assertFalse(html_see_mentions("<i>freq</i> от marawttua", ["marawttua"]))
