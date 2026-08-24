@@ -1,0 +1,16 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  /* Django prints ArticleLink.__str__ as a tiny gray overlay on tabular rows. */
+  #links_from-group .tabular td.original p,
+  #links_to-group .tabular td.original p {
+    display: none !important;
+  }
+  #links_from-group .tabular tr.has_original td,
+  #links_to-group .tabular tr.has_original td {
+    padding-top: 8px !important;
+  }
+</style>
+{% endblock %}

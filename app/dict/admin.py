@@ -53,7 +53,9 @@ class ArticleLinkReverseInline(admin.TabularInline):
 
     def from_article_link(self, obj):
         url = obj.from_article.get_admin_url()
-        return format_html('<a href="{}">{}</a>', url, obj.from_article.word)
+        return format_html(
+            '<a href="{}">{}</a>', url, normalization(obj.from_article.word)
+        )
 
     from_article_link.short_description = "Статья‑источник"
 
