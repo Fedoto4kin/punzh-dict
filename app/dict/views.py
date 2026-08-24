@@ -101,19 +101,7 @@ def search(request, query="", page=1):
                 active_label = f
     else:
         direction = "krl"
-        translation_table = str.maketrans(
-            {
-                ";": "",
-                "’": "",
-                ",": "",
-                "š": "s",
-                "č": "c",
-                "ž": "z",
-                "?": "%",
-                ".": "_",
-            }
-        )
-        page_obj, found_count = word_search(query.translate(translation_table), page)
+        page_obj, found_count = word_search(query, page)
         narrowing = []
         direct_ids = set()
         possible = []

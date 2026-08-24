@@ -379,12 +379,35 @@ def search_by_translate_linked(query: str, page=1, f=None):
 # ------------------------------------------------------------
 
 
-def word_search(query: str, page: int) -> Paginator:
-    ids = ArticleIndexWord.objects.filter(word__ilike=query).values_list(
+# Same mapping the public search form applies before ILIKE: '.' is one
+# character, '?' is any sequence; a few punctuation/diacritic folds.
+_KRL_ILIKE_TRANS = str.maketrans(
+    {
+        ";": "",
+        "’": "",
+        ",": "",
+        "š": "s",
+        "č": "c",
+        "ž": "z",
+        "?": "%",
+        ".": "_",
+    }
+)
+
+
+def prepare_krl_ilike_query(query: str) -> str:
+    return query.translate(_KRL_ILIKE_TRANS)
+
+
+def krl_article_ids(query: str):
+    pattern = prepare_krl_ilike_query(query)
+    return ArticleIndexWord.objects.filter(word__ilike=pattern).values_list(
         "article_id", flat=True
     )
 
-    return get_sorted_articles(ids, page)
+
+def word_search(query: str, page: int) -> Paginator:
+    return get_sorted_articles(krl_article_ids(query), page)
 
 
 # ------------------------------------------------------------

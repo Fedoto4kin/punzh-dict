@@ -16,14 +16,24 @@ from .models import (
     Source,
     Tag,
 )
+from .search import krl_article_ids
 
 
 class ArticleLinkInline(admin.TabularInline):
     model = ArticleLink
     fk_name = "from_article"
     extra = 0
+    autocomplete_fields = ("to_article",)
     verbose_name = "Связь"
     verbose_name_plural = "Смотрите также"
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj=obj, **kwargs)
+        widget = formset.form.base_fields["to_article"].widget
+        widget.can_add_related = False
+        widget.can_change_related = False
+        widget.can_delete_related = False
+        return formset
 
 
 class ArticleLinkReverseInline(admin.TabularInline):
@@ -163,17 +173,14 @@ class ArticleAdm(admin.ModelAdmin):
         js = ("admin/js/article_field_reorder.js",)
 
     def get_search_results(self, request, queryset, search_term):
-
-        queryset, use_distinct = super(ArticleAdm, self).get_search_results(
-            request, queryset, search_term
-        )
-        try:
-            search_term_as_int = int(search_term)
-        except ValueError:
-            pass
-        else:
-            queryset |= self.model.objects.filter(age=search_term_as_int)
-        return queryset, use_distinct
+        term = (search_term or "").strip()
+        if not term:
+            # Autocomplete must not dump the whole dictionary; the changelist
+            # with an empty search box still lists every article.
+            if "autocomplete" in request.path:
+                return queryset.none(), False
+            return queryset, False
+        return queryset.filter(pk__in=krl_article_ids(term)), False
 
     def get_form(self, request, obj=None, **kwargs):
 
