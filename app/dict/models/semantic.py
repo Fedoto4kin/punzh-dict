@@ -51,6 +51,8 @@ class ArticleSemanticField(models.Model):
     """
     Связь статья ↔ смысловое поле (аналог ArticleIndexTag).
     Многозначность допустима: у статьи может быть несколько полей.
+    is_primary — смысл леммы по переводам (не из иллюстраций); не больше
+    одного на статью. Выбирается отдельным LLM-проходом, не классификатором.
     """
 
     article = models.ForeignKey(
@@ -64,12 +66,23 @@ class ArticleSemanticField(models.Model):
         related_name="assignments",
         verbose_name="Смысловое поле",
     )
+    is_primary = models.BooleanField(
+        default=False,
+        verbose_name="Главное",
+    )
 
     def __str__(self):
         return self.field.name
 
     class Meta:
         unique_together = ("article", "field")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["article"],
+                condition=models.Q(is_primary=True),
+                name="dict_asf_one_primary_per_article",
+            ),
+        ]
         verbose_name = "Смысловое поле статьи"
         verbose_name_plural = "Смысловые поля статей"
 
