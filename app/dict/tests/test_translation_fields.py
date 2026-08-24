@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from io import StringIO
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -58,7 +59,9 @@ class LoadTranslationFieldsTestCase(TestCase):
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump({"from_translation": mapping}, f)
-            call_command("load_translation_fields", "--file", path)
+            call_command(
+                "load_translation_fields", "--file", path, stdout=StringIO()
+            )
         finally:
             os.remove(path)
 

@@ -1,5 +1,6 @@
 from django.core.management import call_command
 from django.test import TestCase
+from io import StringIO
 
 from dict.models import Article, ArticleLink
 
@@ -15,7 +16,7 @@ class PruneMirrorLinksTestCase(TestCase):
         ArticleLink.objects.create(from_article=stub, to_article=donor)
         mirror = ArticleLink.objects.create(from_article=donor, to_article=stub)
 
-        call_command("prune_mirror_links", apply=True)
+        call_command("prune_mirror_links", apply=True, stdout=StringIO())
 
         self.assertTrue(
             ArticleLink.objects.filter(from_article=stub, to_article=donor).exists()
@@ -32,7 +33,7 @@ class PruneMirrorLinksTestCase(TestCase):
         ArticleLink.objects.create(from_article=a, to_article=b)
         ArticleLink.objects.create(from_article=b, to_article=a)
 
-        call_command("prune_mirror_links", apply=True)
+        call_command("prune_mirror_links", apply=True, stdout=StringIO())
 
         self.assertEqual(2, ArticleLink.objects.count())
 
@@ -46,6 +47,6 @@ class PruneMirrorLinksTestCase(TestCase):
         ArticleLink.objects.create(from_article=stub, to_article=donor)
         ArticleLink.objects.create(from_article=donor, to_article=stub)
 
-        call_command("prune_mirror_links")
+        call_command("prune_mirror_links", stdout=StringIO())
 
         self.assertEqual(2, ArticleLink.objects.count())
