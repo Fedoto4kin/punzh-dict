@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from dict.see_audit import (
     classify_html,
+    html_see_lemmas,
     html_see_mentions,
     is_see_marker,
     link_see_lemmas,
@@ -77,6 +78,34 @@ class SeeAuditTest(SimpleTestCase):
         html = link_see_lemmas("<i>см.</i> ruttoh; foo")
         self.assertIn('<a href="/search/ruttoh">ruttoh</a>', html)
         self.assertIn("foo", html)
+        self.assertNotIn('href="/search/foo"', html)
+
+    def test_semicolon_does_not_eat_illustration(self):
+        cases = [
+            (
+                "<b>ad’vo</b> <i>s</i> <i>см.</i> ad’ivo; istuw kun ~, ei kehtua ruadua",
+                "ad’ivo",
+                "istuw",
+            ),
+            (
+                "<b>abevu||s</b> <i>s</i> <i>см.</i> abie 1; vierahalla rannalla pid’i t’irpi̮a ~tta",
+                "abie",
+                "vierahalla",
+            ),
+            (
+                "<b>ähät’ä</b> <i>v</i> <i>см.</i> ähkät’ä; ollet keriät randah",
+                "ähkät’ä",
+                "ollet",
+            ),
+        ]
+        for src, lemma, illus in cases:
+            with self.subTest(lemma=lemma):
+                self.assertEqual(html_see_lemmas(src), [lemma])
+                self.assertFalse(classify_html(src)["comma_list"])
+                html = link_see_lemmas(src)
+                self.assertIn(f'<a href="/search/{lemma}">{lemma}</a>', html)
+                self.assertNotIn(f'href="/search/{illus}"', html)
+                self.assertIn(illus, html)
 
     def test_link_comma_list(self):
         html = link_see_lemmas("<i>ср.</i> koinpid’äja, kod’ikaš")

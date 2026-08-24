@@ -2,16 +2,19 @@
 
 import re
 
-KARELIAN = r"[A-Za-z’ÜüÄäÖöŠšČčŽži̮]+"
+KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
 HOMONYM = r"(?:\s+(?:\d+|[IVXivx]{1,5}))*"
-SEE_SEP = r"\s*[,;]\s*"
+HOMONYM_REQ = r"(?:\s+(?:\d+|[IVXivx]{1,5}))+"
+COMMA_SEP = r"\s*,\s*"
 
 # как make_link: канон только кириллица + точка внутри <i>
 CANON = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN}){HOMONYM}")
 ITALIC = re.compile(r"<i>([^<]*)</i>", re.IGNORECASE)
-# после канона — ещё леммы через запятую или точку с запятой
-COMMA_TAIL = re.compile(rf"{SEE_SEP}({KARELIAN}){HOMONYM}")
+# запятая — следующий элемент списка; «;» — только если у следующей леммы
+# есть номер омонима (иначе конец отсылки и иллюстрация: «см. X; istuw…»)
+COMMA_MORE = re.compile(rf"{COMMA_SEP}({KARELIAN}){HOMONYM}")
+SEMI_MORE = re.compile(rf"\s*;\s*({KARELIAN}){HOMONYM_REQ}")
 DERIV_TAGGED = re.compile(
     rf"<i>\s*(freq|caus|mom|refl)\s*</i>\s+от\s+({KARELIAN})",
     re.IGNORECASE,
@@ -92,13 +95,14 @@ def classify_html(html):
         out["canon"].append({"marker": m.group(1), "lemma": lemma, "span": m.group(0)})
         out["lemmas"].append((lemma, "canon"))
         tail = html[m.end() :]
-        extra = COMMA_TAIL.match(tail)
         lemmas = [lemma]
-        while extra:
+        while True:
+            extra = COMMA_MORE.match(tail) or SEMI_MORE.match(tail)
+            if not extra:
+                break
             lemmas.append(extra.group(1))
             out["lemmas"].append((extra.group(1), "comma"))
             tail = tail[extra.end() :]
-            extra = COMMA_TAIL.match(tail)
         if len(lemmas) > 1:
             out["comma_list"].append({"lemmas": lemmas, "span": m.group(0)})
 
@@ -204,11 +208,18 @@ def propose_html_fix(html):
 
 
 SEE_ITEM = rf"{KARELIAN}{HOMONYM}"
+SEE_AFTER_SEMI = rf"{KARELIAN}{HOMONYM_REQ}"
 SEE_LIST = re.compile(
-    rf"<i>(см\.|ср\.)</i>\s+({SEE_ITEM}(?:{SEE_SEP}{SEE_ITEM})*)({SEE_SEP})?"
+    rf"<i>(см\.|ср\.)</i>\s+("
+    rf"{SEE_ITEM}(?:{COMMA_SEP}{SEE_ITEM}|\s*;\s*{SEE_AFTER_SEMI})*"
+    rf")(\s*[;,]?)?"
 )
 _SEE_TOKEN = re.compile(
-    "(" + KARELIAN + r")((?:\s+(?:\d+|[IVXivx]{1,5}))*)|(" + SEE_SEP + ")"
+    "("
+    + KARELIAN
+    + r")((?:\s+(?:\d+|[IVXivx]{1,5}))*)|("
+    + COMMA_SEP
+    + r"|\s*;\s*)"
 )
 
 
