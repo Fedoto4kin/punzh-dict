@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Тест подключения к DeepSeek API
+Проверка подключения к DeepSeek API
 """
 
 import os

@@ -31,7 +31,7 @@ import re
 import sys
 import time
 
-# --- окружение: как в test_deepseek.py (load_env сам находит .env рядом) ---
+# --- окружение: как в probe_deepseek.py (load_env сам находит .env рядом) ---
 from load_env import load_env  # noqa: E402
 
 load_env()

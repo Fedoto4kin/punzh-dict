@@ -51,6 +51,14 @@ docker exec --user 1000:1000  -it punzh_django python manage.py migrate
 ```
 
 
+### Tests
+
+Ярлык `dict` обязателен: иначе Django подхватит оффлайн-скрипты (`agents/`, management commands) с именем `test_*.py`.
+
+```bash
+docker exec --user 1000:1000 punzh_django python manage.py test dict
+```
+
 ### Lint code
 ```bash
 docker exec --user 1000:1000 -i punzh_django black dict/
