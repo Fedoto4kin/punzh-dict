@@ -3,7 +3,6 @@
     indent_size: 2,
     indent_char: " ",
     indent_inner_html: true,
-    wrap_line_length: 88,
     wrap_attributes: "auto",
     extra_liners: [],
     end_with_newline: false,
@@ -40,7 +39,21 @@
       .trim();
   }
 
-  function beautifyHtml(source) {
+  function wrapLineLength(cm) {
+    var wrap = cm.getWrapperElement();
+    var lines = wrap.querySelector(".CodeMirror-lines");
+    var gutters = wrap.querySelector(".CodeMirror-gutters");
+    var gutterW = gutters ? gutters.offsetWidth : 0;
+    var width = lines ? lines.clientWidth : wrap.clientWidth - gutterW;
+    var ch = cm.defaultCharWidth();
+    if (!ch || ch < 4) {
+      ch = 8;
+    }
+    // Leave a small gutter so the last glyph is not clipped by the scrollbar.
+    return Math.max(20, Math.floor(width / ch) - 2);
+  }
+
+  function beautifyHtml(source, wrapLen) {
     if (typeof html_beautify !== "function") {
       return source;
     }
@@ -48,11 +61,17 @@
     if (!text.trim()) {
       return text;
     }
-    return html_beautify(text, BEAUTIFY_OPTIONS);
+    var opts = {};
+    Object.keys(BEAUTIFY_OPTIONS).forEach(function (key) {
+      opts[key] = BEAUTIFY_OPTIONS[key];
+    });
+    opts.wrap_line_length = wrapLen || 0;
+    return html_beautify(text, opts);
   }
 
   function formatEditor(cm) {
-    var formatted = beautifyHtml(cm.getValue());
+    var wrapLen = wrapLineLength(cm);
+    var formatted = beautifyHtml(compactHtml(cm.getValue()), wrapLen);
     if (formatted === cm.getValue()) {
       return;
     }
@@ -63,7 +82,8 @@
   }
 
   function addToolbar(wrapper, cm) {
-    if (wrapper.querySelector(".article-html-toolbar")) {
+    if (wrapper.previousElementSibling &&
+        wrapper.previousElementSibling.classList.contains("article-html-toolbar")) {
       return;
     }
     var bar = document.createElement("div");
@@ -80,6 +100,29 @@
     wrapper.parentNode.insertBefore(bar, wrapper);
   }
 
+  function watchWidth(cm) {
+    var wrap = cm.getWrapperElement();
+    var timer = null;
+    var last = wrapLineLength(cm);
+    function onResize() {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var next = wrapLineLength(cm);
+        if (Math.abs(next - last) < 2) {
+          return;
+        }
+        last = next;
+        formatEditor(cm);
+      }, 150);
+    }
+    if (typeof ResizeObserver === "function") {
+      var ro = new ResizeObserver(onResize);
+      ro.observe(wrap);
+    } else {
+      window.addEventListener("resize", onResize);
+    }
+  }
+
   function initEditor(textarea) {
     if (!textarea || textarea.closest(".empty-form")) {
       return;
@@ -88,7 +131,6 @@
       return;
     }
     textarea.dataset.cmReady = "1";
-    textarea.value = beautifyHtml(textarea.value);
     var cm = CodeMirror.fromTextArea(textarea, {
       mode: "htmlmixed",
       lineNumbers: true,
@@ -119,6 +161,10 @@
       });
     }
     addToolbar(cm.getWrapperElement(), cm);
+    requestAnimationFrame(function () {
+      formatEditor(cm);
+      watchWidth(cm);
+    });
   }
 
   function initAll(root) {
