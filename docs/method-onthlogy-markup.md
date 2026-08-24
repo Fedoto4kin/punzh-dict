@@ -46,7 +46,10 @@ AI-поиску нужна семантическая группировка в�
 - `build_ontology.py` — движок, три режима (`--design-only`, `--consolidate`,
   `--ontology`);
 - `load_semantic_fields`, `load_semantic_classification`, `load_keywords` —
-  management-команды заливки в БД.
+  management-команды заливки в БД;
+- `pick_translation_fields.py` + `load_translation_fields` — отдельный проход:
+  какие из уже проставленных полей из **переводов** леммы (`from_translation`),
+  не переклассификация (см. §4.1).
 
 Везде `temperature=0` (воспроизводимость) и устойчивый парсинг JSON (срезаем
 markdown-обёртки, берём первый объект/массив).
@@ -162,7 +165,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 и закрытый список полей. Несколько True — многозначность; пустой список —
 ни одно поле не про лемму. Одно поле тоже спрашиваем у модели.
 Заливка `load_translation_fields` трогает только флаг.
-Боевой прогон DeepSeek — после LLM-очистки переводов (backlog §3).
+Боевой прогон DeepSeek — после LLM-очистки переводов (backlog §2, затем §4).
 
 **Результат (dev и прод совпадают):** 28 полей, 28262 привязки (~1.77 на
 статью), 48065 keywords, `no_field` ~7% (здоровый уровень). Мёртвых полей нет —
@@ -182,3 +185,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 
 Шаги 1-3, 5 — оффлайн в `app/agents/` через DeepSeek; шаги 4, 6, 7 —
 management-команды Django.
+
+Позже, **после** очистки переводов (`backlog.md` §2): `pick_translation_fields.py`
+→ `load_translation_fields` (`backlog.md` §4). Это не шаг прогона онтологии
+выше: поля уже стоят, меняется только флаг `from_translation`.

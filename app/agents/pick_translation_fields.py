@@ -11,7 +11,7 @@
 
 Заливка в БД — management-команда load_translation_fields, не здесь.
 
-Боевой прогон — после очистки переводов (backlog §3).
+Боевой прогон — после очистки переводов (backlog §2, затем §4).
 """
 
 import argparse
