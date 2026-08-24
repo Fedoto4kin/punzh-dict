@@ -61,6 +61,26 @@ class ArticleAdminKrlSearchTestCase(TestCase):
         self.assertIn("admin-autocomplete", html)
         self.assertIn("to_article", html)
 
+    def test_changelist_query_uses_krl_wildcards(self):
+        self.client.force_login(self.user)
+        response = self.client.get("/admin/dict/article/", {"q": "ai."})
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(">aia<", html)
+        self.assertNotIn(">aiga<", html)
+        self.assertNotIn(">baba<", html)
+
+    def test_changelist_is_not_substring_on_word(self):
+        # Django default search_fields icontains would match aiga/aika/aia
+        # for q=ai; Karelian ILIKE without ?/. is exact on the word index.
+        self.client.force_login(self.user)
+        response = self.client.get("/admin/dict/article/", {"q": "ai"})
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn(">aiga<", html)
+        self.assertNotIn(">aika<", html)
+        self.assertNotIn(">aia<", html)
+
     def test_autocomplete_json_respects_wildcards(self):
         self.client.force_login(self.user)
         try:
