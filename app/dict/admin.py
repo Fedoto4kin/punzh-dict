@@ -153,7 +153,7 @@ class ArticleAdm(admin.ModelAdmin):
     ]
 
     search_fields = ("word",)
-    exclude = ("first_letter", "text_search", "first_trigram")
+    exclude = ("first_letter",)
 
     # Order matters: the reorder JS expects the four editorial inlines first
     # (indexes 0..3) and moves the "tail" fieldset to right after index 3.

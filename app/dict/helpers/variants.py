@@ -5,7 +5,7 @@ from .orphography import new_orthography, normalization
 KRL_ABC = "ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ"
 
 
-def sorted_by_krl(article, field="first_trigram"):
+def sorted_by_krl(article, field="word"):
 
     def prepare_word(word):
         return normalization(

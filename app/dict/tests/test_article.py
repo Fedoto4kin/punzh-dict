@@ -11,7 +11,6 @@ class ArticleTestCase(TestCase):
             word="ewle",
             word_normalized="eule",
             first_letter="E",
-            first_trigram="ewl",
             source_id=1,
             source_detalization=None,
         )
@@ -26,7 +25,6 @@ class ArticleTestCase(TestCase):
             word="hüviin",
             word_normalized="hyvin",
             first_letter="H",
-            first_trigram="hyv",
             source_id=1,
             source_detalization=None,
         )
@@ -42,7 +40,6 @@ class ArticleTestCase(TestCase):
             word="tuwl’||i, ~ut",
             word_normalized="tuuli, tuulut",
             first_letter="T",
-            first_trigram="tuw",
             source_id=1,
             source_detalization=None,
         )

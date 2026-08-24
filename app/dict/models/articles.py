@@ -6,7 +6,6 @@ from django.utils.html import format_html
 
 from ..helpers import (
     KRL_ABC,
-    create_ngram,
     gen_word_variants,
     normalization,
     r_gen_word_variants,
@@ -53,7 +52,6 @@ class Article(ArticleBase):
         verbose_name="Коррекция заголовка",
     )
     first_letter = models.CharField(max_length=1, db_index=True)
-    first_trigram = models.CharField(max_length=3)
     linked_article = models.ForeignKey(
         "self",
         default=None,
@@ -72,9 +70,6 @@ class Article(ArticleBase):
 
     def __str__(self):
         return normalization(self.word)
-
-    def make_ngram(self, n=3):
-        return create_ngram(self.word, n)
 
     def word_index(self):
         if self.word_normalized:
