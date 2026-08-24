@@ -18,7 +18,7 @@ docker compose -f docker-compose.internal.yml exec -w /app django \
 
 ```bash
 git lfs install
-git config core.hooksPath .githooks   # once per clone; blocks raw-JSON commits
+cp .githooks/pre-commit .git/hooks/pre-commit
 git add --renormalize app/dict/fixtures/dict_seed.json
 # git cat-file -s :app/dict/fixtures/dict_seed.json  → should be ~130, not ~28M
 ```
