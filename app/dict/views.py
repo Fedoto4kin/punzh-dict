@@ -1,9 +1,9 @@
 import re
 from urllib.parse import quote
 
-from django.shortcuts import redirect, render
-from django.views.generic import TemplateView
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import TemplateView
 
 from .helpers import KRL_ABC, build_pagination_hints
 from .search import (
@@ -11,6 +11,8 @@ from .search import (
     get_tags_by_ids_distinct,
     get_tags_by_type,
     search_by_pointer,
+    search_by_semantic_field,
+    semantic_fields_with_counts,
     search_by_tags_smart,
     search_by_translate_linked,
     search_possible,
@@ -18,7 +20,7 @@ from .search import (
     detect_direction,
     compatible_disable,
 )
-from .models import Article, ArticleIndexTag, Tag
+from .models import Article, ArticleIndexTag, SemanticField, Tag
 
 
 class StaticView(TemplateView):
@@ -184,6 +186,27 @@ def tags_compatible(request, tags=""):
     except ValueError:
         return JsonResponse({"disable": []})
     return JsonResponse({"disable": compatible_disable(selected)})
+
+
+def ontology_index(request):
+    context = {
+        "ABC": KRL_ABC,
+        "fields": semantic_fields_with_counts(),
+    }
+    return render(request, "ontology.html", context)
+
+
+def ontology_view(request, field_id, page=1):
+    field = get_object_or_404(SemanticField, pk=field_id)
+    content = search_by_semantic_field(field.id, page)
+    context = {
+        "ABC": KRL_ABC,
+        "field": field,
+        "all_fields": semantic_fields_with_counts(),
+        "page_obj": content.page_obj,
+        "trigrams": content.trigrams_dict,
+    }
+    return render(request, "ontology_view.html", context)
 
 
 def page_not_found(request, exception=None):

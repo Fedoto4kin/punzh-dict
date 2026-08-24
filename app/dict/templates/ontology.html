@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Смысловые поля - Словарь карельского языка
+{% endblock %}
+
+{% block content %}
+<div class="row mt-5 mb-3">
+    <div class="col-lg-8">
+        <h2>Смысловые поля</h2>
+        <p class="text-muted">Тематические группы словарных статей.</p>
+    </div>
+</div>
+
+<div class="list-group mb-5">
+    {% for f in fields %}
+    <a href="{% url 'ontology_field' f.id %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ f.name }}</h5>
+            <small>{{ f.article_count }}</small>
+        </div>
+        {% if f.definition %}
+        <p class="mb-1 text-muted">{{ f.definition }}</p>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

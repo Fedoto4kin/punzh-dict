@@ -2,6 +2,7 @@ import re
 
 from django.contrib import admin
 from django.db import models
+from django.db.models import Count
 from django.forms import Textarea
 from django.utils.html import format_html
 
@@ -12,6 +13,7 @@ from .models import (
     ArticleIndexTag,
     ArticleIndexTranslate,
     ArticleLink,
+    ArticleSemanticField,
     SemanticField,
     Source,
     Tag,
@@ -98,6 +100,32 @@ class ArticleIndexTagInline(admin.TabularInline):
         return formset
 
 
+class ArticleSemanticFieldInline(admin.TabularInline):
+    model = ArticleSemanticField
+    extra = 0
+    can_delete = False
+    fields = ("field_name", "field_definition")
+    readonly_fields = ("field_name", "field_definition")
+    verbose_name = "Смысловое поле"
+    verbose_name_plural = "Смысловые поля (онтология)"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def field_name(self, obj):
+        return obj.field.name
+
+    field_name.short_description = "Смысловое поле"
+
+    def field_definition(self, obj):
+        return obj.field.definition
+
+    field_definition.short_description = "Определение"
+
+
 @admin.register(Source)
 class SourceAdm(admin.ModelAdmin):
     exclude = ("css",)
@@ -142,6 +170,7 @@ class ArticleAdm(admin.ModelAdmin):
         "_word",
         "_article_html",
     )
+    list_filter = ("semantic_assignments__field",)
     readonly_fields = [
         "_word",
         "_article_html",
@@ -155,15 +184,25 @@ class ArticleAdm(admin.ModelAdmin):
     search_fields = ("word",)
     exclude = ("first_letter",)
 
-    # Order matters: the reorder JS expects the four editorial inlines first
-    # (indexes 0..3) and moves the "tail" fieldset to right after index 3.
+    # Order matters: the reorder JS parks the "tail" fieldset after
+    # "На эту статью указывают". Semantic fields are omitted on add
+    # (get_inlines), so indexes differ between add and change.
     inlines = [
-        TranslateInline,  # 0 - Переводы
-        ArticleIndexTagInline,  # 1 - Пометы (служебные отметки)
-        ArticleLinkInline,  # 2 - Смотрите также
-        ArticleLinkReverseInline,  # 3 - На эту статью указывают
-        ArticleAdditionInline,  # 4 - Дополнения (not in the requested list)
+        TranslateInline,  # Переводы
+        ArticleIndexTagInline,  # Пометы (служебные отметки)
+        ArticleSemanticFieldInline,  # Смысловые поля (readonly, change only)
+        ArticleLinkInline,  # Смотрите также
+        ArticleLinkReverseInline,  # На эту статью указывают
+        ArticleAdditionInline,  # Дополнения (not in the requested list)
     ]
+
+    def get_inlines(self, request, obj):
+        inlines = super().get_inlines(request, obj)
+        if obj is None:
+            return [
+                inline for inline in inlines if inline is not ArticleSemanticFieldInline
+            ]
+        return inlines
 
     formfield_overrides = {
         models.TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 160})},
@@ -228,7 +267,36 @@ class TagAdm(admin.ModelAdmin):
 
 @admin.register(SemanticField)
 class SemanticFieldAdm(admin.ModelAdmin):
-    list_display = ("id", "name", "parent", "sorting")
+    list_display = ("id", "name", "parent", "sorting", "article_count", "site_link")
     list_filter = ("parent",)
     search_fields = ("name", "definition")
     ordering = ("sorting", "name")
+    readonly_fields = ("name", "definition", "parent", "sorting")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_save"] = False
+        extra_context["show_save_and_continue"] = False
+        extra_context["show_save_and_add_another"] = False
+        return super().changeform_view(request, object_id, form_url, extra_context)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(_article_count=Count("assignments"))
+
+    def article_count(self, obj):
+        return obj._article_count
+
+    article_count.admin_order_field = "_article_count"
+    article_count.short_description = "Статей"
+
+    def site_link(self, obj):
+        return format_html('<a href="/ontology/{}/" target="_blank">🔗</a>', obj.pk)
+
+    site_link.short_description = "Сайт"

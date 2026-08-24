@@ -7,21 +7,25 @@
 //   - fieldset.field-head : Заголовок / Коррекция / Слово (ориг.)
 //   - fieldset.field-tail : Словарная статья (html) / (rendered) / Источник / Уточнение
 //
-// After load we move the ".field-tail" fieldset so it sits right after the
-// 4th inline group ("На эту статью указывают"), producing the target order:
+// After load we move ".field-tail" to sit right after the reverse-links
+// inline ("На эту статью указывают", #links_to-group). Semantic-field inline
+// is absent on add, so we must not rely on a fixed inline index.
+//
+// Target order (change form; on add the ontology block is omitted):
 //
 //   Заголовок (в норм. орф.)
 //   Коррекция заголовка
 //   Слово (ориг.)
-//   Переводы                      (inline 0)
-//   Пометы (служебные отметки)    (inline 1)
-//   Смотрите также                (inline 2)
-//   На эту статью указывают       (inline 3)
+//   Переводы
+//   Пометы (служебные отметки)
+//   Смысловые поля (онтология)    (change only)
+//   Смотрите также
+//   На эту статью указывают
 //   Словарная статья (html)       <- tail fieldset moved here
 //   Словарная статья
 //   Источник
 //   Уточнение источника
-//   Дополнения                    (inline 4, trails at the very bottom)
+//   Дополнения                    (trails at the very bottom)
 
 document.addEventListener('DOMContentLoaded', function () {
     var tail = document.querySelector('fieldset.field-tail');
@@ -29,12 +33,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // Top-level inline wrappers, in the same order as ModelAdmin.inlines.
-    var groups = document.querySelectorAll('.inline-group');
-    if (groups.length < 4) {
-        return;
+    var anchor = document.getElementById('links_to-group');
+    if (!anchor) {
+        var groups = document.querySelectorAll('.inline-group');
+        if (groups.length < 4) {
+            return;
+        }
+        // Fallback: last editorial inline before additions.
+        anchor = groups[groups.length - 2];
     }
 
-    var anchor = groups[3]; // "На эту статью указывают"
     anchor.parentNode.insertBefore(tail, anchor.nextSibling);
 });

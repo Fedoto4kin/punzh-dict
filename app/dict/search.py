@@ -22,6 +22,8 @@ from .models import (
     ArticleIndexTag,
     Tag,
     ArticleLink,
+    ArticleSemanticField,
+    SemanticField,
     Levenshtein,
 )
 
@@ -540,6 +542,55 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
     page_obj, sorted_articles = sort_and_paginate(articles, page)
     trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
 
+    return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
+
+
+def article_ids_for_semantic_field(field_id):
+    """
+    Articles in a semantic field, plus unmarked «см.» referrers.
+
+    Lemmas classified into the field are the core set. Articles that only
+    point at those lemmas via ArticleLink (typically «см. X», no translation
+    for the LLM to tag) inherit the field at read time — same idea as
+    expand_by_links in Russian search, but one-way: we do not follow
+    outgoing links, which would leak unrelated targets into the listing.
+    Referrers that already have any semantic field keep their own markup.
+    """
+    classified = set(
+        ArticleSemanticField.objects.filter(field_id=field_id).values_list(
+            "article_id", flat=True
+        )
+    )
+    if not classified:
+        return classified
+    referrers = set(
+        ArticleLink.objects.filter(to_article_id__in=classified).values_list(
+            "from_article_id", flat=True
+        )
+    )
+    if not referrers:
+        return classified
+    marked = set(
+        ArticleSemanticField.objects.filter(article_id__in=referrers).values_list(
+            "article_id", flat=True
+        )
+    )
+    return classified | (referrers - marked)
+
+
+def semantic_fields_with_counts():
+    fields = list(SemanticField.objects.all())
+    for field in fields:
+        field.article_count = len(article_ids_for_semantic_field(field.pk))
+    return fields
+
+
+def search_by_semantic_field(field_id, page):
+    articles = Article.objects.filter(
+        pk__in=article_ids_for_semantic_field(field_id)
+    ).prefetch_related("additions")
+    page_obj, sorted_articles = sort_and_paginate(articles, page)
+    trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
 
 

@@ -38,6 +38,13 @@ urlpatterns = [
     path("tags/compatible/<str:tags>", views.tags_compatible, name="tags_compatible"),
     path("tags/<str:tags>", views.tag_search, name="tags"),
     path("tags/<str:tags>/<int:page>", views.tag_search, name="tags"),
+    path("ontology/", views.ontology_index, name="ontology"),
+    path("ontology/<int:field_id>/", views.ontology_view, name="ontology_field"),
+    path(
+        "ontology/<int:field_id>/<int:page>",
+        views.ontology_view,
+        name="ontology_field_page",
+    ),
     path(
         "yandex_33ad64467c0b0a09.html",
         serve,
