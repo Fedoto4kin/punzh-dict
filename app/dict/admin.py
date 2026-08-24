@@ -212,7 +212,7 @@ class ArticleAdm(admin.ModelAdmin):
 class TagAdm(admin.ModelAdmin):
     list_display = ("id", "name", "tag", "type")
     list_filter = ("type",)
-    search_fields = ("name", "tag")
+    search_fields = ("^name", "^tag")
     ordering = ("type", "sorting", "name")
 
 
