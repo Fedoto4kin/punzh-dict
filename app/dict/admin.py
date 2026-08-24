@@ -36,6 +36,9 @@ class ArticleLinkReverseInline(admin.TabularInline):
     verbose_name = "Связь"
     verbose_name_plural = "На эту статью указывают"
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
     def from_article_link(self, obj):
         url = obj.from_article.get_admin_url()
         return format_html('<a href="{}">{}</a>', url, obj.from_article.word)
