@@ -104,8 +104,8 @@ class ArticleSemanticFieldInline(admin.TabularInline):
     model = ArticleSemanticField
     extra = 0
     can_delete = False
-    fields = ("field_name", "field_definition")
-    readonly_fields = ("field_name", "field_definition")
+    fields = ("field_name", "from_translation", "field_definition")
+    readonly_fields = ("field_name", "from_translation", "field_definition")
     verbose_name = "Смысловое поле"
     verbose_name_plural = "Смысловые поля (онтология)"
 
