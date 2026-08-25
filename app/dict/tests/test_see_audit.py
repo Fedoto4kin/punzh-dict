@@ -100,6 +100,12 @@ class SeeAuditTest(SimpleTestCase):
                 "ähkät’ä",
                 "ollet",
             ),
+            (
+                "<b>kopakkah</b> <i>adv</i> <i>см.</i> kopakašti; "
+                "har’jatešša i kuduos’s’a karbiet pöl’is’s’äh",
+                "kopakašti",
+                "har’jatešša",
+            ),
         ]
         for src, lemma, illus in cases:
             with self.subTest(lemma=lemma):
@@ -145,6 +151,21 @@ class SeeAuditTest(SimpleTestCase):
         self.assertIn("riugu", keys)
         self.assertNotIn("riwgu", article_headword_keys(compound))
         self.assertIn("humalariwgu", article_headword_keys(compound))
+
+    def test_fold_strips_homonym_and_diacritics(self):
+        from dict.see_audit import fold_lemma
+
+        self.assertEqual(fold_lemma("čašk||a I"), "caska")
+        self.assertEqual(fold_lemma("muč||čo, ~čon’e"), "mucco")
+        self.assertEqual(fold_lemma("čaška"), "caska")
+        self.assertEqual(fold_lemma("muččo"), "mucco")
+
+    def test_mentions_matches_index_style_forms(self):
+        html = "<i>см.</i> čaška; foo"
+        self.assertTrue(html_see_mentions(html, ["čašk||a I", "caska"]))
+        self.assertTrue(
+            html_see_mentions("<i>ср.</i> muččo 1", ["muč||čo, ~čon’e", "mucco"])
+        )
 
     def test_comma_list_skips_homonym_numbers(self):
         c = classify_html("<i>см.</i> mado 2, šano 1")

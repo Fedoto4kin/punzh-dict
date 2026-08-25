@@ -70,6 +70,36 @@ class ScanSeeLinksTestCase(TestCase):
         self.assertFalse(scan["homonym"])
         self.assertFalse(scan["unresolved"])
 
+    def test_existing_link_to_pipe_headword_not_extra(self):
+        target = Article.objects.create(
+            word="čašk||a I",
+            article_html="<b>čašk||a</b> чашка",
+        )
+        src = Article.objects.create(
+            word="as’t’ie||n’e",
+            article_html="<b>as’t’ie||n’e</b> <i>см.</i> čaška",
+        )
+        lnk = ArticleLink.objects.create(from_article=src, to_article=target)
+        scan = scan_see_links(src, [lnk])
+        self.assertFalse(scan["extra"])
+        self.assertFalse(scan["unique_missing"])
+
+    def test_semicolon_illustration_with_conjunction_i_not_second_lemma(self):
+        a = Article.objects.create(word="kopakašti", article_html="<b>kopakašti</b>")
+        src = Article.objects.create(
+            word="kopakkah",
+            article_html=(
+                "<b>kopakkah</b> <i>см.</i> kopakašti; "
+                "har’jatešša i kuduos’s’a karbiet"
+            ),
+        )
+        lnk = ArticleLink.objects.create(from_article=src, to_article=a)
+        scan = scan_see_links(src, [lnk])
+        self.assertFalse(scan["unique_missing"])
+        self.assertFalse(scan["unresolved"])
+        self.assertFalse(scan["homonym"])
+        self.assertFalse(scan["extra"])
+
 
 class FixSeeRefsTestCase(TestCase):
     def test_apply_unique_creates_link_without_html_change(self):

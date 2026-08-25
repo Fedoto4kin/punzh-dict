@@ -4,11 +4,14 @@ import re
 
 KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
-# римский номер — отдельный токен (I, II), не префикс слова (v в voijettu)
-_ROMAN = r"(?:[IVX]{1,5}|[ivx]{1,5})(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮])"
+# римский номер только UPPERCASE (I, II): строчная «i»/«v» — союз или начало иллюстрации
+# («см. X; har’jatešša i kuduos…»), не омоним
+_ROMAN = r"[IVX]{1,5}(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮])"
 HOMONYM = rf"(?:\s+(?:\d+|{_ROMAN}))*"
 HOMONYM_REQ = rf"(?:\s+(?:\d+|{_ROMAN}))+"
 COMMA_SEP = r"\s*,\s*"
+# хвост омонима у заголовка: «čašk||a I», «bul’u II»
+_HOMONYM_TAIL = re.compile(r"(?:\s+(?:\d+|[IVXivx]{1,5}))+$")
 
 # как make_link: канон только кириллица + точка внутри <i>
 CANON = re.compile(rf"<i>(см\.|ср\.)</i>\s+({KARELIAN}){HOMONYM}")
@@ -156,13 +159,19 @@ def html_see_lemmas(html):
 
 
 def fold_lemma(word):
-    """Свернуть лемму для сверки: без ||, | и апострофов."""
+    """
+    Свернуть лемму/заголовок для сверки: без ||/|, апострофов, номера омонима,
+    хвоста после запятой; š/č/ž → s/c/z (как в ArticleIndexWord).
+    """
     if not word:
         return ""
     w = word.lower().replace("||", "").replace("|", "")
     for ch in "’'`ʼʹ":
         w = w.replace(ch, "")
-    return w
+    w = w.split(",", 1)[0].strip()
+    w = _HOMONYM_TAIL.sub("", w).strip()
+    w = w.replace("~", "")
+    return w.replace("š", "s").replace("č", "c").replace("ž", "z")
 
 
 def html_see_mentions(html, target_words):
@@ -264,6 +273,7 @@ def article_headword_keys(article):
         if not raw:
             return
         glued = raw.replace("||", "").replace("|", "").strip()
+        glued = _HOMONYM_TAIL.sub("", glued).strip()
         if not glued:
             return
         keys.add(fold_lemma(glued))
@@ -350,6 +360,8 @@ def scan_see_links(article, outgoing):
                 unique_missing.append({"lemma": lemma, "target": tgt})
     extra = []
     for lnk in outgoing:
+        if any(lemma_matches_headword(lnk.to_article, lemma) for lemma in lemmas):
+            continue
         if html_see_mentions(html, article_index_words(lnk.to_article)):
             continue
         extra.append(lnk)
