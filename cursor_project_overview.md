@@ -62,6 +62,7 @@
 - `load_translation_fields --file` — только флаг `from_translation` на уже существующих связях (`{"from_translation": {id: [имена]}}`; пустой список сбрасывает флаги статьи). Связи не создавать и не удалять. JSON готовит `app/agents/pick_translation_fields.py` (переводы + закрытый список полей, без иллюстраций).
 - `reindex_tags` — индекс помет из html: типы 1–4 игла `<i>{значение}</i>`, тип 5 — голый текст. Тот же матчинг нужен валидатору формы.
 - `export_adjectives_by_field`, `fill_missing_translations`, `test_timeweb`.
+- `classify_article --id` — доклассификация одной статьи: тот же замёрзший промпт, что у пакетной разметки (`dict.ai.prompts`), модель DeepSeek через Timeweb (`TIMEWEB_AI_MODEL_CLASSIFY`), онтология из `SemanticField`. Пишет `ArticleSemanticField` + `ArticleKeyword` только этой статьи. Ядро: `dict.ai.classify.classify_article` (без HTTP, можно звать из фона). `--dry-run` не пишет.
 
 ## Next (не смешивать ветки)
 1. Очистить переводы (`backlog.md` §2), затем боевой прогон `from_translation` (§4). Не переклассифицировать поля и не фильтровать `/ontology/` в этой версии.

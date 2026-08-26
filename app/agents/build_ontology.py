@@ -62,46 +62,17 @@ import django  # noqa: E402
 django.setup()
 
 from openai import OpenAI  # noqa: E402
+from dict.ai.prompts import (  # noqa: E402
+    SYSTEM_PROMPT_FROZEN,
+    build_article_input,
+    build_user_prompt,
+)
 from dict.models import (  # noqa: E402
     Article,
     ArticleIndexTranslate,
     ArticleIndexTag,
     Tag,
 )
-
-TAG_RE = re.compile(r"<[^>]+>")
-CYR_RE = re.compile(r"[а-яёА-ЯЁ][а-яёА-ЯЁ \-,;]*[а-яёА-ЯЁ]")
-
-
-def cyrillic_from_html(html):
-    """Грубо: русские куски из HTML (переводы + хвосты иллюстраций вперемешку)."""
-    if not html:
-        return []
-    text = TAG_RE.sub(" ", html)
-    out = []
-    for c in CYR_RE.findall(text):
-        c = re.sub(r"\s+", " ", c).strip()
-        if len(c) > 2:
-            out.append(c)
-    return out
-
-
-def build_article_input(article):
-    """Собрать РУССКИЙ вход по статье: переводы, пометы (расшифровка), кириллица."""
-    translations = list(
-        ArticleIndexTranslate.objects.filter(article=article)
-        .exclude(rus_word__isnull=True)
-        .values_list("rus_word", flat=True)
-    )
-    cyr = cyrillic_from_html(article.article_html)
-    # русский из иллюстраций = кириллица минус то, что уже в переводах
-    tr_set = set(t.lower() for t in translations if t)
-    illustr = [c for c in cyr if c.lower() not in tr_set]
-    return {
-        "word": article.word,
-        "translations": translations,
-        "illustrations_ru": illustr[:15],  # ограничим, чтоб не раздувать промпт
-    }
 
 
 SYSTEM_PROMPT = (
@@ -120,29 +91,6 @@ SYSTEM_PROMPT = (
 )
 
 
-SYSTEM_PROMPT_FROZEN = (
-    "Ты классифицируешь словарную статью по ФИКСИРОВАННОМУ списку смысловых "
-    "полей. На вход — РУССКИЕ данные статьи: переводы и русские фрагменты "
-    "иллюстраций.\n"
-    "СТРОГО: относи ТОЛЬКО к полям из данного списка. НОВЫЕ поля заводить "
-    "ЗАПРЕЩЕНО. Если статья не подходит ни к одному полю (служебное слово, "
-    "частица, союз) — верни пустой список полей и \"no_field\": true. "
-    "Ставь 1-3 наиболее релевантных поля, не больше.\n"
-    "Отвечай СТРОГО одним JSON без markdown: "
-    '{"keywords": [..], "fields": [..], "no_field": false}.'
-)
-
-
-def build_user_prompt(art_input, field_defs):
-    cats = [{"field": f, "definition": d} for f, d in sorted(field_defs.items())]
-    return (
-        "Смысловые поля (классифицируй строго по ним):\n"
-        + json.dumps(cats, ensure_ascii=False)
-        + "\n\nСтатья:\n"
-        + json.dumps(art_input, ensure_ascii=False)
-    )
-
-
 def parse_json(text):
     """Устойчивый парсинг: срезаем markdown-обёртки, берём первый {...}."""
     t = text.strip()
@@ -155,8 +103,6 @@ def parse_json(text):
         return json.loads(m.group())
     except json.JSONDecodeError:
         return None
-
-
 
 
 # --- служебные части речи, исключаемые из выборки для ПРОЕКТИРОВАНИЯ ---
