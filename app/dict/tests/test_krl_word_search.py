@@ -16,7 +16,11 @@ class PrepareKrlIlikeQueryPublicTestCase(SimpleTestCase):
         self.assertEqual("soba", prepare_krl_ilike_query("šoba"))
         self.assertEqual("mullin", prepare_krl_ilike_query("mul’l’in"))
         self.assertEqual("mullin", prepare_krl_ilike_query("mul'l'in"))
+        self.assertEqual("mullin", prepare_krl_ilike_query("mulʼlʼin"))
         self.assertEqual("mullin mallin", prepare_krl_ilike_query("mul’l’in-mal’l’in"))
+        self.assertEqual(
+            "mullin mallin", prepare_krl_ilike_query("mulʼlʼin-malʼlʼin")
+        )
         self.assertEqual("siksi", prepare_krl_ilike_query("šiksi…"))
         self.assertEqual("siksi sto", prepare_krl_ilike_query("šiksi… što"))
 
@@ -83,10 +87,15 @@ class KrlArticleIdsTestCase(TestCase):
     def test_two_word_full_phrase_matches(self):
         self.assertEqual(self._ids("mullin mallin"), {self.phrase.id})
         self.assertEqual(self._ids("mul’l’in mal’l’in"), {self.phrase.id})
+        self.assertEqual(self._ids("mulʼlʼin malʼlʼin"), {self.phrase.id})
 
     def test_hyphenated_see_form_finds_spaced_headword(self):
         self.assertEqual(self._ids("mullin-mallin"), {self.phrase.id})
         self.assertEqual(self._ids("mul’l’in-mal’l’in"), {self.phrase.id})
+        self.assertEqual(self._ids("mulʼlʼin-malʼlʼin"), {self.phrase.id})
+
+    def test_modifier_letter_apostrophe_single_token(self):
+        self.assertEqual(self._ids("mulʼlʼin"), {self.phrase.id})
 
     def test_two_word_u_variants_full_phrase(self):
         self.assertEqual(self._ids("müllin mällin"), {self.phrase_u.id})
@@ -194,6 +203,21 @@ class WordSearchHttpTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], "/search/mullin%20mallin")
+
+    def test_search_proc_keeps_modifier_letter_apostrophe(self):
+        response = self.client.get(
+            "/search/", {"query": "mulʼlʼin malʼlʼin"}, follow=False
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            "/search/mul%CA%BCl%CA%BCin%20mal%CA%BCl%CA%BCin",
+        )
+
+    def test_search_modifier_letter_apostrophe_path_shows_article(self):
+        response = self.client.get("/search/mul%CA%BCl%CA%BCin%20mal%CA%BCl%CA%BCin")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "mullin mallin")
 
     def test_search_hyphen_form_shows_article(self):
         response = self.client.get(
