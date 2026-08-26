@@ -228,29 +228,47 @@ def propose_html_fix(html):
     return BARE_SEE.sub(repl_bare, html)
 
 
-SEE_ITEM = rf"{KARELIAN}{HOMONYM}"
-SEE_AFTER_SEMI = rf"{KARELIAN}{HOMONYM_REQ}"
+# опциональное окончание в скобках только для подсветки: kurpa(t) → /search/kurpat
+_OPT_PAREN = r"(?:\([^)]*\))?"
+SEE_ITEM = rf"{KARELIAN}{_OPT_PAREN}{HOMONYM}"
+SEE_AFTER_SEMI = rf"{KARELIAN}{_OPT_PAREN}{HOMONYM_REQ}"
 SEE_LIST = re.compile(
     rf"<i>(см\.|ср\.)</i>\s+("
     rf"{SEE_ITEM}(?:{COMMA_SEP}{SEE_ITEM}|\s*;\s*{SEE_AFTER_SEMI})*"
     rf")(\s*[;,]?)?"
 )
 _SEE_TOKEN = re.compile(
-    "(" + KARELIAN + r")((?:\s+(?:\d+|" + _ROMAN + r"))*)|(" + COMMA_SEP + r"|\s*;\s*)"
+    "("
+    + KARELIAN
+    + r")(\([^)]*\))?((?:\s+(?:\d+|"
+    + _ROMAN
+    + r"))*)|("
+    + COMMA_SEP
+    + r"|\s*;\s*)"
 )
 
 
 def link_see_lemmas(html):
-    """Обернуть каждое слово после «см./ср.»; номера омонимов не трогать."""
+    """
+    Обернуть каждое слово после «см./ср.»; номера омонимов не трогать.
+    kurpa(t) в тексте — ссылка на /search/kurpat (скобки в href снимаются).
+    """
     html = html or ""
 
     def repl(m):
         mark, blob, tail_sep = m.group(1), m.group(2), m.group(3) or ""
         bits = []
         for token in _SEE_TOKEN.finditer(blob):
-            word, hom, sep = token.group(1), token.group(2), token.group(3)
+            word, paren, hom, sep = (
+                token.group(1),
+                token.group(2),
+                token.group(3),
+                token.group(4),
+            )
             if word:
-                bits.append(f'<a href="/search/{word}">{word}</a>')
+                display = word + (paren or "")
+                href = display.replace("(", "").replace(")", "")
+                bits.append(f'<a href="/search/{href}">{display}</a>')
                 if hom:
                     bits.append(hom)
             else:

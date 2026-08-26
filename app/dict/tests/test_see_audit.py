@@ -189,3 +189,14 @@ class SeeAuditTest(SimpleTestCase):
         self.assertTrue(html.rstrip().endswith(";"))
         self.assertNotIn('href="/search/I"', html)
         self.assertNotIn('href="/search/2"', html)
+
+    def test_link_paren_optional_ending_in_href(self):
+        """kurpa(t) в тексте → поиск kurpat; анализ лемм без скобок."""
+        src = "<i>ср.</i> luapotti, kurpa(t)"
+        self.assertEqual(html_see_lemmas(src), ["luapotti", "kurpa"])
+        html = link_see_lemmas(src)
+        self.assertIn('<a href="/search/luapotti">luapotti</a>', html)
+        self.assertIn('<a href="/search/kurpat">kurpa(t)</a>', html)
+        self.assertNotIn(
+            'href="/search/kurpa"', html.replace('href="/search/kurpat"', "")
+        )
