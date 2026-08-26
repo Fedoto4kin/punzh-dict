@@ -71,5 +71,31 @@ docker exec --user 1000:1000 punzh_django python manage.py test dict
 docker exec --user 1000:1000 -i punzh_django black dict/
 ```
 
+### Поля из перевода (`from_translation`)
 
-@todo: add deploy flow script
+Оффлайн: пометить уже проставленные смысловые поля — из переводов леммы
+или нет. **Не** переклассификация. Боевой прогон — после очистки переводов
+(`backlog.md` §2, затем §4). Подробности: `agents/AGENTS.md`.
+
+Нужны: доступ к БД в контейнере, `openai` (`pip install openai` разово),
+ключ в `agents/.env` (`DEEPSEEK_API_KEY=...` без кавычек), миграция `0025`.
+
+Имя контейнера: `punzh_django` (dev) или `punzh_web` (internal compose) —
+подставьте своё.
+
+```bash
+# дым (100 статей) → agents/data/translation_fields.json
+docker exec --user 1000:1000 -w /app/agents punzh_django \
+  python pick_translation_fields.py --limit 100 --order id --out translation_fields.json
+
+# полный словарь (автодокат при обрыве)
+docker exec --user 1000:1000 -w /app/agents punzh_django \
+  python pick_translation_fields.py --order id --out translation_fields.json
+
+# заливка флага (связи не создаёт и не удаляет)
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py load_translation_fields \
+  --file /app/agents/data/translation_fields.json
+```
+
+JSON в `agents/data/` — не коммитить. `/ontology/` по флагу не фильтрует.
