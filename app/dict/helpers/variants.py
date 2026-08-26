@@ -4,6 +4,36 @@ from .orphography import new_orthography, normalization
 
 KRL_ABC = "ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ"
 
+# Interior hyphen ≈ space: mul’l’in-mal’l’in ↔ mullin mallin.
+# Leading-hyphen lemmas («-raiska») are left alone.
+_INTERIOR_HYPHEN = re.compile(r"(?<=\w)-(?=\w)", re.UNICODE)
+
+
+def fold_interior_hyphens(text):
+    return _INTERIOR_HYPHEN.sub(" ", text or "")
+
+
+def expand_index_variants(variants):
+    """
+    Keep full forms; add whitespace/hyphen alternates and each token.
+    «mullin mallin» → also mullin, mallin, mullin-mallin;
+    «lendelija-orava» → also spaced form and parts.
+    """
+    out = set(variants)
+    for v in variants:
+        if not v:
+            continue
+        spaced = fold_interior_hyphens(v)
+        if spaced != v:
+            out.add(spaced)
+        parts = spaced.split()
+        for tok in parts:
+            if tok:
+                out.add(tok)
+        if len(parts) > 1:
+            out.add("-".join(parts))
+    return out
+
 
 def sorted_by_krl(article, field="word"):
 

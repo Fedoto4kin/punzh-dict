@@ -7,6 +7,8 @@ from django.utils.html import format_html
 from ..helpers import (
     KRL_ABC,
     compact_article_html,
+    expand_index_variants,
+    fold_interior_hyphens,
     gen_word_variants,
     normalization,
     r_gen_word_variants,
@@ -78,19 +80,23 @@ class Article(ArticleBase):
 
     def word_index(self):
         if self.word_normalized:
-            return r_gen_word_variants(word=self.word_normalized, _word=self.word)
+            variants = r_gen_word_variants(word=self.word_normalized, _word=self.word)
         else:
-            return gen_word_variants(self.word)
+            variants = gen_word_variants(self.word)
+        return expand_index_variants(variants)
 
     def word_normalization_index(self):
         word = self.word
         if self.word_normalized:
             word = self.word_normalized
 
-        return set(
-            w.strip().replace("’", "").split(" ", 1)[0]
-            for w in normalization(word).split(",")
-        )
+        tokens = set()
+        for w in normalization(word).split(","):
+            part = fold_interior_hyphens(w.strip().replace("’", ""))
+            for tok in part.split():
+                if tok:
+                    tokens.add(tok)
+        return tokens
 
     def save(self, *args, **kwargs):
 

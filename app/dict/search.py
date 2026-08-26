@@ -12,7 +12,12 @@ from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.db.models.functions import Length
 
-from .helpers import build_pagination_hints, normalization, sorted_by_krl
+from .helpers import (
+    build_pagination_hints,
+    fold_interior_hyphens,
+    normalization,
+    sorted_by_krl,
+)
 from .models import (
     Article,
     ArticleAddition,
@@ -387,6 +392,7 @@ _KRL_ILIKE_TRANS = str.maketrans(
     {
         ";": "",
         "’": "",
+        "'": "",
         ",": "",
         "š": "s",
         "č": "c",
@@ -398,7 +404,7 @@ _KRL_ILIKE_TRANS = str.maketrans(
 
 
 def prepare_krl_ilike_query(query: str) -> str:
-    return query.translate(_KRL_ILIKE_TRANS)
+    return fold_interior_hyphens(query.translate(_KRL_ILIKE_TRANS))
 
 
 def krl_article_ids(query: str):

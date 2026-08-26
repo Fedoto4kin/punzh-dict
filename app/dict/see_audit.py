@@ -2,11 +2,11 @@
 
 import re
 
-KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮]+"
+KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
 # римский номер только UPPERCASE (I, II): строчная «i»/«v» — союз или начало иллюстрации
 # («см. X; har’jatešša i kuduos…»), не омоним
-_ROMAN = r"[IVX]{1,5}(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮])"
+_ROMAN = r"[IVX]{1,5}(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-])"
 HOMONYM = rf"(?:\s+(?:\d+|{_ROMAN}))*"
 HOMONYM_REQ = rf"(?:\s+(?:\d+|{_ROMAN}))+"
 COMMA_SEP = r"\s*,\s*"
@@ -171,6 +171,8 @@ def fold_lemma(word):
     w = w.split(",", 1)[0].strip()
     w = _HOMONYM_TAIL.sub("", w).strip()
     w = w.replace("~", "")
+    # дефис внутри леммы ≈ пробел (mul’l’in-mal’l’in ↔ mul’l’in mal’l’in)
+    w = re.sub(r"(?<=\w)-(?=\w)", " ", w)
     return w.replace("š", "s").replace("č", "c").replace("ž", "z")
 
 
