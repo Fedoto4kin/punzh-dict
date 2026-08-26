@@ -16,13 +16,13 @@
 - Python 3.8, Django 3.1.7, PostgreSQL (`django.contrib.postgres`: FTS, триграммы)
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
 - Docker: образ `images/django/Dockerfile`; dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
-- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`). В URL пока не подключён. Проверка канала: `test_timeweb`.
+- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client` (шлюз), `prompts` (общий замёрзший промпт), `classify` (одна статья). AI-поиск в URL пока не подключён. Проверка канала: `test_timeweb`. Доклассификация: `classify_article --id`.
 - LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка 16k → DeepSeek напрямую (`app/agents/.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 
 ## Structure
-- `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands).
+- `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands, `ai/`).
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
-- `app/agents/` — **оффлайн** скрипты (онтология, LLM, в т.ч. `pick_translation_fields.py`). Не обслуживают живые запросы; заливку в БД делают management-команды.
+- `app/agents/` — **оффлайн** скрипты (онтология, LLM, в т.ч. `pick_translation_fields.py`). Не обслуживают живые запросы; заливку пакетного JSON в БД делают management-команды. Промпт классификации импортируют из `dict.ai.prompts`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
 - `backlog.md` — текущие задачи (очистка переводов §2; боевой прогон `from_translation` §4).
 - `docs/` — спеки (не обязательно реализованный код):
@@ -66,7 +66,7 @@
 
 ## Next (не смешивать ветки)
 1. Очистить переводы (`backlog.md` §2), затем боевой прогон `from_translation` (§4). Не переклассифицировать поля и не фильтровать `/ontology/` в этой версии.
-2. AI-поиск, слой 1: разбор запроса + отдельная страница по `docs/ai-search.md` (клиент шлюза уже есть).
+2. AI-поиск, слой 1: разбор запроса + отдельная страница по `docs/ai-search.md` (клиент шлюза и `classify_article` уже есть; автохук после сохранения статьи — отдельно).
 3. Валидатор формы по `docs/SPEC_article_form_validator.md`: сначала В2 (автокомплит «см.»), затем В1 и проверки html↔структура.
 
 ## Notes for AI (Cursor)

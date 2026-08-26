@@ -36,17 +36,25 @@ AI-поиску нужна семантическая группировка в�
 промпт не идёт — модель не знает диалекта, русский перевод для неё
 единственная надёжная семантическая опора.
 
-**Модель и режим.** Пакетная оффлайн-разметка всех статей — скрипт
-`build_ontology.py` из `app/agents/`, напрямую через **DeepSeek** (личный ключ
-в `app/agents/.env`, запуск `-w /app/agents`). Это отделено от рантайма: разбор
-запросов и одиночные новые слова в приложении идут через шлюз Timeweb
-(`dict.ai.client`). Критерий: пакет → прямой DeepSeek; поштучно вживую → шлюз.
+**Модель и режим.** Два канала, один замёрзший промпт:
+
+| | Пакет (~16k) | Одна статья (новое слово) |
+|---|---|---|
+| Скрипт | `agents/build_ontology.py --ontology` | `manage.py classify_article --id` |
+| API | DeepSeek напрямую (`DEEPSEEK_API_KEY` в `agents/.env`) | шлюз Timeweb (`TIMEWEB_AI_*`, модель `TIMEWEB_AI_MODEL_CLASSIFY`) |
+| Онтология | JSON-файл (`ontology_frozen.json`) | справочник `SemanticField` в БД |
+| Запись | JSON → `load_semantic_*` / `load_keywords` | сразу в `ArticleSemanticField` + `ArticleKeyword` |
+
+Общий текст промпта и сбор входа статьи — `dict.ai.prompts`
+(`SYSTEM_PROMPT_FROZEN`, `build_article_input`): пакетный скрипт импортирует
+их оттуда, чтобы тексты не разъезжались.
 
 **Инструменты:**
-- `build_ontology.py` — движок, три режима (`--design-only`, `--consolidate`,
-  `--ontology`);
+- `build_ontology.py` — оффлайн-движок, три режима (`--design-only`,
+  `--consolidate`, `--ontology`);
 - `load_semantic_fields`, `load_semantic_classification`, `load_keywords` —
-  management-команды заливки в БД;
+  management-команды заливки пакетного JSON в БД;
+- `classify_article --id` — доклассификация одной статьи (см. §5);
 - `pick_translation_fields.py` + `load_translation_fields` — отдельный проход:
   какие из уже проставленных полей из **переводов** леммы (`from_translation`),
   не переклассификация (см. §4.1).
@@ -117,9 +125,9 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 ### 3.4. Прогон для разметки (`--ontology FROZEN --limit N`)
 
 Классификация всех статей по замороженной онтологии:
-- промпт `SYSTEM_PROMPT_FROZEN`: относить **строго** к полям из списка, новые
-  заводить **запрещено**, 1-3 самых релевантных поля; служебное слово → пустой
-  список и `no_field: true`;
+- промпт `SYSTEM_PROMPT_FROZEN` (общий модуль `dict.ai.prompts`): относить
+  **строго** к полям из списка, новые заводить **запрещено**, 1-3 самых
+  релевантных поля; служебное слово → пустой список и `no_field: true`;
 - в коде страховка: левые поля отсекаются (`f in field_defs`);
 - вход по статье — переводы + русские фрагменты иллюстраций;
 - устойчивость долгого/платного прогона: **автодокат** (если выходной файл уже
@@ -189,3 +197,41 @@ management-команды Django.
 Позже, **после** очистки переводов (`backlog.md` §2): `pick_translation_fields.py`
 → `load_translation_fields` (`backlog.md` §4). Это не шаг прогона онтологии
 выше: поля уже стоят, меняется только флаг `from_translation`.
+
+---
+
+## 5. Доклассификация нового слова
+
+После массового прогона словарь живёт: в админке появляются новые статьи.
+Их нужно разметить тем же правилом, без повторного прогона всех 16k.
+
+**Команда:** `manage.py classify_article --id <article_id>`  
+**Ядро:** `dict.ai.classify.classify_article` (без HTTP — можно звать из фона).  
+**Канал:** Timeweb → DeepSeek (`TIMEWEB_AI_MODEL_CLASSIFY`). Проверка шлюза:
+`manage.py test_timeweb`.
+
+Поведение:
+- онтология — из `SemanticField` (не из файла);
+- промпт и вход статьи — те же, что у пакетного `--ontology`;
+- пишет **только** эту статью: старые `ArticleSemanticField` /
+  `ArticleKeyword` заменяются; остальные статьи не трогает;
+- левые имена полей отсекаются; keywords — с той же санитарией, что
+  `load_keywords` (strip/lower, длина ≥ 2, не чисто цифры);
+- `no_field` / пустой список → привязок нет, keywords всё равно пишутся;
+- `from_translation` не трогает (остаётся `False`; отдельный проход §4.1);
+- `--dry-run` — только ответ модели, без записи;
+- сбой LLM / пустой справочник / нет статьи → `ok=False`, БД не меняется.
+
+Фон (позже): вызывать ядро после сохранения статьи (не из `Article.save()` —
+инлайны переводов пишутся позже); в воркере — `close_old_connections()`
+вокруг вызова, не внутри ядра.
+
+```bash
+# дым
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py classify_article --id 12345 --dry-run
+
+# запись в БД
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py classify_article --id 12345
+```

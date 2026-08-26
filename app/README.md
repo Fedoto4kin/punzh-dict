@@ -71,6 +71,27 @@ docker exec --user 1000:1000 punzh_django python manage.py test dict
 docker exec --user 1000:1000 -i punzh_django black dict/
 ```
 
+### Доклассификация одной статьи (`classify_article`)
+
+Рантайм: разметить **одну** статью по онтологии из БД. Тот же замёрзший
+промпт, что у пакетной разметки; модель DeepSeek через шлюз Timeweb
+(`TIMEWEB_AI_API_KEY`, `TIMEWEB_AI_MODEL_CLASSIFY`). Пишет сразу в
+`ArticleSemanticField` и `ArticleKeyword` этой статьи. Подробности:
+`docs/method-onthlogy-markup.md` §5.
+
+Имя контейнера: `punzh_django` (dev) или `punzh_web` (internal compose) —
+подставьте своё. Канал: `manage.py test_timeweb`.
+
+```bash
+# дым (без записи)
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py classify_article --id 12345 --dry-run
+
+# запись
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py classify_article --id 12345
+```
+
 ### Поля из перевода (`from_translation`)
 
 Оффлайн: пометить уже проставленные смысловые поля — из переводов леммы
@@ -79,9 +100,6 @@ docker exec --user 1000:1000 -i punzh_django black dict/
 
 Нужны: доступ к БД в контейнере, `openai` (`pip install openai` разово),
 ключ в `agents/.env` (`DEEPSEEK_API_KEY=...` без кавычек), миграция `0025`.
-
-Имя контейнера: `punzh_django` (dev) или `punzh_web` (internal compose) —
-подставьте своё.
 
 ```bash
 # дым (100 статей) → agents/data/translation_fields.json

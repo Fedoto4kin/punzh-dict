@@ -61,7 +61,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 ### Данные словаря
 
 #### `build_ontology.py` — онтология смысловых полей + классификация
-Три режима (подробности внутри файла и в `docs/CONCEPT_ai_search.md`):
+Три режима (подробности внутри файла и в `docs/method-onthlogy-markup.md`):
 - `--design-only --runs N --sample K` — N прогонов проектирования онтологии
   (ансамбль; выборки не пересекаются; служебные части речи исключены).
 - `--consolidate FILE` — усушка N наборов в единый список (объединить
@@ -69,9 +69,12 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
   человеком и замораживается.
 - `--ontology FROZEN --limit N` — классификация статей по замороженной
   онтологии (1-3 поля, `no_field` валиден, новые поля запрещены). Автодокат +
-  сохранение каждые 100. Возвращает и `keywords`.
+  сохранение каждые 100. Возвращает и `keywords`. Промпт/вход статьи —
+  из `dict.ai.prompts` (общий с рантайм-`classify_article`).
 
 Проверка подключения к DeepSeek: `probe_deepseek.py`.
+Одна новая статья вживую — **не здесь**: `manage.py classify_article --id`
+(`dict.ai.classify`, шлюз Timeweb); см. `docs/method-onthlogy-markup.md` §5.
 
 #### `pick_translation_fields.py` — поля из перевода vs из примера
 Не переклассифицирует. Вход: переводы леммы + закрытый список полей статьи
