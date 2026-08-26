@@ -17,6 +17,8 @@ class PrepareKrlIlikeQueryPublicTestCase(SimpleTestCase):
         self.assertEqual("mullin", prepare_krl_ilike_query("mul’l’in"))
         self.assertEqual("mullin", prepare_krl_ilike_query("mul'l'in"))
         self.assertEqual("mullin mallin", prepare_krl_ilike_query("mul’l’in-mal’l’in"))
+        self.assertEqual("siksi", prepare_krl_ilike_query("šiksi…"))
+        self.assertEqual("siksi sto", prepare_krl_ilike_query("šiksi… što"))
 
     def test_folds_u_umlaut_to_y_like_sibilants(self):
         self.assertEqual("hyckähtiä", prepare_krl_ilike_query("hüčkähtiä"))
@@ -39,6 +41,7 @@ class KrlArticleIdsTestCase(TestCase):
         self.hyphen_hw = Article.objects.create(word="l’en’d’el’ijä-orava")
         self.old_u = Article.objects.create(word="hüčkäht’||iä")
         self.new_y = Article.objects.create(word="hyčkäht’iä")
+        self.ellipsis = Article.objects.create(word="šiksi… što")
 
     def _ids(self, query):
         return set(krl_article_ids(query))
@@ -128,6 +131,25 @@ class KrlArticleIdsTestCase(TestCase):
         self.assertEqual(self._ids("hüčkähtiä"), expected)
         self.assertEqual(self._ids("hyčkähtiä"), expected)
         self.assertEqual(self._ids("hüčkäht?"), expected)
+
+    def test_ellipsis_headword_index_splits_like_comma(self):
+        indexed = set(
+            ArticleIndexWord.objects.filter(article=self.ellipsis).values_list(
+                "word", flat=True
+            )
+        )
+        self.assertEqual(indexed, {"siksi", "sto"})
+        norms = set(
+            ArticleIndexWordNormalization.objects.filter(
+                article=self.ellipsis
+            ).values_list("word", flat=True)
+        )
+        self.assertEqual(norms, {"šiksi", "što"})
+
+    def test_ellipsis_headword_searchable_by_each_part(self):
+        self.assertEqual(self._ids("šiksi"), {self.ellipsis.id})
+        self.assertEqual(self._ids("siksi"), {self.ellipsis.id})
+        self.assertEqual(self._ids("što"), {self.ellipsis.id})
 
 
 class SeeHyphenLinkTestCase(SimpleTestCase):

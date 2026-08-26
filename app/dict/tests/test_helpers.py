@@ -50,6 +50,10 @@ class KrlHelpersTestCase(TestCase):
     def test_get_variants_tilda(self):
         self.assertEqual(gen_word_variants("baba, ~z’en’i"), {"baba", "babazeni"})
 
+    def test_get_variants_ellipsis_is_comma(self):
+        self.assertEqual(gen_word_variants("šiksi… što"), {"siksi", "sto"})
+        self.assertEqual(gen_word_variants("šiksi... što"), {"siksi", "sto"})
+
     def test_get_variants_w(self):
         self.assertEqual(gen_word_variants("uwt||tua"), {"uuttua", "uwttua", "uvttua"})
 

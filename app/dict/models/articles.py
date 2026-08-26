@@ -12,6 +12,7 @@ from ..helpers import (
     gen_word_variants,
     normalization,
     r_gen_word_variants,
+    split_alt_forms,
 )
 from .source import Source
 
@@ -91,7 +92,7 @@ class Article(ArticleBase):
             word = self.word_normalized
 
         tokens = set()
-        for w in normalization(word).split(","):
+        for w in split_alt_forms(normalization(word)):
             part = fold_interior_hyphens(w.strip().replace("’", ""))
             for tok in part.split():
                 if tok:

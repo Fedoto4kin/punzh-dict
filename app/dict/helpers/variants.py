@@ -13,6 +13,14 @@ def fold_interior_hyphens(text):
     return _INTERIOR_HYPHEN.sub(" ", text or "")
 
 
+# «šiksi… što» ≈ «šiksi, što»: alternative forms, not a phrase.
+_ALT_SEP = re.compile(r"\.{3}|…")
+
+
+def split_alt_forms(word):
+    return _ALT_SEP.sub(",", word or "").split(",")
+
+
 def expand_index_variants(variants):
     """
     Keep full forms; add whitespace/hyphen alternates and each token.
@@ -114,13 +122,13 @@ def r_gen_word_variants(word, _word) -> ():
     word = word.replace("˛", "")
     word = word.lower()
 
-    for w in word.split(","):
+    for w in split_alt_forms(word):
         variants += proc(w, word)
         if w.count("|") and not re.findall(r"([|])\1{1,2}", w):
             for _ in w.split("|"):
                 variants += proc(_, word)
     if _word:
-        for w in _word.split(","):
+        for w in split_alt_forms(_word):
             variants += r_proc(w, _word)
             if w.count("|") and not re.findall(r"([|])\1{1,2}", w):
                 for _ in w.split("|"):
@@ -181,7 +189,7 @@ def gen_word_variants(word) -> ():
     word = word.replace("˛", "")
     word = word.lower()
 
-    for w in word.split(","):
+    for w in split_alt_forms(word):
         variants += proc(w, word)
         if w.count("|") and not re.findall(r"([|])\1{1,2}", w):
             for _ in w.split("|"):
