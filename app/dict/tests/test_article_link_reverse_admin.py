@@ -41,9 +41,9 @@ class ArticleLinkReverseInlineTestCase(TestCase):
         response = self.client.get(f"/admin/dict/article/{target.pk}/change/")
         self.assertEqual(response.status_code, 200)
         reverse_html = (
-            response.content.decode().split('id="links_to-group"', 1)[1].split(
-                "</fieldset>", 1
-            )[0]
+            response.content.decode()
+            .split('id="links_to-group"', 1)[1]
+            .split("</fieldset>", 1)[0]
         )
         self.assertIn(">riugu, riugune</a>", reverse_html)
 

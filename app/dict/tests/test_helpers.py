@@ -79,6 +79,9 @@ class KrlHelpersTestCase(TestCase):
             {"lüwvä", "lyyvä", "lyvvä", "lüvvä", "lüüvä", "lywvä"},
         )
 
+    def test_get_variants_already_normalized_y_stays_y(self):
+        self.assertEqual(gen_word_variants("hyčkäht’iä"), {"hyckähtiä"})
+
     def test_get_variants_complex3(self):
         self.assertEqual(
             gen_word_variants("armas|miel’i|aigoman’e"),

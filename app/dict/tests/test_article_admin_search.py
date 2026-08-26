@@ -17,6 +17,7 @@ class PrepareKrlIlikeQueryTestCase(SimpleTestCase):
 
     def test_diacritics_fold(self):
         self.assertEqual("soba", prepare_krl_ilike_query("šoba"))
+        self.assertEqual("hyvin", prepare_krl_ilike_query("hüvin"))
 
 
 class ArticleAdminKrlSearchTestCase(TestCase):

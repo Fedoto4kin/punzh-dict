@@ -59,9 +59,7 @@ class LoadTranslationFieldsTestCase(TestCase):
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump({"from_translation": mapping}, f)
-            call_command(
-                "load_translation_fields", "--file", path, stdout=StringIO()
-            )
+            call_command("load_translation_fields", "--file", path, stdout=StringIO())
         finally:
             os.remove(path)
 
@@ -78,18 +76,18 @@ class LoadTranslationFieldsTestCase(TestCase):
         )
 
     def test_empty_list_clears_flags(self):
-        ArticleSemanticField.objects.filter(article=self.art, field=self.animals).update(
-            from_translation=True
-        )
+        ArticleSemanticField.objects.filter(
+            article=self.art, field=self.animals
+        ).update(from_translation=True)
         self._load({str(self.art.id): []})
         self.assertFalse(
             self.art.semantic_assignments.filter(from_translation=True).exists()
         )
 
     def test_unknown_field_name_skips_that_name(self):
-        ArticleSemanticField.objects.filter(article=self.art, field=self.animals).update(
-            from_translation=True
-        )
+        ArticleSemanticField.objects.filter(
+            article=self.art, field=self.animals
+        ).update(from_translation=True)
         self._load({str(self.art.id): ["Нет такого поля"]})
         self.assertFalse(
             self.art.semantic_assignments.filter(from_translation=True).exists()

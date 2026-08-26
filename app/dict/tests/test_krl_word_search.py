@@ -18,6 +18,12 @@ class PrepareKrlIlikeQueryPublicTestCase(SimpleTestCase):
         self.assertEqual("mullin", prepare_krl_ilike_query("mul'l'in"))
         self.assertEqual("mullin mallin", prepare_krl_ilike_query("mul’l’in-mal’l’in"))
 
+    def test_folds_u_umlaut_to_y_like_sibilants(self):
+        self.assertEqual("hyckähtiä", prepare_krl_ilike_query("hüčkähtiä"))
+        self.assertEqual("hyckähtiä", prepare_krl_ilike_query("hyčkähtiä"))
+        self.assertEqual("Hyckähtiä", prepare_krl_ilike_query("Hüčkähtiä"))
+        self.assertEqual("hyckäht%", prepare_krl_ilike_query("hüčkäht?"))
+
     def test_leading_hyphen_kept(self):
         self.assertEqual("-raiska", prepare_krl_ilike_query("-raiska"))
 
@@ -31,6 +37,8 @@ class KrlArticleIdsTestCase(TestCase):
         self.phrase = Article.objects.create(word="mul’l’in mal’l’in")
         self.phrase_u = Article.objects.create(word="mül’l’in mäl’l’in")
         self.hyphen_hw = Article.objects.create(word="l’en’d’el’ijä-orava")
+        self.old_u = Article.objects.create(word="hüčkäht’||iä")
+        self.new_y = Article.objects.create(word="hyčkäht’iä")
 
     def _ids(self, query):
         return set(krl_article_ids(query))
@@ -95,6 +103,31 @@ class KrlArticleIdsTestCase(TestCase):
 
     def test_prefix_wildcard_reaches_into_phrase(self):
         self.assertEqual(self._ids("mullin?"), {self.phrase.id})
+
+    def test_y_headword_index_keeps_normalized_form_only(self):
+        indexed = set(
+            ArticleIndexWord.objects.filter(article=self.new_y).values_list(
+                "word", flat=True
+            )
+        )
+        self.assertEqual(indexed, {"hyckähtiä"})
+
+    def test_u_headword_index_keeps_both_orthographies(self):
+        indexed = set(
+            ArticleIndexWord.objects.filter(article=self.old_u).values_list(
+                "word", flat=True
+            )
+        )
+        self.assertEqual(indexed, {"hyckähtiä", "hückähtiä"})
+
+    def test_u_query_finds_already_normalized_headword(self):
+        self.assertIn(self.new_y.id, self._ids("hüčkähtiä"))
+
+    def test_u_and_y_queries_find_both_orthographies(self):
+        expected = {self.old_u.id, self.new_y.id}
+        self.assertEqual(self._ids("hüčkähtiä"), expected)
+        self.assertEqual(self._ids("hyčkähtiä"), expected)
+        self.assertEqual(self._ids("hüčkäht?"), expected)
 
 
 class SeeHyphenLinkTestCase(SimpleTestCase):

@@ -387,7 +387,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
 
 
 # Same mapping the public search form applies before ILIKE: '.' is one
-# character, '?' is any sequence; a few punctuation/diacritic folds.
+# character, '?' is any sequence; sibilants and ü/y fold like the word index.
 _KRL_ILIKE_TRANS = str.maketrans(
     {
         ";": "",
@@ -397,6 +397,8 @@ _KRL_ILIKE_TRANS = str.maketrans(
         "š": "s",
         "č": "c",
         "ž": "z",
+        "ü": "y",
+        "Ü": "Y",
         "?": "%",
         ".": "_",
     }
