@@ -2,11 +2,16 @@
 
 import re
 
-KARELIAN = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-]+"
+# Одно «слово» заголовка (в т.ч. с дефисом). Пробельные двухсловные леммы —
+# отдельно: KARELIAN = слово + опциональные продолжения.
+KARELIAN_WORD = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
 # римский номер только UPPERCASE (I, II): строчная «i»/«v» — союз или начало иллюстрации
 # («см. X; har’jatešša i kuduos…»), не омоним
-_ROMAN = r"[IVX]{1,5}(?![A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-])"
+_ROMAN = rf"[IVX]{{1,5}}(?!{KARELIAN_WORD})"
+# продолжение леммы через пробел: не омонимный номер (I / 2) и не начало списка
+_KRL_CONT = rf"(?!(?:[IVX]{{1,5}}|\d+)(?!{KARELIAN_WORD})){KARELIAN_WORD}"
+KARELIAN = rf"{KARELIAN_WORD}(?:\s+{_KRL_CONT})*"
 HOMONYM = rf"(?:\s+(?:\d+|{_ROMAN}))*"
 HOMONYM_REQ = rf"(?:\s+(?:\d+|{_ROMAN}))+"
 COMMA_SEP = r"\s*,\s*"
@@ -254,6 +259,7 @@ def link_see_lemmas(html):
     """
     Обернуть каждое слово после «см./ср.»; номера омонимов не трогать.
     kurpa(t) в тексте — ссылка на /search/kurpat (скобки в href снимаются).
+    Двухсловные леммы через пробел (не через запятую) — одна ссылка.
     """
     html = html or ""
 
@@ -269,7 +275,7 @@ def link_see_lemmas(html):
             )
             if word:
                 display = word + (paren or "")
-                href = display.replace("(", "").replace(")", "")
+                href = display.replace("(", "").replace(")", "").replace(" ", "%20")
                 bits.append(f'<a href="/search/{href}">{display}</a>')
                 if hom:
                     bits.append(hom)

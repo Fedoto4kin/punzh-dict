@@ -105,6 +105,17 @@ class SeeHyphenLinkTestCase(SimpleTestCase):
         self.assertIn('<a href="/search/mul’l’in-mal’l’in">mul’l’in-mal’l’in</a>', html)
         self.assertNotIn('href="/search/mul’l’in"', html)
 
+    def test_link_keeps_spaced_lemma(self):
+        src = (
+            "<b>kur’in murin</b> <i>adv</i> <i>см.</i> kur’iin mur’iin; "
+            "mukelduači pordahilda ~"
+        )
+        self.assertEqual(html_see_lemmas(src), ["kur’iin mur’iin"])
+        html = link_see_lemmas(src)
+        self.assertIn('<a href="/search/kur’iin%20mur’iin">kur’iin mur’iin</a>', html)
+        self.assertNotIn('href="/search/kur’iin"', html)
+        self.assertNotIn("mukelduači</a>", html)
+
     def test_fold_lemma_equates_hyphen_and_space(self):
         self.assertEqual(
             fold_lemma("mul’l’in-mal’l’in"), fold_lemma("mul’l’in mal’l’in")
