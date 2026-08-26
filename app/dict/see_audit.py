@@ -361,6 +361,53 @@ def article_index_words(article):
     return words
 
 
+def lemma_resolves_to(lemma, from_id, to_article):
+    """Лемма из HTML указывает на to_article."""
+    found = lookup_articles(lemma, from_id)
+    if any(a.id == to_article.id for a in found):
+        return True
+    return lemma_matches_headword(to_article, lemma)
+
+
+def infer_link_kind(from_article, to_article):
+    """
+    Угадать kind существующей связи по HTML источника.
+    deriv имеет приоритет над см./ср.; иначе дефолт see.
+    """
+    from dict.models import ArticleLink
+
+    html = from_article.article_html or ""
+    from_id = from_article.id
+    c = classify_html(html)
+
+    for rec in c["deriv_tagged"]:
+        if lemma_resolves_to(rec["lemma"], from_id, to_article):
+            return ArticleLink.KIND_DERIV
+    for rec in c["deriv_loose"]:
+        if lemma_resolves_to(rec["lemma"], from_id, to_article):
+            return ArticleLink.KIND_DERIV
+
+    for m in CANON.finditer(html):
+        mark = m.group(1)
+        cross_kind = (
+            ArticleLink.KIND_CF if mark.startswith("ср") else ArticleLink.KIND_SEE
+        )
+        lemma = m.group(2)
+        lemmas = [lemma]
+        tail = html[m.end() :]
+        while True:
+            extra = COMMA_MORE.match(tail) or SEMI_MORE.match(tail)
+            if not extra:
+                break
+            lemmas.append(extra.group(1))
+            tail = tail[extra.end() :]
+        for lem in lemmas:
+            if lemma_resolves_to(lem, from_id, to_article):
+                return cross_kind
+
+    return ArticleLink.KIND_SEE
+
+
 def scan_see_links(article, outgoing):
     """
     Сверка лемм «см./ср.» в HTML с исходящими ArticleLink.

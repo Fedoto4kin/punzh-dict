@@ -59,9 +59,10 @@ class ArticleLinkInline(admin.TabularInline):
     model = ArticleLink
     fk_name = "from_article"
     extra = 0
+    fields = ("to_article", "kind")
     autocomplete_fields = ("to_article",)
     verbose_name = "Исходящая отсылка"
-    verbose_name_plural = "Смотрите также (см./ср. из этой статьи)"
+    verbose_name_plural = "Смотрите также (см./ср./от из этой статьи)"
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj=obj, **kwargs)
@@ -77,8 +78,8 @@ class ArticleLinkReverseInline(admin.TabularInline):
     fk_name = "to_article"
     extra = 0
     can_delete = False
-    readonly_fields = ("from_article_link",)
-    fields = ("from_article_link",)
+    readonly_fields = ("from_article_link", "kind")
+    fields = ("from_article_link", "kind")
     verbose_name = "Входящая отсылка"
     verbose_name_plural = "На эту статью указывают (только просмотр)"
 

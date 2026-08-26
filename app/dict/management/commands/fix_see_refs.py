@@ -200,7 +200,9 @@ class Command(BaseCommand):
             if not html_only:
                 for tgt in targets:
                     obj, created = ArticleLink.objects.get_or_create(
-                        from_article=article, to_article=tgt
+                        from_article=article,
+                        to_article=tgt,
+                        defaults={"kind": ArticleLink.KIND_SEE},
                     )
                     if created:
                         created_link_ids.append(obj.id)
@@ -209,7 +211,9 @@ class Command(BaseCommand):
 
     def _create_link(self, from_id, to_id):
         obj, created = ArticleLink.objects.get_or_create(
-            from_article_id=from_id, to_article_id=to_id
+            from_article_id=from_id,
+            to_article_id=to_id,
+            defaults={"kind": ArticleLink.KIND_SEE},
         )
         return obj.id if created else None
 
@@ -238,6 +242,7 @@ class Command(BaseCommand):
             ArticleLink.objects.get_or_create(
                 from_article_id=rec["from_article_id"],
                 to_article_id=rec["to_article_id"],
+                defaults={"kind": ArticleLink.KIND_SEE},
             )
 
     def _create_unique_links(self, items):

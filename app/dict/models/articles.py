@@ -204,6 +204,17 @@ class ArticleIndexTag(models.Model):
 
 
 class ArticleLink(models.Model):
+    KIND_SEE = "see"
+    KIND_CF = "cf"
+    KIND_DERIV = "deriv"
+    KIND_CHOICES = (
+        (KIND_SEE, "см."),
+        (KIND_CF, "ср."),
+        (KIND_DERIV, "от"),
+    )
+    # Поиск / онтология: только см. и ср.; деривации «от» — отдельно (backlog §1).
+    KINDS_CROSSREF = (KIND_SEE, KIND_CF)
+
     from_article = models.ForeignKey(
         Article,
         related_name="links_from",
@@ -216,6 +227,13 @@ class ArticleLink(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Целевая статья",
     )
+    kind = models.CharField(
+        max_length=8,
+        choices=KIND_CHOICES,
+        default=KIND_SEE,
+        db_index=True,
+        verbose_name="Тип связи",
+    )
 
     class Meta:
         unique_together = ("from_article", "to_article")
@@ -223,4 +241,5 @@ class ArticleLink(models.Model):
         verbose_name_plural = "Связи между статьями"
 
     def __str__(self):
-        return f"{self.from_article.word} см. {self.to_article.word}"
+        label = dict(self.KIND_CHOICES).get(self.kind, self.kind)
+        return f"{self.from_article.word} {label} {self.to_article.word}"

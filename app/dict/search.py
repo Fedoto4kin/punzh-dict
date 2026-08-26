@@ -77,16 +77,16 @@ def sort_and_paginate(articles, page):
 
 def expand_by_links(article_ids):
     """
-    Кластер по направленным ArticleLink: исходящие и входящие концы
-    одной дуги. Обратная строка B→A в БД не нужна — достаточно A→B.
+    Кластер по направленным ArticleLink (только см./ср., без deriv).
     """
-    outgoing = ArticleLink.objects.filter(from_article_id__in=article_ids).values_list(
-        "to_article_id", flat=True
-    )
+    cross = ArticleLink.KINDS_CROSSREF
+    outgoing = ArticleLink.objects.filter(
+        from_article_id__in=article_ids, kind__in=cross
+    ).values_list("to_article_id", flat=True)
 
-    incoming = ArticleLink.objects.filter(to_article_id__in=article_ids).values_list(
-        "from_article_id", flat=True
-    )
+    incoming = ArticleLink.objects.filter(
+        to_article_id__in=article_ids, kind__in=cross
+    ).values_list("from_article_id", flat=True)
 
     return set(article_ids) | set(outgoing) | set(incoming)
 
@@ -351,7 +351,9 @@ def search_by_translate_linked(query: str, page=1, f=None):
     # Связи внутри выдачи (обе стороны) — для наследования "прямых" попаданий
     links = {}
     for fa, ta in ArticleLink.objects.filter(
-        from_article_id__in=result_ids, to_article_id__in=result_ids
+        from_article_id__in=result_ids,
+        to_article_id__in=result_ids,
+        kind__in=ArticleLink.KINDS_CROSSREF,
     ).values_list("from_article_id", "to_article_id"):
         links.setdefault(fa, set()).add(ta)
         links.setdefault(ta, set()).add(fa)
@@ -574,9 +576,10 @@ def article_ids_for_semantic_field(field_id):
     if not classified:
         return classified
     referrers = set(
-        ArticleLink.objects.filter(to_article_id__in=classified).values_list(
-            "from_article_id", flat=True
-        )
+        ArticleLink.objects.filter(
+            to_article_id__in=classified,
+            kind__in=ArticleLink.KINDS_CROSSREF,
+        ).values_list("from_article_id", flat=True)
     )
     if not referrers:
         return classified

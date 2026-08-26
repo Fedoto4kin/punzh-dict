@@ -4,7 +4,7 @@
 Веб-версия словаря карельского языка (тверские говоры) Пунжиной А. В.: статьи, навигация, поиск, админка. ~16k статей.
 
 Данные и возможности:
-- словарные статьи (`Article`) с HTML-текстом, дополнениями (`ArticleAddition`) и связями «см.» (`ArticleLink`);
+- словарные статьи (`Article`) с HTML-текстом, дополнениями (`ArticleAddition`) и связями (`ArticleLink`: `kind` = `see` / `cf` / `deriv`);
 - русские переводы (`ArticleIndexTranslate`);
 - пометы (`Tag`: населённые пункты, часть речи, стилистика, говоры, фразеологизмы);
 - источники (`Source`);
@@ -24,7 +24,7 @@
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
 - `app/agents/` — **оффлайн** скрипты (онтология, LLM, в т.ч. `pick_translation_fields.py`). Не обслуживают живые запросы; заливку пакетного JSON в БД делают management-команды. Промпт классификации импортируют из `dict.ai.prompts`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
-- `backlog.md` — текущие задачи (очистка переводов §2; боевой прогон `from_translation` §4).
+- `backlog.md` — текущие задачи (§1 kind/«от» в работе; §2 очистка переводов; §4 `from_translation`).
 - `docs/` — спеки (не обязательно реализованный код):
   - `ai-search.md` — UX отдельной страницы AI-поиска;
   - `searching_upgrade.md` — реализованные подсказки русского поиска + заметки;
@@ -39,7 +39,7 @@
 Деплой: `./deploy.sh`.
 
 ## Key models (`app/dict/models/`)
-- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink`.
+- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; в работе — связи «от», см. `backlog.md` §1).
 - `semantic.py` — `SemanticField`, `ArticleSemanticField` (`from_translation`), `ArticleKeyword`.
 - `tags.py` — `Tag`.
 - `source.py` — `Source`.
