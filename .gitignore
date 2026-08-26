@@ -14,5 +14,6 @@ media
 .certbot
 app/staticfiles
 app/agents/data/
+app/adjectives_by_field.md
 
 db

@@ -23,8 +23,7 @@
 - `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands).
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
 - `app/agents/` — **оффлайн** скрипты (онтология, LLM, в т.ч. `pick_translation_fields.py`). Не обслуживают живые запросы; заливку в БД делают management-команды.
-- `app/utilites/` — разовые вспомогательные скрипты (имя каталога с опечаткой, не `utilities`).
-- `app/import.py` — импорт данных.
+- `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
 - `backlog.md` — текущие задачи (очистка переводов §2; боевой прогон `from_translation` §4).
 - `docs/` — спеки (не обязательно реализованный код):
   - `ai-search.md` — UX отдельной страницы AI-поиска;
