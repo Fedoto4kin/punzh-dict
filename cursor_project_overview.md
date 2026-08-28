@@ -16,13 +16,13 @@
 - Python 3.8, Django 3.1.7, PostgreSQL (`django.contrib.postgres`: FTS, триграммы)
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
 - Docker: образ `images/django/Dockerfile`; dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
-- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client` (шлюз), `prompts` (общий замёрзший промпт), `classify` (одна статья). AI-поиск в URL пока не подключён. Проверка канала: `test_timeweb`. Доклассификация: `classify_article --id`.
-- LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка 16k → DeepSeek напрямую (`app/agents/.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
+- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client` (шлюз), `prompts` (общий замёрзший промпт классификации — им же пользуется `agents/build_ontology.py`), `classify` (одна статья). AI-поиск в URL пока не подключён. Проверка канала: `test_timeweb`. Доклассификация: `classify_article --id`. См. `dict/ai/README.md` — чем `dict/ai/` отличается от `agents/`.
+- LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 
 ## Structure
 - `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands, `ai/`).
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
-- `app/agents/` — **оффлайн** скрипты (онтология, LLM, в т.ч. `pick_translation_fields.py`). Не обслуживают живые запросы; заливку пакетного JSON в БД делают management-команды. Промпт классификации импортируют из `dict.ai.prompts`.
+- `app/agents/` — **оффлайн** скрипты (онтология, очистка переводов, LLM). Не обслуживают живые запросы; заливку JSON в БД делают management-команды. Промпт классификации импортируют из `dict.ai.prompts` (общий с рантаймом); промпт очистки переводов — целиком здесь (`translation_cleanup.py`). См. `agents/AGENTS.md`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
 - `backlog.md` — текущие задачи (§1 kind/«от» в работе; §2 очистка переводов; §4 `from_translation`).
 - `docs/` — спеки (не обязательно реализованный код):

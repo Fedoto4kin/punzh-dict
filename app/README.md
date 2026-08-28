@@ -26,9 +26,13 @@ git add --renormalize app/dict/fixtures/dict_seed.json
 Before load need to clear dict_ tables
 
 ```bash
-docker exec -w /app punzh_django python manage.py loaddata  /app/dict/fixtures/dict_seed.json
+docker exec -w /app punzh_django python manage.py loaddata /app/dict/fixtures/dict_seed.json
 ```
 After need to restore indexes
+
+```bash
+docker exec -it -w /app punzh_django python manage.py shell
+```
 
 ```python
 from django.contrib.postgres.search import SearchVector
@@ -65,6 +69,16 @@ docker exec --user 1000:1000  -it punzh_django python manage.py migrate
 ```bash
 docker exec --user 1000:1000 punzh_django python manage.py test dict
 ```
+
+### LLM: `agents/` и `dict/ai/`
+
+| | `app/agents/` | `app/dict/ai/` |
+|---|----------------|----------------|
+| Назначение | Пакетная подготовка данных (json) | Рантайм и команды «на лету» |
+| Примеры | `clean_translations.py`, `translation_cleanup.py` | `classify.py`, `client.py` |
+| DeepSeek | `agents/.env`, `-w /app/agents` | Timeweb через `client.py` |
+
+Подробнее: `agents/AGENTS.md`, `dict/ai/README.md`.
 
 ### Lint code
 ```bash

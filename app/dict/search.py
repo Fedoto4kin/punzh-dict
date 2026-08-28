@@ -1,6 +1,5 @@
 import re
 from dataclasses import dataclass
-from itertools import chain
 
 from django.contrib.postgres.search import (
     SearchQuery,
@@ -257,48 +256,33 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
     return narrowing
 
 
-def find_direct_hits(blobs_by_article, result_ids, links):
+def find_exact_match_ids(result_ids, ilike_ids, blobs_by_article, links):
     """
-    Direct hits (SPEC v2). An article qualifies two ways:
-      * base: every rus_word entry is a single token, no phrase (ruttoh ->
-        быстро, круто, скоро);
-      * inherited: it has NO translations of its own but is linked (either
-        direction) to at least one BASE direct hit (rutoldi -> "см. ruttoh").
-        Inheritance is ONE hop from a base direct hit only.
+    Exact matches for ?f=exact (query-normalized ILIKE on rus_word):
+      * article has at least one rus_word equal to the query (ilike_ids);
+      * inherited: no translations of its own, linked (either direction,
+        one hop within result_ids) to such an ILIKE hit (rutoldi -> «см. ruttoh»).
 
-    blobs_by_article: {article_id: [rus_word, ...]} for articles that have
-                      translations (empty-list keys count as no translation).
-    result_ids      : the full result set (ids).
-    links           : {article_id: set(neighbour_ids)} within the result set.
-
-    Returns set(article_id).
+    Link-expanded articles that have their own translations but no exact
+    rus_word match are excluded (e.g. ehatta with only «быстро ехать»).
     """
-    base_direct = set()
-    for aid, rus_words in blobs_by_article.items():
-        if not rus_words:
-            continue
-        all_single = True
-        for rw in rus_words:
-            if len(_TOKEN_RE.findall(rw.lower())) > 1:
-                all_single = False
-                break
-        if all_single:
-            base_direct.add(aid)
-
+    ilike_in_result = set(ilike_ids) & set(result_ids)
     translationless = set(result_ids) - set(blobs_by_article.keys())
-    inherited = set()
-    for aid in translationless:
-        if links.get(aid, set()) & base_direct:
-            inherited.add(aid)
-
-    return base_direct | inherited
+    inherited = {
+        aid
+        for aid in translationless
+        if links.get(aid, set()) & ilike_in_result
+    }
+    return ilike_in_result | inherited
 
 
 def search_by_translate_linked(query: str, page=1, f=None):
 
-    # 1. ILIKE
-    ids_ilike = ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
-        "article_id", flat=True
+    # 1. ILIKE (exact rus_word match, case-insensitive; query already ё→е in views)
+    ids_ilike = set(
+        ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
+            "article_id", flat=True
+        )
     )
 
     # 2. Fulltext
@@ -321,7 +305,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
     fulltext_ids = set(fulltext_ids) - set(ids_ilike)
 
     # 3. Объединяем
-    all_ids = list(set(chain(ids_ilike, fulltext_ids)))
+    all_ids = list(ids_ilike | set(fulltext_ids))
 
     # 4. Расширяем через связи ArticleLink
     expanded_ids = expand_by_links(all_ids)
@@ -334,7 +318,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
     )
 
     # Множество, реально попавшее в выдачу
-    result_ids = expanded_ids if expanded_ids else set(ids_ilike)
+    result_ids = expanded_ids if expanded_ids else ids_ilike
 
     # page_blobs: переводы по каждой карточке выдачи, ОДНИМ запросом
     blobs_by_article = {}
@@ -348,7 +332,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
     query_words = set(_TOKEN_RE.findall(query.lower()))
     narrowing = split_by_coverage(candidates, page_blobs, query_words, STOPWORDS)
 
-    # Связи внутри выдачи (обе стороны) — для наследования "прямых" попаданий
+    # Связи внутри выдачи (обе стороны) — для наследования точных попаданий
     links = {}
     for fa, ta in ArticleLink.objects.filter(
         from_article_id__in=result_ids,
@@ -357,7 +341,9 @@ def search_by_translate_linked(query: str, page=1, f=None):
     ).values_list("from_article_id", "to_article_id"):
         links.setdefault(fa, set()).add(ta)
         links.setdefault(ta, set()).add(fa)
-    direct_ids = find_direct_hits(blobs_by_article, result_ids, links)
+    direct_ids = find_exact_match_ids(
+        result_ids, ids_ilike, blobs_by_article, links
+    )
 
     # Фильтр применяется ПОСЛЕ вычисления тегов/прямых (они всегда от полного
     # якоря) и ДО пагинации, чтобы номера страниц и n-граммы совпадали с

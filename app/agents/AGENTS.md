@@ -6,10 +6,26 @@
 **Область:** только оффлайн — разовая/пакетная обработка, подготовка данных,
 в будущем — инструменты разработки (агентский цикл, тесты, оркестрация).
 **НЕ рантайм.** Ничто отсюда не обслуживает живые запросы пользователей.
+
+### `agents/` vs `dict/ai/`
+
+| | `app/agents/` | `app/dict/ai/` |
+|---|----------------|----------------|
+| **Когда** | Пакет/разово (16k статей, пилот, json) | На лету (запрос пользователя, одна статья) |
+| **Кто вызывает** | Скрипты вручную (`docker … -w /app/agents`) | Views, management-команды, фон |
+| **LLM** | DeepSeek напрямую (`agents/.env`) | Timeweb-шлюз (`dict.ai.client`) |
+| **Запись в БД** | Обычно json; `clean_translations --write` — снимок + запись (`dict/translation_index_write`) | Да (`classify_article` и т.п.) |
+| **Примеры** | `clean_translations.py`, `translation_cleanup.py`, `pick_translation_fields.py` | `client.py`, `classify.py`, `prompts.py` |
+
+**Исключение:** `dict.ai.prompts` лежит в рантайм-пакете, потому что **один**
+замороженный промпт нужен и пакету (`build_ontology.py`), и
+`classify_article`. Промпт, который используется **только** оффлайн — целиком
+в `agents/` (напр. `translation_cleanup.py`).
+
+Подробнее: `dict/ai/README.md`.
+
 Рантайм-классификация (запрос пользователя, новые слова) — `dict.ai`
-(`classify_article` / шлюз Timeweb), здесь её нет. Замёрзший промпт и сбор
-входа статьи живут в `dict.ai.prompts` — пакетный `--ontology` импортирует
-их оттуда, чтобы тексты не разъезжались.
+(`classify_article` / шлюз Timeweb), здесь её нет.
 
 Не «агенты» в смысле автономности (ранняя идея архитектор/исполнитель +
 `Dockerfile.agent` отвергнута). Пока — скрипты с чёткими режимами, запускаемые
@@ -49,10 +65,10 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 периодическим сохранением. Стоимость мизерна (кэш DeepSeek ловит постоянный
 префикс промпта).
 
-**Заливка в БД — НЕ здесь.** Инструменты пишут json; заливкой в модели
-занимаются штатные management-команды в `dict/` (`load_semantic_*`,
-`load_keywords`, `load_translation_fields`). Разделение: agents/ готовит
-данные, dict/ пишет в БД.
+**Заливка в БД.** По умолчанию инструменты пишут json; заливкой занимаются
+management-команды в `dict/` (`load_semantic_*`, `load_keywords`,
+`load_translation_fields`). Исключение: `clean_translations --write` (снимок
+индекса + запись через `dict/translation_index_write`).
 
 ---
 
@@ -75,6 +91,25 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 Проверка подключения к DeepSeek: `probe_deepseek.py`.
 Одна новая статья вживую — **не здесь**: `manage.py classify_article --id`
 (`dict.ai.classify`, шлюз Timeweb); см. `docs/method-onthlogy-markup.md` §5.
+
+#### `clean_translations.py` — очистка rus_word (backlog §2)
+LLM-очистка индекса переводов. Промпт, gloss и sanitize —
+`agents/translation_cleanup.py` (только оффлайн). По умолчанию **dry-run**:
+отчёт в `data/*.json`. `--word`, `--id`, `--limit`, `--order random`, автодокат,
+`--force` (перепроцессить id из json).
+
+**Запись:** `--write` — снимок всего индекса + запись в БД (миграция 0027);
+`--from-json PATH` — применить готовый json без повторного LLM.
+
+```bash
+# dry-run
+docker exec --user 1000:1000 -w /app/agents punzh_django \\
+  python clean_translations.py --limit 10 --word olla --out clean_pilot.json
+
+# боевой прогон
+docker exec --user 1000:1000 -w /app/agents punzh_django \\
+  python clean_translations.py --write --out clean_prod.json
+```
 
 #### `pick_translation_fields.py` — поля из перевода vs из примера
 Не переклассифицирует. Вход: переводы леммы + закрытый список полей статьи
@@ -109,8 +144,8 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 3. Переиспользовать общее: `load_env`; при росте вынести обёртку клиента
    DeepSeek (ключ/base_url/retry/парсинг) в общий модуль (напр.
    `deepseek_client.py`), чтобы инструменты не дублировали инициализацию.
-4. Заливку результата в БД — отдельной management-командой в `dict/`, не в
-   самом инструменте.
+4. Заливку результата в БД — management-командой в `dict/` (или `--write` у
+   `clean_translations`, если нужен снимок индекса).
 5. Дописать раздел в «Каталог» этого файла.
 
 ---
@@ -120,6 +155,9 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 - `load_env.py` — читает `.env` из текущего каталога в `os.environ`. Запускать
   инструменты с `-w /app/agents`. (Рекомендация: научить снимать кавычки/пробелы —
   `.strip().strip('"').strip("'")` — чтобы не спотыкаться на `.env`.)
+- `translation_cleanup.py` — промпт, извлечение gloss (основная статья +
+  `ArticleAddition` → `addendum_gloss_senses`), post-LLM sanitize для
+  `clean_translations.py` (не импортировать из `dict/ai/`).
 - `probe_deepseek.py` — проверка подключения (ключ, соединение, простой запрос). Не называть `test_*.py`: Django подхватит как юнит-тест.
 - (план) `deepseek_client.py` — общая обёртка клиента, когда инструментов
   станет больше одного.

@@ -170,6 +170,27 @@ class ArticleIndexTranslate(models.Model):
         ordering = ["rus_word"]
 
 
+class ArticleIndexTranslateSnapshot(models.Model):
+    """
+    Backup of rus_word index before cleanup --write (backlog §2).
+    One row per (batch_id, article, rus_word) as it was before the batch.
+    """
+
+    batch_id = models.CharField(max_length=64, db_index=True, verbose_name="Снимок")
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    rus_word = models.CharField(
+        max_length=255, default=None, blank=True, null=True, verbose_name="Перевод"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Снимок перевода"
+        verbose_name_plural = "Снимки переводов"
+        indexes = [
+            models.Index(fields=["batch_id", "article"]),
+        ]
+
+
 class ArticleIndexWordNormalization(models.Model):
     word = models.CharField(max_length=255, default=None, blank=True, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
