@@ -10,12 +10,16 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 | Промпт + sanitize | `app/agents/translation_cleanup.py` | готово |
 | Dry-run / write | `app/agents/clean_translations.py` | готово |
 | Снимок + запись | `app/dict/translation_index_write.py`, миграция `0027` | готово |
-| Exact-поиск | `find_exact_match_ids` в `app/dict/search.py` | готово, коммит `66f112f` |
-| Service-word post-filter | `_keep_service_word_phrase` | упрощено, `bcc4b21` |
-| Боевой dry-run ~13k | prod | **не завершён** (остановлен; json удалён) |
+| Exact-поиск | `find_exact_match_ids` в `app/dict/search.py` | готово |
+| Service-word post-filter | `_keep_service_word_phrase` | упрощено, `9b92ba6` |
+| Боевой dry-run ~13k | prod | **в процессе** (чистый перезапуск 13036, 2026-08-29) |
 
-Коммиты: `66f112f` (cleanup + поиск), `920607b` (preserve index для service),
-`bcc4b21` (упрощение service-filter).
+Коммиты (ветка `master`, хронология):
+
+- `ac9ba86` — preserve однословных эквивалентов служебных лемм из index («но» у `da I`)
+- `9b92ba6` — упрощение service-filter: `_keep_service_word_phrase` (≤3 слова)
+- `30533af` — этот handoff + black/isort для cleanup-модуля
+- ранее — основа cleanup, снимок `0027`, `find_exact_match_ids` (см. `git log --grep=cleanup`)
 
 **Не в репо:** `pick_*_ids.py`, `pilot_selection.py` (разовые утилиты удалены).
 
@@ -69,7 +73,7 @@ echo $! > ~/clean_prod_dry.pid
 - `python -u` — небуферизованный вывод в лог.
 - **`LOG=...` задать до nohup** (пустой `$LOG` → Exit 1).
 - Автодокат: id из `--out` json пропускаются; `--force` — перепроцессить.
-- Готово: строка `Гotovo. Статей: N. Ошибок: 0.` в логе.
+- Готово: строка `Готово. Статей: N. Ошибок: 0.` в логе.
 
 ### Заливка после dry-run
 
@@ -142,6 +146,9 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 
 ## Линтер
 
+**Перед коммитом изменений по cleanup** — только эти файлы (не `make format` на
+весь `/app`, если в дереве есть несвязный WIP):
+
 ```bash
 docker exec --user 1000:1000 -w /app punzh_django python -m isort \
   agents/translation_cleanup.py agents/clean_translations.py \
@@ -152,7 +159,16 @@ docker exec --user 1000:1000 -w /app punzh_django python -m black \
   dict/tests/test_translation_cleanup.py dict/translation_index_write.py
 ```
 
-Или `make format` (форматирует весь `/app` в контейнере).
+На prod-контейнере заменить `punzh_django` → `punzh_web`. isort обычно трогает
+импорты в `clean_translations.py` и тестах; black — переносы длинных строк в
+`translation_cleanup.py` (без изменения логики).
+
+Проверка после форматирования:
+
+```bash
+docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
+  dict.tests.test_translation_cleanup --keepdb
+```
 
 ---
 
@@ -165,7 +181,18 @@ docker exec --user 1000:1000 -w /app punzh_django python -m black \
 
 ## Открыто
 
-- [ ] Полный prod dry-run → json → `--from-json`
+- [ ] Дождаться «Готово» на prod → проверка json → migrate → `--from-json`
 - [ ] DB-тест «корова» / 1717 (full vs exact vs тег)
 - [ ] prio‑фильтр для «быть» (отдельно от cleanup)
 - [ ] Ярлыки тегов и скобки в `split_by_coverage`
+
+---
+
+## Не смешивать с cleanup
+
+В рабочем дереве могут лежать **несвязные** WIP (`classify_article`,
+`audit_cyrillic_lemmas`, `deploy.sh`, nginx и т.д.). Не включать их в коммиты
+и PR по очистке переводов без явного запроса.
+
+См. также: `app/agents/AGENTS.md`, `backlog.md` §2, `cursor_project_overview.md`
+(ссылка на этот файл).

@@ -205,7 +205,9 @@ def _is_crossref_text(text):
     t = re.sub(r"\s+", " ", (text or "").strip())
     if not re.search(r"(?:^|\s)(?:см|ср)\.", t, re.I):
         return False
-    words = [w for w in re.findall(r"[а-яё]+", t, re.I) if w.lower() not in ("см", "ср")]
+    words = [
+        w for w in re.findall(r"[а-яё]+", t, re.I) if w.lower() not in ("см", "ср")
+    ]
     return len(words) == 0
 
 
@@ -353,7 +355,9 @@ def _phraseme_senses_from_html(html):
             phrase = _normalize_yo_to_e(re.sub(r"\s+", " ", pm.group(1)).strip(" ,."))
             if phrase and re.search(r"[а-яё]{2,}", phrase, re.I):
                 phrases.add(phrase)
-        for pm in re.finditer(r";\s*([а-яё][а-яё\s\-]+?)(?:\s+[A-Za-z]|;|$)", block, re.I):
+        for pm in re.finditer(
+            r";\s*([а-яё][а-яё\s\-]+?)(?:\s+[A-Za-z]|;|$)", block, re.I
+        ):
             phrase = _normalize_yo_to_e(re.sub(r"\s+", " ", pm.group(1)).strip(" ,."))
             if phrase and len(re.findall(r"[а-яё]+", phrase.lower())) >= 2:
                 phrases.add(phrase)
@@ -479,7 +483,9 @@ def _phrases_from_i_pro_parallel(gloss_senses):
         for m in _I_PRO_PARALLEL_RE.finditer(sense):
             prefix = m.group(1)
             for tail in (m.group(2).strip(), m.group(3).strip()):
-                phrase = _normalize_yo_to_e(re.sub(r"\s+", " ", (prefix + tail).strip()))
+                phrase = _normalize_yo_to_e(
+                    re.sub(r"\s+", " ", (prefix + tail).strip())
+                )
                 key = phrase.lower()
                 if key not in seen:
                     seen.add(key)
