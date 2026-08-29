@@ -78,6 +78,7 @@ class Command(BaseCommand):
     def _collect(self, opts, queue):
         links = self._links_map()
         items = []
+        wrong_kind = []
         for art in (
             self._articles_qs(opts)
             .only("id", "word", "article_html")
@@ -98,6 +99,14 @@ class Command(BaseCommand):
                             "article_id": art.id,
                             "lemma": row["lemma"],
                             "target_id": tid,
+                        }
+                    )
+                for row in scan["wrong_kind"]:
+                    wrong_kind.append(
+                        {
+                            "article_id": art.id,
+                            "lemma": row["lemma"],
+                            "target_id": row["target"].id,
                         }
                     )
             elif queue == "unresolved":
@@ -121,7 +130,22 @@ class Command(BaseCommand):
                     )
         if opts["limit"]:
             items = items[: opts["limit"]]
+        if queue == "unique":
+            return items, wrong_kind
         return items
+
+    def _warn_wrong_kind(self, rows):
+        for row in rows:
+            article = Article.objects.filter(pk=row["article_id"]).first()
+            target = Article.objects.filter(pk=row["target_id"]).first()
+            if not article or not target:
+                continue
+            self.stdout.write(
+                self.style.WARNING(
+                    f"#{article.id} {article.word}: «{row['lemma']}» → "
+                    f"#{target.id} — связь есть, kind не deriv (пропуск)"
+                )
+            )
 
     def _create_link(self, from_id, to_id):
         existing = ArticleLink.objects.filter(
@@ -174,8 +198,12 @@ class Command(BaseCommand):
             raise CommandError("--apply-unique несовместим с --queue.")
 
         items = self._collect(opts, queue)
+        if queue == "unique":
+            items, wrong_kind_rows = items
+        else:
+            wrong_kind_rows = []
         total = len(items)
-        if not total:
+        if not total and not (opts["apply_unique"] and wrong_kind_rows):
             empty = {
                 "unique": "Однозначных дыр (корзина A) нет.",
                 "unresolved": "Нерезолвящихся лемм нет.",
@@ -184,19 +212,24 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(empty[queue]))
             return
 
-        labels = {
-            "unique": "однозначных дыр (A)",
-            "unresolved": "нерезолвящихся лемм",
-            "homonym": "омонимов без связи",
-        }
-        self.stdout.write(self.style.WARNING(f"Очередь {labels[queue]}: {total}."))
+        if total:
+            labels = {
+                "unique": "однозначных дыр (A)",
+                "unresolved": "нерезолвящихся лемм",
+                "homonym": "омонимов без связи",
+            }
+            self.stdout.write(self.style.WARNING(f"Очередь {labels[queue]}: {total}."))
 
         if opts["dry_run"]:
             self._dry_run(items, queue)
+            if wrong_kind_rows:
+                self._warn_wrong_kind(wrong_kind_rows)
             return
 
         if opts["apply_unique"]:
             done, existed, wrong = self._create_unique_links(items)
+            wrong += len(wrong_kind_rows)
+            self._warn_wrong_kind(wrong_kind_rows)
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Итог: связей создано — {done}, уже deriv — {existed}, "
