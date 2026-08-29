@@ -127,9 +127,11 @@ SYSTEM_PROMPT_CLEAN_TRANSLATIONS = (
     "- односложный глагол без обязательного дополнения из gloss'а не оставляй "
     "(«вызывать» без «отклик», если gloss только «вызывать отклик»).\n\n"
     "СЛУЖЕБНЫЕ ЛЕММЫ (is_service_word): только словарные эквиваленты леммы "
-    "(«и», «а», «но», «а – а»). НИКОГДА не добавляй примерные предложения "
-    "из иллюстраций («ну а …», «а иди куда хочешь», «а ну …») — даже если "
-    "они встречаются в статье. Не создавай фраз длиннее 3 слов.\n\n"
+    "(«и», «а», «но», «да», «а – а»). НИКОГДА не добавляй примерные "
+    "предложения из иллюстраций («ну а …», «а иди куда хочешь», «а ну …») — "
+    "даже если они встречаются в статье. Не создавай фраз длиннее 3 слов. "
+    "Однословные эквиваленты из входного translations не удаляй, если это "
+    "словарные формы, а не обрывки примеров.\n\n"
     "ОТСЫЛКИ И ФРАЗЕОЛОГИЗМЫ:\n"
     "- НИКОГДА не включай «см. …», «ср. …» — это не переводы, а указатели "
     "на другие статьи;\n"
@@ -630,6 +632,41 @@ def _filter_service_word_translations(translations, gloss_senses):
     return out
 
 
+def _is_preservable_service_original(text):
+    """
+    Short dictionary-style equivalents from the raw index (not illustration phrases).
+    Single token, or «а – а» (two tokens around a dash).
+    """
+    s = re.sub(r"\s+", " ", (text or "").strip())
+    if not s or _is_crossref_text(s):
+        return False
+    words = re.findall(r"[а-яё]+", s.lower())
+    if len(words) == 1:
+        return True
+    if len(words) == 2 and re.search(r"[–—\-]", s):
+        return True
+    return False
+
+
+def _preserve_original_service_equivalents(translations, original_translations):
+    """Re-add one-word index entries the LLM/filter dropped (e.g. «но» for da I)."""
+    if not original_translations:
+        return translations
+    existing = {t.lower() for t in translations}
+    out = list(translations)
+    for item in original_translations:
+        if not isinstance(item, str):
+            continue
+        s = _normalize_yo_to_e(re.sub(r"\s+", " ", item.strip()))
+        if not s or s.lower() in existing:
+            continue
+        if not _is_preservable_service_original(s):
+            continue
+        out.append(s)
+        existing.add(s.lower())
+    return out
+
+
 def _drop_non_index_entries(translations):
     """Remove cross-ref strings and similar non-translation junk."""
     return [t for t in translations if not _is_crossref_text(t)]
@@ -656,7 +693,7 @@ def parse_cleanup_json(text):
 
 
 def sanitize_cleaned_translations(
-    raw, *, is_service_word=False, gloss_senses=None
+    raw, *, is_service_word=False, gloss_senses=None, original_translations=None
 ):
     """
     Post-LLM: strip, dedupe, drop empties, remove aux tokens subsumed by phrases.
@@ -687,6 +724,7 @@ def sanitize_cleaned_translations(
     out = _drop_non_index_entries(out)
     if is_service_word:
         out = _filter_service_word_translations(out, gloss_senses)
+        out = _preserve_original_service_equivalents(out, original_translations)
     return out
 
 

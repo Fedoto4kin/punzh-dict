@@ -320,6 +320,35 @@ class SanitizeCleanedTranslationsTestCase(SimpleTestCase):
             ["а", "но", "а – а"],
         )
 
+    def test_service_word_preserves_original_single_word_not_in_gloss(self):
+        """da I: «но» in index but absent from gloss / LLM output."""
+        gloss = ["да", "и"]
+        raw = ["да", "и"]
+        original = ["да", "и", "но"]
+        self.assertEqual(
+            sanitize_cleaned_translations(
+                raw,
+                is_service_word=True,
+                gloss_senses=gloss,
+                original_translations=original,
+            ),
+            ["да", "и", "но"],
+        )
+
+    def test_service_word_does_not_restore_illustration_phrases_from_original(self):
+        gloss = ["а, но (при противопоставлении предложений)", "а", "а – а"]
+        raw = ["а", "но", "а – а"]
+        original = ["а", "но", "а – а", "ну а", "а иди куда хочешь"]
+        self.assertEqual(
+            sanitize_cleaned_translations(
+                raw,
+                is_service_word=True,
+                gloss_senses=gloss,
+                original_translations=original,
+            ),
+            ["а", "но", "а – а"],
+        )
+
     def test_olla_sanitize_restores_be_from_gloss(self):
         gloss = [
             "быть, существовать",
