@@ -22,7 +22,7 @@
 ## Structure
 - `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands, `ai/`).
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
-- `app/agents/` — **оффлайн** скрипты (онтология, очистка переводов, LLM). Не обслуживают живые запросы; заливку JSON в БД делают management-команды. Промпт классификации импортируют из `dict.ai.prompts` (общий с рантаймом); промпт очистки переводов — целиком здесь (`translation_cleanup.py`). См. `agents/AGENTS.md`.
+- `app/agents/` — **оффлайн** скрипты (онтология, очистка переводов, LLM). Не обслуживают живые запросы; заливку JSON в БД — `clean_translations --write` или management-команды. Промпт очистки — `translation_cleanup.py`; handoff: **`docs/translation_cleanup.md`**. См. `agents/AGENTS.md`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
 - `backlog.md` — текущие задачи (§1 kind/«от» в работе; §2 очистка переводов; §4 `from_translation`).
 - `docs/` — спеки (не обязательно реализованный код):
