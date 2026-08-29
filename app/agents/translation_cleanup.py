@@ -127,11 +127,11 @@ SYSTEM_PROMPT_CLEAN_TRANSLATIONS = (
     "- односложный глагол без обязательного дополнения из gloss'а не оставляй "
     "(«вызывать» без «отклик», если gloss только «вызывать отклик»).\n\n"
     "СЛУЖЕБНЫЕ ЛЕММЫ (is_service_word): только словарные эквиваленты леммы "
-    "(«и», «а», «но», «да», «а – а»). НИКОГДА не добавляй примерные "
+    "(«и», «а», «но», «да», «да и», «а – а»). НИКОГДА не добавляй примерные "
     "предложения из иллюстраций («ну а …», «а иди куда хочешь», «а ну …») — "
     "даже если они встречаются в статье. Не создавай фраз длиннее 3 слов. "
-    "Однословные эквиваленты из входного translations не удаляй, если это "
-    "словарные формы, а не обрывки примеров.\n\n"
+    "Эквиваленты из входного translations не удаляй (в т.ч. «да и», «но»), "
+    "если это словарные формы, а не обрывки примеров.\n\n"
     "ОТСЫЛКИ И ФРАЗЕОЛОГИЗМЫ:\n"
     "- НИКОГДА не включай «см. …», «ср. …» — это не переводы, а указатели "
     "на другие статьи;\n"
@@ -596,60 +596,30 @@ def _ensure_gloss_standalone_equivalents(translations, gloss_senses):
     return out
 
 
-def _service_word_allowed_from_gloss(gloss_senses):
-    allowed = set()
-    for sense in gloss_senses or []:
-        head = _strip_leading_pos_label(sense.split(";")[0].strip())
-        if not head:
-            continue
-        norm = re.sub(r"\s+", " ", head).strip().lower()
-        allowed.add(norm)
-        plain = re.sub(r"\([^)]*\)", "", _strip_grammar_parens(head))
-        plain = re.sub(r"\s+", " ", plain).strip()
-        for piece in re.split(r"\s*,\s*", plain):
-            piece = piece.strip()
-            if piece:
-                allowed.add(piece.lower())
-    return allowed
-
-
-def _filter_service_word_translations(translations, gloss_senses):
-    allowed = _service_word_allowed_from_gloss(gloss_senses)
-    if not allowed:
-        return translations
-    allowed_tokens = set()
-    for phrase in allowed:
-        allowed_tokens.update(re.findall(r"[а-яё]+", phrase))
-    out = []
-    for t in translations:
-        tl = re.sub(r"\s+", " ", t.strip()).lower()
-        if tl in allowed:
-            out.append(t)
-            continue
-        words = re.findall(r"[а-яё]+", tl)
-        if len(words) == 1 and words[0] in allowed_tokens:
-            out.append(t)
-    return out
-
-
-def _is_preservable_service_original(text):
+def _keep_service_word_phrase(text):
     """
-    Short dictionary-style equivalents from the raw index (not illustration phrases).
-    Single token, or «а – а» (two tokens around a dash).
+    Short service-word index line (≤3 tokens): keep dictionary equivalents,
+    drop crossrefs and illustration tails («ну а», «а ну», long phrases).
     """
     s = re.sub(r"\s+", " ", (text or "").strip())
     if not s or _is_crossref_text(s):
         return False
     words = re.findall(r"[а-яё]+", s.lower())
-    if len(words) == 1:
-        return True
-    if len(words) == 2 and re.search(r"[–—\-]", s):
-        return True
-    return False
+    if not words or len(words) > 3:
+        return False
+    if len(words) == 2 and (words[0] == "ну" or words[1] == "ну"):
+        return False
+    return True
 
 
-def _preserve_original_service_equivalents(translations, original_translations):
-    """Re-add one-word index entries the LLM/filter dropped (e.g. «но» for da I)."""
+def _filter_service_word_translations(translations, gloss_senses=None):
+    return [t for t in translations if _keep_service_word_phrase(t)]
+
+
+def _preserve_original_service_equivalents(
+    translations, original_translations, gloss_senses=None
+):
+    """Re-add short index entries the LLM dropped («но», «да и», …)."""
     if not original_translations:
         return translations
     existing = {t.lower() for t in translations}
@@ -660,7 +630,7 @@ def _preserve_original_service_equivalents(translations, original_translations):
         s = _normalize_yo_to_e(re.sub(r"\s+", " ", item.strip()))
         if not s or s.lower() in existing:
             continue
-        if not _is_preservable_service_original(s):
+        if not _keep_service_word_phrase(s):
             continue
         out.append(s)
         existing.add(s.lower())
@@ -724,7 +694,9 @@ def sanitize_cleaned_translations(
     out = _drop_non_index_entries(out)
     if is_service_word:
         out = _filter_service_word_translations(out, gloss_senses)
-        out = _preserve_original_service_equivalents(out, original_translations)
+        out = _preserve_original_service_equivalents(
+            out, original_translations, gloss_senses
+        )
     return out
 
 

@@ -335,6 +335,31 @@ class SanitizeCleanedTranslationsTestCase(SimpleTestCase):
             ["да", "и", "но"],
         )
 
+    def test_service_word_preserves_da_i_from_original(self):
+        """dai: «да и» in gloss and index; LLM may leave only «и»."""
+        gloss = ["да и, и"]
+        raw = ["и"]
+        original = ["да и", "и"]
+        self.assertEqual(
+            sanitize_cleaned_translations(
+                raw,
+                is_service_word=True,
+                gloss_senses=gloss,
+                original_translations=original,
+            ),
+            ["и", "да и"],
+        )
+
+    def test_keep_service_word_phrase(self):
+        from translation_cleanup import _keep_service_word_phrase
+
+        self.assertTrue(_keep_service_word_phrase("да и"))
+        self.assertTrue(_keep_service_word_phrase("но"))
+        self.assertTrue(_keep_service_word_phrase("а – а"))
+        self.assertFalse(_keep_service_word_phrase("ну а"))
+        self.assertFalse(_keep_service_word_phrase("а ну"))
+        self.assertFalse(_keep_service_word_phrase("а иди куда хочешь"))
+
     def test_service_word_does_not_restore_illustration_phrases_from_original(self):
         gloss = ["а, но (при противопоставлении предложений)", "а", "а – а"]
         raw = ["а", "но", "а – а"]
