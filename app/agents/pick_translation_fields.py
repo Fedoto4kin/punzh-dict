@@ -55,20 +55,11 @@ django.setup()
 from openai import OpenAI  # noqa: E402
 
 from dict.models import Article  # noqa: E402
-
-SYSTEM_PROMPT = (
-    "Ты смотришь смысловые поля словарной статьи и решаешь, какие из них "
-    "относятся к ПЕРЕВОДАМ леммы, а какие нет. "
-    "На вход — РУССКИЕ ПЕРЕВОДЫ и закрытый список уже проставленных "
-    "смысловых полей (имя и определение). Иллюстрации и примеры "
-    "употребления тебе НЕ даны и учитывать их НЕЛЬЗЯ.\n"
-    "Поле «по переводу» — его смысл виден в переводах леммы. "
-    "Поле только из примера / соседний смысл, которого нет в переводах, "
-    "в список НЕ включай. Можно отметить НЕСКОЛЬКО полей (многозначность) "
-    "или НИ ОДНОГО, если ни одно поле не следует из переводов "
-    "(пустые/мусорные переводы, поля не про лемму).\n"
-    "Отвечай СТРОГО одним JSON без markdown, имена СТРОГО из списка: "
-    '{"translation_fields": ["имя", ...]}.'
+from dict.ai.prompts import (  # noqa: E402
+    SYSTEM_PROMPT_TRANSLATION_FIELDS,
+    build_translation_fields_user_prompt,
+    parse_translation_fields,
+    translations_for_classification,
 )
 
 
@@ -86,10 +77,6 @@ def parse_json(text):
         return None
 
 
-def translations_for(article):
-    return [t for t in article.articleindextranslate_set.all() if t.rus_word]
-
-
 def field_payload(assignments):
     seen = []
     names = []
@@ -102,37 +89,28 @@ def field_payload(assignments):
     return seen, names
 
 
-def build_user_prompt(translations, fields):
-    return (
-        "Переводы леммы:\n"
-        + json.dumps([t.rus_word for t in translations], ensure_ascii=False)
-        + "\n\nУже проставленные смысловые поля "
-        "(верни те, что следуют из переводов):\n"
-        + json.dumps(fields, ensure_ascii=False)
-    )
+def build_user_prompt(translations, field_names, field_defs):
+    return build_translation_fields_user_prompt(translations, field_names, field_defs)
 
 
-def pick_with_llm(client, model, translations, fields, allowed_names):
+def pick_with_llm(client, model, translations, field_names, field_defs, allowed_names):
     resp = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": build_user_prompt(translations, fields)},
+            {"role": "system", "content": SYSTEM_PROMPT_TRANSLATION_FIELDS},
+            {
+                "role": "user",
+                "content": build_user_prompt(translations, field_names, field_defs),
+            },
         ],
         temperature=0,
     )
     data = parse_json(resp.choices[0].message.content)
     if not data:
         return None, "bad_json"
-    raw = data.get("translation_fields")
-    if raw is None:
+    chosen = parse_translation_fields(data, allowed_names)
+    if chosen is None:
         return None, "bad_json"
-    if not isinstance(raw, list):
-        return None, "bad_json"
-    chosen = []
-    for name in raw:
-        if name in allowed_names and name not in chosen:
-            chosen.append(name)
     return chosen, None
 
 
@@ -173,7 +151,10 @@ def main():
         Article.objects.filter(semantic_assignments__isnull=False)
         .exclude(id__in=done_ids)
         .distinct()
-        .prefetch_related("semantic_assignments__field", "articleindextranslate_set")
+        .prefetch_related(
+            "semantic_assignments__field",
+            "articleindextranslate_set",
+        )
     )
     if args.order == "random":
         qs = qs.order_by("?")
@@ -215,10 +196,11 @@ def main():
         fields, names = field_payload(assignments)
         if not names:
             continue
-        translations = translations_for(article)
+        field_defs = {item["field"]: item["definition"] for item in fields}
+        translations = translations_for_classification(article)
         try:
             chosen, err = pick_with_llm(
-                client, args.model, translations, fields, set(names)
+                client, args.model, translations, names, field_defs, set(names)
             )
         except Exception as e:  # noqa: BLE001
             errors.append((article.id, str(e)))

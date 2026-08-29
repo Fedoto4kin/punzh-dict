@@ -39,11 +39,16 @@ class Command(BaseCommand):
                 f"классификация id={article_id} не удалась: {result['error']}"
             )
         fields = ", ".join(result["fields"]) or "—"
+        tr_fields = ", ".join(result["translation_fields"]) or "—"
         keywords = ", ".join(result["keywords"]) or "—"
         mode = "dry-run" if result["dry_run"] else "записано"
+        extra = ""
+        if result.get("error"):
+            extra = f"  предупреждение={result['error']}"
         self.stdout.write(
             self.style.SUCCESS(
-                f"id={article_id}  поля: {fields}  keywords: {keywords}  "
-                f"no_field={result['no_field']}  ({mode})"
+                f"id={article_id}  поля: {fields}  по переводу: {tr_fields}  "
+                f"keywords: {keywords}  no_field={result['no_field']}  "
+                f"({mode}){extra}"
             )
         )

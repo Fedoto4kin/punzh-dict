@@ -11,16 +11,16 @@
 | Модуль | Назначение |
 |--------|------------|
 | `client.py` | HTTP-клиент к шлюзу Timeweb (`chat_json`, настройки из env). |
-| `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии. Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py` — чтобы тексты не разъезжались. |
-| `classify.py` | Ядро классификации одной статьи (без HTTP внутри — можно звать из фона). |
+| `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии (включая аддендумы). Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py`. Промпт «по переводу» (`SYSTEM_PROMPT_TRANSLATION_FIELDS`) — общий с `pick_translation_fields.py`; вход — только `ArticleIndexTranslate`. |
+| `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |
 
 ## Исключение: общий промпт в `prompts.py`
 
 `dict.ai.prompts` лежит здесь не потому, что это «оффлайн», а потому что **один
 и тот же** замороженный текст нужен и пакетной разметке (`agents/build_ontology.py`),
 и рантайму (`manage.py classify_article`). Если промпт используется **только**
-оффлайн-скриптом — он живёт целиком в `agents/` (напр. `translation_cleanup.py`,
-логика `pick_translation_fields.py`).
+оффлайн-скриптом — он живёт целиком в `agents/` (напр. `clean_translations.py`).
+Промпт «по переводу» и сбор входа — в `dict.ai.prompts` (рантайм + `pick_translation_fields`).
 
 ## См. также
 

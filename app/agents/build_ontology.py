@@ -360,7 +360,9 @@ def main():
         except Exception as e:  # noqa: BLE001
             print(f"Не удалось прочитать прежний {out_path} ({e}); начинаем заново.")
 
-    qs = Article.objects.exclude(id__in=done_ids)
+    qs = Article.objects.exclude(id__in=done_ids).prefetch_related(
+        "additions", "articleindextranslate_set"
+    )
     if args.order == "random":
         qs = qs.order_by("?")
     else:

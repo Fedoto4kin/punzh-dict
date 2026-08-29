@@ -9,15 +9,21 @@ Does not raise on LLM failure — returns ok=False so the caller can log and
 move on. Persistence is per-article only; other articles are left untouched.
 """
 
+import logging
+
 from django.conf import settings
 from django.db import transaction
 
 from dict.ai import client as ai_client
 from dict.ai.prompts import (
     SYSTEM_PROMPT_FROZEN,
+    SYSTEM_PROMPT_TRANSLATION_FIELDS,
     build_article_input,
+    build_translation_fields_user_prompt,
     build_user_prompt,
     ontology_from_db,
+    parse_translation_fields,
+    translations_for_classification,
 )
 from dict.models import (
     Article,
@@ -26,7 +32,15 @@ from dict.models import (
     SemanticField,
 )
 
+logger = logging.getLogger(__name__)
+
 CLASSIFY_TIMEOUT = 45
+
+ARTICLE_PREFETCH = (
+    "additions",
+    "articleindextranslate_set",
+    "semantic_assignments__field",
+)
 
 
 def sanitize_keyword(word):
@@ -44,6 +58,7 @@ def _empty_result(article_id, error, persist):
         "ok": False,
         "article_id": article_id,
         "fields": [],
+        "translation_fields": [],
         "keywords": [],
         "no_field": False,
         "error": error,
@@ -52,19 +67,36 @@ def _empty_result(article_id, error, persist):
     }
 
 
+def _pick_translation_fields(article, fields, field_defs, model, timeout):
+    """Second LLM call: which assigned fields follow from the translation index."""
+    if not fields:
+        return []
+    translations = translations_for_classification(article)
+    data = ai_client.chat_json(
+        SYSTEM_PROMPT_TRANSLATION_FIELDS,
+        build_translation_fields_user_prompt(translations, fields, field_defs),
+        model,
+        timeout=timeout,
+    )
+    if data is None:
+        return None
+    return parse_translation_fields(data, fields)
+
+
 def classify_article(article_id, persist=True, timeout=CLASSIFY_TIMEOUT):
     """
     Classify a single article by id.
 
-    Returns a dict with ok, article_id, fields, keywords, no_field, error,
-    persisted, dry_run. persist=False only runs the model (for --dry-run).
+    Returns a dict with ok, article_id, fields, translation_fields, keywords,
+    no_field, error, persisted, dry_run. persist=False only runs the model
+    (for --dry-run).
 
     Background callers should close_old_connections() themselves around
     this function — it must not close the connection used by tests or
     management commands.
     """
     try:
-        article = Article.objects.get(pk=article_id)
+        article = Article.objects.prefetch_related(*ARTICLE_PREFETCH).get(pk=article_id)
     except Article.DoesNotExist:
         return _empty_result(article_id, "not_found", persist)
 
@@ -103,23 +135,39 @@ def classify_article(article_id, persist=True, timeout=CLASSIFY_TIMEOUT):
         keywords.append(w)
 
     no_field = bool(data.get("no_field"))
+    translation_fields = []
+    translation_fields_error = None
+    if fields:
+        picked = _pick_translation_fields(article, fields, field_defs, model, timeout)
+        if picked is None:
+            translation_fields_error = "translation_fields_unavailable"
+            logger.warning(
+                "Article %s: translation_fields LLM failed; "
+                "from_translation will be False for all fields.",
+                article_id,
+            )
+        else:
+            translation_fields = picked
+
     result = {
         "ok": True,
         "article_id": article.id,
         "fields": fields,
+        "translation_fields": translation_fields,
         "keywords": keywords,
         "no_field": no_field,
-        "error": None,
+        "error": translation_fields_error,
         "persisted": False,
         "dry_run": not persist,
     }
     if persist:
-        _persist(article.id, fields, keywords)
+        _persist(article.id, fields, keywords, translation_fields)
         result["persisted"] = True
     return result
 
 
-def _persist(article_id, fields, keywords):
+def _persist(article_id, fields, keywords, translation_fields=None):
+    translation_set = set(translation_fields or [])
     field_id_by_name = dict(SemanticField.objects.values_list("name", "id"))
     with transaction.atomic():
         ArticleSemanticField.objects.filter(article_id=article_id).delete()
@@ -127,7 +175,9 @@ def _persist(article_id, fields, keywords):
         ArticleSemanticField.objects.bulk_create(
             [
                 ArticleSemanticField(
-                    article_id=article_id, field_id=field_id_by_name[name]
+                    article_id=article_id,
+                    field_id=field_id_by_name[name],
+                    from_translation=(name in translation_set),
                 )
                 for name in fields
                 if name in field_id_by_name
