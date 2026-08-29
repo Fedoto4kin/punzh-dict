@@ -444,3 +444,81 @@ def scan_see_links(article, outgoing):
         "homonym": homonym,
         "extra": extra,
     }
+
+
+def html_deriv_lemmas(html):
+    """Леммы из дериваций «от» (tagged + loose), без дублей."""
+    c = classify_html(html or "")
+    seen = []
+    for rec in c["deriv_tagged"]:
+        lemma = rec["lemma"]
+        if lemma not in seen:
+            seen.append(lemma)
+    for rec in c["deriv_loose"]:
+        lemma = rec["lemma"]
+        if lemma not in seen:
+            seen.append(lemma)
+    return seen
+
+
+def scan_deriv_links(article, outgoing):
+    """
+    Сверка лемм «от» в HTML с исходящими ArticleLink.
+    HTML не меняет. См./ср. не входят.
+    """
+    from dict.models import ArticleLink
+
+    html = article.article_html or ""
+    c = classify_html(html)
+    links_by_to = {lnk.to_article_id: lnk for lnk in outgoing}
+    linked_ids = set(links_by_to.keys())
+    unique_missing = []
+    unresolved = []
+    homonym = []
+    wrong_kind = []
+    already = []
+
+    def process(lemma, source):
+        found = lookup_articles(lemma, article.id)
+        ids = {a.id for a in found}
+        row = {"lemma": lemma, "source": source}
+        if not found:
+            unresolved.append({**row, "found": []})
+            return
+        if len(found) > 1:
+            if ids & linked_ids:
+                for a in found:
+                    if a.id not in linked_ids:
+                        continue
+                    lnk = links_by_to[a.id]
+                    entry = {**row, "target": a, "link": lnk, "found": found}
+                    if lnk.kind == ArticleLink.KIND_DERIV:
+                        already.append(entry)
+                    else:
+                        wrong_kind.append(entry)
+                    return
+            homonym.append({**row, "found": found})
+            return
+        tgt = found[0]
+        if tgt.id not in linked_ids:
+            unique_missing.append({**row, "target": tgt})
+            return
+        lnk = links_by_to[tgt.id]
+        entry = {**row, "target": tgt, "link": lnk}
+        if lnk.kind == ArticleLink.KIND_DERIV:
+            already.append(entry)
+        else:
+            wrong_kind.append(entry)
+
+    for rec in c["deriv_tagged"]:
+        process(rec["lemma"], "tagged")
+    for rec in c["deriv_loose"]:
+        process(rec["lemma"], "loose")
+
+    return {
+        "unique_missing": unique_missing,
+        "unresolved": unresolved,
+        "homonym": homonym,
+        "wrong_kind": wrong_kind,
+        "already": already,
+    }
