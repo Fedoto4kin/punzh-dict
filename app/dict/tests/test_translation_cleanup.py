@@ -1,5 +1,4 @@
 from django.test import SimpleTestCase, TestCase
-
 from translation_cleanup import (
     SYSTEM_PROMPT_CLEAN_TRANSLATIONS,
     _drop_subsumed_auxiliaries,
@@ -12,7 +11,14 @@ from translation_cleanup import (
     pos_tags_for,
     sanitize_cleaned_translations,
 )
-from dict.models import Article, ArticleAddition, ArticleIndexTag, ArticleIndexTranslate, Tag
+
+from dict.models import (
+    Article,
+    ArticleAddition,
+    ArticleIndexTag,
+    ArticleIndexTranslate,
+    Tag,
+)
 
 MAI_HTML = (
     "<b>mai||jata</b> <i>v</i> <ol>"
@@ -316,7 +322,9 @@ class SanitizeCleanedTranslationsTestCase(SimpleTestCase):
             "а – а",
         ]
         self.assertEqual(
-            sanitize_cleaned_translations(raw, is_service_word=True, gloss_senses=gloss),
+            sanitize_cleaned_translations(
+                raw, is_service_word=True, gloss_senses=gloss
+            ),
             ["а", "но", "а – а"],
         )
 

@@ -38,8 +38,8 @@
 Любой новый инструмент здесь следует этим правилам — так каталог остаётся
 единообразным и предсказуемым.
 
-**Запуск.** Внутри контейнера `punzh_django` (нужен доступ к БД и Django),
-рабочий каталог `-w /app/agents` (чтобы `load_env` нашёл `.env` рядом):
+**Запуск.** Контейнер: **`punzh_django`** (dev) или **`punzh_web`** (prod).
+Рабочий каталог `-w /app/agents` (чтобы `load_env` нашёл `.env`):
 ```bash
 docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [флаги]
 ```
@@ -93,29 +93,41 @@ management-команды в `dict/` (`load_semantic_*`, `load_keywords`,
 (`dict.ai.classify`, шлюз Timeweb); см. `docs/method-onthlogy-markup.md` §5.
 
 #### `clean_translations.py` — очистка rus_word (backlog §2)
+
+Полная документация: **`docs/translation_cleanup.md`** (prod-путь, nohup,
+service-word правила, контрольные id, тесты, линтер).
+
 LLM-очистка индекса переводов. Промпт, gloss и sanitize —
 `agents/translation_cleanup.py` (только оффлайн). По умолчанию **dry-run**:
 отчёт в `data/*.json`. `--word`, `--id`, `--limit`, `--order random`, автодокат,
 `--force` (перепроцессить id из json).
 
+**Служебные леммы** (`is_service_word`): post-LLM `_keep_service_word_phrase` —
+≤3 слова; иллюстрации («ну а», «а ну», длинные фразы) отсекаются; короткие
+строки из **исходного** index восстанавливаются (страховка: «но», «да и»).
+
 **Запись:** `--write` — снимок всего индекса + запись в БД (миграция 0027);
 `--from-json PATH` — применить готовый json без повторного LLM.
 
+**Prod (рекомендуется):** dry-run в json (nohup) → проверка → migrate →
+`--write --from-json`.
+
 ```bash
 # dry-run
-docker exec --user 1000:1000 -w /app/agents punzh_django \\
-  python clean_translations.py --limit 10 --word olla --out clean_pilot.json
+docker exec --user 1000:1000 -w /app/agents punzh_web \\
+  python -u clean_translations.py --out clean_prod.json
 
-# боевой прогон
-docker exec --user 1000:1000 -w /app/agents punzh_django \\
-  python clean_translations.py --write --out clean_prod.json
+# заливка
+docker exec --user 1000:1000 -w /app/agents punzh_web \\
+  python clean_translations.py --write --from-json clean_prod.json
 ```
 
 #### `pick_translation_fields.py` — поля из перевода vs из примера
-Не переклассифицирует. Вход: переводы леммы + закрытый список полей статьи
-(имя, определение). Иллюстрации в промпт **не** идут. 0 полей — пропуск;
-иначе DeepSeek: какие поля из списка следуют из переводов (можно несколько
-или ни одного; одно поле тоже спрашиваем). Автодокат + сохранение каждые 100.
+Не переклассифицирует. Вход: переводы леммы (индекс + gloss аддендумов) +
+закрытый список полей статьи (имя, определение). Промпт и сбор переводов —
+из `dict.ai.prompts` (общий с рантайм-`classify_article`). Иллюстрации в промпт
+**не** идут. 0 полей — пропуск; иначе DeepSeek: какие поля из списка следуют
+из переводов (можно несколько или ни одного). Автодокат + сохранение каждые 100.
 Выход: `{"from_translation": {id: [имена]}}` (пустой список валиден).
 Заливка: `load_translation_fields --file`. Боевой прогон — после очистки
 переводов (backlog §2, затем §4).
@@ -157,7 +169,8 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \\
   `.strip().strip('"').strip("'")` — чтобы не спотыкаться на `.env`.)
 - `translation_cleanup.py` — промпт, извлечение gloss (основная статья +
   `ArticleAddition` → `addendum_gloss_senses`), post-LLM sanitize для
-  `clean_translations.py` (не импортировать из `dict/ai/`).
+  `clean_translations.py`. Service-word: `_keep_service_word_phrase` (см.
+  `docs/translation_cleanup.md`). Не импортировать из `dict/ai/`.
 - `probe_deepseek.py` — проверка подключения (ключ, соединение, простой запрос). Не называть `test_*.py`: Django подхватит как юнит-тест.
 - (план) `deepseek_client.py` — общая обёртка клиента, когда инструментов
   станет больше одного.

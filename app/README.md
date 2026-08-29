@@ -81,16 +81,26 @@ docker exec --user 1000:1000 punzh_django python manage.py test dict
 Подробнее: `agents/AGENTS.md`, `dict/ai/README.md`.
 
 ### Lint code
+
 ```bash
-docker exec --user 1000:1000 -i punzh_django black dict/
+docker exec --user 1000:1000 -w /app punzh_django python -m isort \
+  agents/translation_cleanup.py agents/clean_translations.py dict/
+
+docker exec --user 1000:1000 -w /app punzh_django python -m black \
+  agents/ dict/
 ```
+
+Или `make format` из корня репо (форматирует весь `/app` в контейнере).
+
+Очистка переводов (§2): **`docs/translation_cleanup.md`**.
 
 ### Доклассификация одной статьи (`classify_article`)
 
-Рантайм: разметить **одну** статью по онтологии из БД. Тот же замёрзший
-промпт, что у пакетной разметки; модель DeepSeek через шлюз Timeweb
-(`TIMEWEB_AI_API_KEY`, `TIMEWEB_AI_MODEL_CLASSIFY`). Пишет сразу в
-`ArticleSemanticField` и `ArticleKeyword` этой статьи. Подробности:
+Рантайм: разметить **одну** статью по онтологии из БД (основной текст +
+аддендумы). Два LLM-вызова: поля/keywords по всей статье, затем флаг
+`from_translation` на полях, подтверждённых переводами. Тот же промпт, что у
+пакетной разметки; модель DeepSeek через шлюз Timeweb
+(`TIMEWEB_AI_API_KEY`, `TIMEWEB_AI_MODEL_CLASSIFY`). Подробности:
 `docs/method-onthlogy-markup.md` §5.
 
 Имя контейнера: `punzh_django` (dev) или `punzh_web` (internal compose) —

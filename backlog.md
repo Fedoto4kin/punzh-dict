@@ -35,11 +35,25 @@
 ### Шаги
 
 1. ~~Инвентаризация HTML~~ (`audit_see_refs`).
-2. **Сейчас:** `kind` + миграция; бэклог существующих связей `see`/`cf` из HTML.
-3. Резолв `от X` (ok / омоним / miss) — отчёт.
-4. Автосоздание однозначных `deriv`; интерактив для омонимов/дыр
-   (по образцу `fix_see_refs`).
+2. ~~`kind` + миграция; бэклог существующих связей `see`/`cf` из HTML.~~
+3. ~~Резолв `от X` (ok / омоним / miss) — отчёт~~ (`check_deriv_links`).
+4. ~~Автосоздание однозначных `deriv`; интерактив для омонимов/дыр~~ (`fix_deriv_refs`).
 5. Админка / подписи; при необходимости подсветка и «см от».
+
+**Команды (локально / прод, контейнер `punzh_django` / `punzh_web`):**
+
+```bash
+# отчёт (ожидание на дампе: ok 712, hom 48, miss 4, already 0)
+python manage.py check_deriv_links --examples 10
+
+# авто ~712
+python manage.py fix_deriv_refs --apply-unique --dry-run
+python manage.py fix_deriv_refs --apply-unique
+
+# вручную ~52 (нужен TTY: docker exec -it …)
+python manage.py fix_deriv_refs --queue homonym
+python manage.py fix_deriv_refs --queue unresolved
+```
 
 **Не смешивать** с очередью правок см./ср. (`check_article_links` /
 `fix_see_refs`) без фильтра по `kind`.
@@ -81,12 +95,18 @@
 **Проблема в поиске:**
 Поиск по «быть» не предлагает уточнений → нужно добавить **prio‑фильтр**.
 
-### Пилот
+### Пилот и prod
 
-- Dry-run на выборке: `clean_translations.py --id …` / `--word …` / `--limit N`
-  (автодокат в `--out`; `--force` — перепроцессить).
-- Статьи **без** строк в `ArticleIndexTranslate` не обрабатываются (ожидаемо).
-- Боевой прогон: `--write` (снимок + запись); `--from-json` — без повторного LLM.
+Подробно: **`docs/translation_cleanup.md`**.
+
+- Dry-run: `clean_translations.py --id …` / `--word …`; автодокат в `--out`;
+  `--force` — перепроцессить id.
+- Prod: контейнер **`punzh_web`**; dry-run (nohup) → json → `--write --from-json`.
+- Миграция **`0027`** (`ArticleIndexTranslateSnapshot`) перед первой заливкой.
+- Статьи **без** строк в `ArticleIndexTranslate` не обрабатываются.
+
+**Контрольные id после правок service-word:** 10786 (`a`), 1475 (`da I`),
+1477 (`dai`), 8992 (`olla`), 4469, 7636, 1717.
 
 ### TODO: поиск после очистки переводов (ожидаемое поведение)
 
@@ -121,7 +141,7 @@
       не морфологическое; стеммер (бэклог §6.4) может улучшить теги.
 - [ ] **prio‑фильтр** для сверхчастых запросов («быть») — отдельная задача
       (§2 выше).
-- [ ] **`--force`** в `clean_translations.py` — перепрогон id без сброса json.
+- [x] **`--force`** в `clean_translations.py` — перепрогон id без сброса json.
 
 **Уроки пилота (2026-08, исправлено в промпте/sanitize):**
 

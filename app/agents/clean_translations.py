@@ -53,13 +53,6 @@ import django  # noqa: E402
 django.setup()
 
 from openai import OpenAI  # noqa: E402
-
-from dict.translation_index_write import (  # noqa: E402
-    apply_from_results,
-    apply_translations,
-    make_batch_id,
-    snapshot_translation_index,
-)
 from translation_cleanup import (  # noqa: E402
     SYSTEM_PROMPT_CLEAN_TRANSLATIONS,
     all_gloss_senses,
@@ -69,7 +62,14 @@ from translation_cleanup import (  # noqa: E402
     parse_cleanup_json,
     sanitize_cleaned_translations,
 )
+
 from dict.models import Article  # noqa: E402
+from dict.translation_index_write import apply_from_results  # noqa: E402
+from dict.translation_index_write import (
+    apply_translations,
+    make_batch_id,
+    snapshot_translation_index,
+)
 
 
 def clean_with_llm(client, model, art_input):
