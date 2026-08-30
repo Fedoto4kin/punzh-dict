@@ -198,7 +198,8 @@ HIGH_FREQ_ANCHOR_QUERIES = frozenset({"быть"})
 
 # Short-prefix fuzzy token match (backlog P3 surrogate): «корова» → «корове».
 _FUZZY_TOKEN_MIN_LEN = 5
-_FUZZY_SUFFIX = r"[а-яё]{1,3}"
+# One inflection letter (корова/корове); not derivational siblings (понизу/понизить).
+_FUZZY_SUFFIX = r"[а-яё]"
 
 # Token boundary for rus_word: same alphabet as _TOKEN_RE ([а-яё\-] tokens).
 _TOKEN_BOUNDARY_BEFORE = r"(?:^|[^а-яё\-])"
@@ -231,23 +232,6 @@ def _translate_q_any_query_token(query_tokens):
     return combined
 
 
-def _display_label(phrase, query_words):
-    """Narrowing tag label: drop exact query tokens, keep punctuation (e.g. скобки)."""
-    label = phrase
-    for qw in sorted(query_words, key=len, reverse=True):
-        label = re.sub(
-            r"(?<![а-яё])" + re.escape(qw) + r"(?![а-яё])",
-            "",
-            label,
-            flags=re.IGNORECASE,
-        )
-    label = re.sub(r"\s+", " ", label).strip()
-    label = re.sub(r"\(\s+", "(", label)
-    label = re.sub(r"\s+\)", ")", label)
-    label = label.strip(" ,")
-    return label or phrase
-
-
 def _label_and_key_tokens(phrase, query_words, stopwords):
     toks = _TOKEN_RE.findall(phrase.lower())
     label_toks = [t for t in toks if t not in query_words]  # drop the query's own words
@@ -263,15 +247,11 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
 
     candidates : suggestion phrases (rus_word), e.g. "быстро ехать".
     page_blobs : per-card joined lowercase translations of the result set.
-    query_words: set of the query's own tokens, dropped from label and key by
-                 EXACT match. NOTE: morphological variants of the query
-                 (e.g. "быстрее" when the query is "быстро") are NOT removed —
-                 they leak into the label. Accepted for now; a stemmer would
-                 fix it (SPEC v2, deferred).
+    query_words: set of the query's own tokens, dropped from KEY by EXACT match.
     stopwords  : tokens dropped from the KEY only (kept in the label).
 
-    LABEL = candidate minus query words (stopwords kept) -> shown.
-    KEY   = label minus stopwords -> matched.
+    LABEL = full candidate phrase (shown on the button).
+    KEY   = candidate minus query words minus stopwords -> matched by ?f=.
     COVERAGE = cards whose blob contains at least one key token as a substring.
       0 < coverage < N -> narrowing;  coverage in {0, N} or empty key -> dropped.
 
@@ -297,13 +277,7 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
         if coverage == 0 or coverage == N:
             continue
 
-        narrowing.append(
-            {
-                "label": _display_label(phrase, query_words),
-                "key": key,
-                "coverage": coverage,
-            }
-        )
+        narrowing.append({"label": phrase, "key": key, "coverage": coverage})
 
     narrowing.sort(key=lambda e: e["coverage"])
 

@@ -58,6 +58,20 @@ class KorovaNarrowingTestCase(TestCase):
         self.assertIn(self.enzi.id, direct_ids)
 
 
+class PonizuNarrowingTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.exact = Article.objects.create(word="ponizu")
+        ArticleIndexTranslate.objects.create(article=cls.exact, rus_word="понизу")
+        cls.verb = Article.objects.create(word="ponizit")
+        ArticleIndexTranslate.objects.create(article=cls.verb, rus_word="понизить цену")
+
+    def test_ponizu_no_spurious_narrowing_tags(self):
+        _, _, narrowing, direct_ids, _ = search_by_translate_linked("понизу", 1, None)
+        self.assertEqual([], narrowing)
+        self.assertIn(self.exact.id, direct_ids)
+
+
 class HighFreqAnchorTestCase(TestCase):
     def setUp(self):
         self.olla = Article.objects.create(word="olla")
