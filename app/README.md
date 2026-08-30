@@ -23,32 +23,15 @@ git add --renormalize app/dict/fixtures/dict_seed.json
 
 #### Load fixtures 
 
-Before load need to clear dict_ tables
+Одна команда: очистка `dict_*`, `loaddata`, пересборка индексов слов и `search_vector` переводов.
 
 ```bash
-docker exec -w /app punzh_django python manage.py loaddata /app/dict/fixtures/dict_seed.json
-```
-After need to restore indexes
-
-```bash
-docker exec -it -w /app punzh_django python manage.py shell
+docker exec --user 1000:1000 -w /app punzh_django \
+  python manage.py load_dict_seed --yes
 ```
 
-```python
-from django.contrib.postgres.search import SearchVector
-from dict.models import Article, ArticleIndexTranslate
-
-# 1) пересобрать индексы слов/нормализаций через save()
-i = 0
-for art in Article.objects.all().iterator():
-    art.save()
-    i += 1
-    if i % 1000 == 0:
-        print("reindex words:", i)
-print("reindex words done:", i)
-
-print("search_vector:", ArticleIndexTranslate.objects.update(search_vector=SearchVector("rus_word")))
-```
+На продакшене (`DEBUG=False`) команда выводит предупреждение и требует ввести `yes`
+вручную; для скриптов — `--yes --allow-production` (только с бэкапом БД).
 
 ----
 
