@@ -82,7 +82,7 @@
     </p>
 </div>
 {% endif %}
-{% if narrowing or has_direct %}
+{% if narrowing %}
 <div class="mt-1 alert alert-info" role="alert">
     <div class="d-flex justify-content-between align-items-center">
         <h5 class="alert-heading mb-0">
@@ -112,9 +112,23 @@
         <hr>
         <p class="mb-0">
             <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
-               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>                 </p>
+               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
+        </p>
         {% endif %}
     </div>
+</div>
+{% elif has_direct %}
+<div class="mt-1 alert alert-info" role="alert">
+    <p class="mb-0">
+        {% if active_f == 'exact' %}
+        <a href="/search/{{ query|urlencode }}/1" class="badge badge-primary align-middle text-white mr-1"
+           style="text-decoration:none" title="Снять фильтр">
+            точные соответствия &times;
+        </a>
+        {% endif %}
+        <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
+           class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
+    </p>
 </div>
 {% endif %}
 {% if related_queries %}
