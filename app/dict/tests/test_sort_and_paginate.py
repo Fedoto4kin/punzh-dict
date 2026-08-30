@@ -63,3 +63,23 @@ class ExpandByLinksTestCase(TestCase):
     def test_unlinked_article_not_pulled(self):
         # C has no links: it maps only to itself, and no cluster leaks in.
         self.assertEqual({self.c.id}, expand_by_links([self.c.id]))
+
+    def test_cf_link_not_expanded(self):
+        cf = Article.objects.create(word="cfword")
+        ArticleLink.objects.create(
+            from_article=cf, to_article=self.a, kind=ArticleLink.KIND_CF
+        )
+        self.assertEqual({cf.id}, expand_by_links([cf.id]))
+        expanded_from_a = expand_by_links([self.a.id])
+        self.assertNotIn(cf.id, expanded_from_a)
+        self.assertIn(self.b.id, expanded_from_a)
+
+    def test_deriv_link_expanded(self):
+        deriv = Article.objects.create(word="rutoldi")
+        ArticleLink.objects.create(
+            from_article=deriv, to_article=self.a, kind=ArticleLink.KIND_DERIV
+        )
+        self.assertEqual({deriv.id, self.a.id}, expand_by_links([deriv.id]))
+        expanded_from_a = expand_by_links([self.a.id])
+        self.assertIn(deriv.id, expanded_from_a)
+        self.assertIn(self.b.id, expanded_from_a)

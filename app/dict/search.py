@@ -71,15 +71,15 @@ def sort_and_paginate(articles, page):
 
 def expand_by_links(article_ids):
     """
-    Кластер по направленным ArticleLink (только см./ср., без deriv).
+    Кластер по направленным ArticleLink (см. и от, обе стороны; без ср.).
     """
-    cross = ArticleLink.KINDS_CROSSREF
+    kinds = ArticleLink.KINDS_LISTING
     outgoing = ArticleLink.objects.filter(
-        from_article_id__in=article_ids, kind__in=cross
+        from_article_id__in=article_ids, kind__in=kinds
     ).values_list("to_article_id", flat=True)
 
     incoming = ArticleLink.objects.filter(
-        to_article_id__in=article_ids, kind__in=cross
+        to_article_id__in=article_ids, kind__in=kinds
     ).values_list("from_article_id", flat=True)
 
     return set(article_ids) | set(outgoing) | set(incoming)
@@ -367,7 +367,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
     for fa, ta in ArticleLink.objects.filter(
         from_article_id__in=result_ids,
         to_article_id__in=result_ids,
-        kind__in=ArticleLink.KINDS_CROSSREF,
+        kind__in=ArticleLink.KINDS_LISTING,
     ).values_list("from_article_id", "to_article_id"):
         links.setdefault(fa, set()).add(ta)
         links.setdefault(ta, set()).add(fa)
@@ -577,8 +577,8 @@ def article_ids_for_semantic_field(field_id):
     Articles in a semantic field, plus unmarked «см.» referrers.
 
     Lemmas classified into the field are the core set. Articles that only
-    point at those lemmas via ArticleLink (typically «см. X», no translation
-    for the LLM to tag) inherit the field at read time — same idea as
+    point at those lemmas via ArticleLink (см. / от, no translation for the
+    LLM to tag) inherit the field at read time — same kinds as
     expand_by_links in Russian search, but one-way: we do not follow
     outgoing links, which would leak unrelated targets into the listing.
     Referrers that already have any semantic field keep their own markup.
@@ -593,7 +593,7 @@ def article_ids_for_semantic_field(field_id):
     referrers = set(
         ArticleLink.objects.filter(
             to_article_id__in=classified,
-            kind__in=ArticleLink.KINDS_CROSSREF,
+            kind__in=ArticleLink.KINDS_LISTING,
         ).values_list("from_article_id", flat=True)
     )
     if not referrers:

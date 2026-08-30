@@ -233,8 +233,10 @@ class ArticleLink(models.Model):
         (KIND_CF, "ср."),
         (KIND_DERIV, "от"),
     )
-    # Поиск / онтология: только см. и ср.; деривации «от» — отдельно (backlog §1).
+    # см.+ср. — типы перекрёстных отсылок в HTML (не для расширения выдачи).
     KINDS_CROSSREF = (KIND_SEE, KIND_CF)
+    # Поиск / онтология: подтягивать только см. и от (backlog §1).
+    KINDS_LISTING = (KIND_SEE, KIND_DERIV)
 
     from_article = models.ForeignKey(
         Article,

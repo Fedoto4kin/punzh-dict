@@ -111,3 +111,29 @@ class OntologyViewTestCase(TestCase):
         content = search_by_semantic_field(self.animals.id, 1)
         words = [a.word for a in content.page_obj.object_list]
         self.assertNotIn("muu", words)
+
+    def test_cf_referrer_not_inherited(self):
+        cf_stub = Article.objects.create(word="cflink")
+        ArticleLink.objects.create(
+            from_article=cf_stub,
+            to_article=self.ciga,
+            kind=ArticleLink.KIND_CF,
+        )
+        words = [
+            a.word
+            for a in search_by_semantic_field(self.animals.id, 1).page_obj.object_list
+        ]
+        self.assertNotIn("cflink", words)
+
+    def test_deriv_referrer_inherited(self):
+        deriv = Article.objects.create(word="rutoldi")
+        ArticleLink.objects.create(
+            from_article=deriv,
+            to_article=self.ciga,
+            kind=ArticleLink.KIND_DERIV,
+        )
+        words = [
+            a.word
+            for a in search_by_semantic_field(self.animals.id, 1).page_obj.object_list
+        ]
+        self.assertIn("rutoldi", words)
