@@ -87,8 +87,8 @@ def search(request, query="", page=1):
     active_label = None
     if direction == "rus":
         translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
-        page_obj, found_count, narrowing, direct_ids = search_by_translate_linked(
-            query.translate(translation_table), page, f
+        page_obj, found_count, narrowing, direct_ids, related_queries = (
+            search_by_translate_linked(query.translate(translation_table), page, f)
         )
         possible = []
         # подпись активного фильтра для badge в заголовке
@@ -106,6 +106,7 @@ def search(request, query="", page=1):
         page_obj, found_count = word_search(query, page)
         narrowing = []
         direct_ids = set()
+        related_queries = []
         possible = []
         if not len(page_obj.object_list):
             possible = search_possible(query)
@@ -120,6 +121,7 @@ def search(request, query="", page=1):
         "possible": possible,
         "narrowing": narrowing,
         "has_direct": bool(direct_ids),
+        "related_queries": related_queries,
         "active_f": f,
         "active_label": active_label,
         "found_count": found_count,

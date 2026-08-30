@@ -117,6 +117,16 @@
     </div>
 </div>
 {% endif %}
+{% if related_queries %}
+<div class="mt-1 alert alert-secondary" role="alert">
+    <h5 class="alert-heading mb-2">Связанные запросы</h5>
+    <p class="mb-0">
+        {% for syn in related_queries %}
+        <a href="/search/{{ syn|urlencode }}/1" class="btn btn-sm btn-outline-secondary m-1">{{ syn }}</a>
+        {% endfor %}
+    </p>
+</div>
+{% endif %}
 {% endif %}
 
 <div class="row mt-4">

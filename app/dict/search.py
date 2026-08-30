@@ -289,6 +289,29 @@ def find_exact_match_ids(result_ids, ilike_ids, blobs_by_article, links):
     return ilike_in_result | inherited
 
 
+def find_related_queries(ilike_ids, blobs_by_article, query_words):
+    """
+    One-word rus_word synonyms from articles with a direct ILIKE hit on the query.
+    Other single-token translations of the same card, minus query tokens; deduped.
+    """
+    seen = set()
+    related = []
+    for aid in ilike_ids:
+        for rw in blobs_by_article.get(aid, []):
+            if not rw:
+                continue
+            toks = _TOKEN_RE.findall(rw.lower())
+            if len(toks) != 1:
+                continue
+            tok = toks[0]
+            if tok in query_words or tok in seen:
+                continue
+            seen.add(tok)
+            related.append(tok)
+    related.sort()
+    return related
+
+
 def search_by_translate_linked(query: str, page=1, f=None):
 
     # 1. ILIKE (exact rus_word match, case-insensitive; query already ё→е in views)
@@ -349,6 +372,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
         links.setdefault(fa, set()).add(ta)
         links.setdefault(ta, set()).add(fa)
     direct_ids = find_exact_match_ids(result_ids, ids_ilike, blobs_by_article, links)
+    related_queries = find_related_queries(ids_ilike, blobs_by_article, query_words)
 
     # Фильтр применяется ПОСЛЕ вычисления тегов/прямых (они всегда от полного
     # якоря) и ДО пагинации, чтобы номера страниц и n-граммы совпадали с
@@ -371,7 +395,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
 
     page_obj, found_count = get_sorted_articles(filtered_ids, page)
 
-    return page_obj, found_count, narrowing, direct_ids
+    return page_obj, found_count, narrowing, direct_ids, related_queries
 
 
 # ------------------------------------------------------------

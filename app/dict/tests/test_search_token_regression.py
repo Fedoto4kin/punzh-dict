@@ -39,7 +39,7 @@ class SearchTokenRegressionTestCase(TestCase):
         ArticleIndexTranslate.objects.create(article=cls.zvon, rus_word="звон")
 
     def _article_ids(self, query, f=None):
-        page, _, _, _ = search_by_translate_linked(query, 1, f)
+        page, _, _, _, _ = search_by_translate_linked(query, 1, f)
         return {a.id for a in page.object_list}
 
     def test_tam_full_includes_bare_and_phrase(self):
