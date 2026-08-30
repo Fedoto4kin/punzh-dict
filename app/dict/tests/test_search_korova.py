@@ -47,6 +47,30 @@ class KorovaNarrowingTestCase(TestCase):
         self.assertEqual(1, found_count)
         self.assertEqual({self.enzi.word}, {a.word for a in page_obj.object_list})
 
+    def test_korova_filter_excludes_paren_only_cow_gloss(self):
+        gloss_only = Article.objects.create(word="heat_cow")
+        ArticleIndexTranslate.objects.create(
+            article=gloss_only,
+            rus_word="быть в охоте (о корове)",
+        )
+        page_obj, found_count, _, _, _ = search_by_translate_linked(
+            "корова", 1, "первотельная"
+        )
+        self.assertEqual(1, found_count)
+        self.assertEqual({self.enzi.word}, {a.word for a in page_obj.object_list})
+
+    def test_korova_legacy_f_with_korove_requires_both_tokens(self):
+        gloss_only = Article.objects.create(word="heat_cow2")
+        ArticleIndexTranslate.objects.create(
+            article=gloss_only,
+            rus_word="быть в охоте (о корове)",
+        )
+        page_obj, found_count, _, _, _ = search_by_translate_linked(
+            "корова", 1, "первотельная корове"
+        )
+        self.assertEqual(1, found_count)
+        self.assertEqual({self.enzi.word}, {a.word for a in page_obj.object_list})
+
     def test_pervotelnaia_korova_exact_ilike(self):
         ArticleIndexTranslate.objects.create(
             article=self.enzi,

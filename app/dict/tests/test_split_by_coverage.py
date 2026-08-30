@@ -84,18 +84,18 @@ class SplitByCoverageTestCase(SimpleTestCase):
             ),
         )
 
-    def test_multitoken_key_matches_any_token(self):
+    def test_multitoken_key_requires_all_tokens_in_blob(self):
         self.assertEqual(
             [
                 {
                     "label": "быстро ехать лошади",
                     "key": "ехать лошади",
-                    "coverage": 2,
+                    "coverage": 1,
                 }
             ],
             split_by_coverage(
                 ["быстро ехать лошади"],
-                ["быстро ехать", "конь лошади", "прыгать"],
+                ["быстро ехать лошади", "быстро ехать", "конь лошади", "прыгать"],
                 QW,
                 STOPS,
             ),
@@ -106,7 +106,7 @@ class SplitByCoverageTestCase(SimpleTestCase):
             [
                 {
                     "label": "первотельная (о корове)",
-                    "key": "первотельная корове",
+                    "key": "первотельная",
                     "coverage": 1,
                 }
             ],
@@ -118,7 +118,7 @@ class SplitByCoverageTestCase(SimpleTestCase):
             ),
         )
 
-    def test_query_form_variant_in_full_label_and_key(self):
+    def test_query_form_variant_needs_full_key_tokens_in_blob(self):
         self.assertEqual(
             [
                 {
@@ -128,6 +128,9 @@ class SplitByCoverageTestCase(SimpleTestCase):
                 }
             ],
             split_by_coverage(
-                ["быстрее в движении"], ["стало быстрее", "медленно"], QW, STOPS
+                ["быстрее в движении"],
+                ["быстрее в движении", "стало быстрее", "медленно"],
+                QW,
+                STOPS,
             ),
         )

@@ -232,11 +232,24 @@ def _translate_q_any_query_token(query_tokens):
     return combined
 
 
+def _strip_parens_for_key(phrase):
+    """Parenthetical glosses (о корове), (детс.) — for label only, not filter key."""
+    return re.sub(r"\([^)]*\)", " ", phrase)
+
+
 def _label_and_key_tokens(phrase, query_words, stopwords):
-    toks = _TOKEN_RE.findall(phrase.lower())
-    label_toks = [t for t in toks if t not in query_words]  # drop the query's own words
+    key_source = _strip_parens_for_key(phrase)
+    toks = _TOKEN_RE.findall(key_source.lower())
+    label_toks = [t for t in toks if t not in query_words]
     key_toks = [t for t in label_toks if t not in stopwords]
     return label_toks, key_toks
+
+
+def _blob_matches_key_tokens(blob, key_tokens):
+    """All key tokens must appear in the blob (substring, same as ?f= filter)."""
+    if not key_tokens:
+        return False
+    return all(tok in blob for tok in key_tokens)
 
 
 def split_by_coverage(candidates, page_blobs, query_words, stopwords):
@@ -251,8 +264,8 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
     stopwords  : tokens dropped from the KEY only (kept in the label).
 
     LABEL = full candidate phrase (shown on the button).
-    KEY   = candidate minus query words minus stopwords -> matched by ?f=.
-    COVERAGE = cards whose blob contains at least one key token as a substring.
+    KEY   = phrase minus parens, query words, stopwords -> matched by ?f= (AND).
+    COVERAGE = cards whose blob contains every key token as a substring.
       0 < coverage < N -> narrowing;  coverage in {0, N} or empty key -> dropped.
 
     Returns narrowing: [{"label","key","coverage"}], deduped by key
@@ -273,7 +286,7 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
             continue
         seen_keys.add(key)
 
-        coverage = sum(1 for b in blobs if any(t in b for t in key_toks))
+        coverage = sum(1 for b in blobs if _blob_matches_key_tokens(b, key_toks))
         if coverage == 0 or coverage == N:
             continue
 
@@ -399,16 +412,13 @@ def search_by_translate_linked(query: str, page=1, f=None):
     if f == "exact":
         filtered_ids = set(result_ids) & direct_ids
     elif f:
-        # f — ключ уточняющего тега: оставить карточки, чей перевод содержит
-        # ЛЮБОЙ токен ключа (то же правило, что считало coverage).
+        # f — ключ тега: все токены ключа должны быть в блобе переводов (AND).
         f_tokens = _TOKEN_RE.findall(f.lower())
         kept = set()
         for aid, rus_words in blobs_by_article.items():
             blob = " | ".join(rus_words).lower()
-            for tok in f_tokens:
-                if tok in blob:
-                    kept.add(aid)
-                    break
+            if _blob_matches_key_tokens(blob, f_tokens):
+                kept.add(aid)
         filtered_ids = set(result_ids) & kept
 
     page_obj, found_count = get_sorted_articles(filtered_ids, page)
