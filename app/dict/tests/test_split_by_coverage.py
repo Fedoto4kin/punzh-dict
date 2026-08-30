@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 
-from ..search import split_by_coverage
+from ..search import STOPWORDS, split_by_coverage
 
-STOPS = {"к", "на", "и", "с", "в", "что-л"}
+STOPS = STOPWORDS
 QW = {"быстро"}  # query_words for the anchor "быстро"
 
 
@@ -101,6 +101,23 @@ class SplitByCoverageTestCase(SimpleTestCase):
                 ["быстро ехать лошади"],
                 ["быстро ехать", "конь лошади", "прыгать"],
                 QW,
+                STOPS,
+            ),
+        )
+
+    def test_label_keeps_parens_from_original_phrase(self):
+        self.assertEqual(
+            [
+                {
+                    "label": "первотельная (о корове)",
+                    "key": "первотельная корове",
+                    "coverage": 1,
+                }
+            ],
+            split_by_coverage(
+                ["первотельная (о корове)"],
+                ["первотельная (о корове)", "дойная корова"],
+                {"корова"},
                 STOPS,
             ),
         )

@@ -192,6 +192,14 @@ _STOP_1B = {
 }
 STOPWORDS = _STOP_1A | _STOP_1B
 
+# Anchor queries where token-OR hits are huge: narrowing candidates only from
+# ILIKE-exact articles (backlog §2 prio-filter «быть»).
+HIGH_FREQ_ANCHOR_QUERIES = frozenset({"быть"})
+
+# Short-prefix fuzzy token match (backlog P3 surrogate): «корова» → «корове».
+_FUZZY_TOKEN_MIN_LEN = 5
+_FUZZY_SUFFIX = r"[а-яё]{1,3}"
+
 # Token boundary for rus_word: same alphabet as _TOKEN_RE ([а-яё\-] tokens).
 _TOKEN_BOUNDARY_BEFORE = r"(?:^|[^а-яё\-])"
 _TOKEN_BOUNDARY_AFTER = r"(?:$|[^а-яё\-])"
@@ -205,12 +213,39 @@ def _token_boundary_regex(token):
     return _TOKEN_BOUNDARY_BEFORE + re.escape(token) + _TOKEN_BOUNDARY_AFTER
 
 
+def _token_boundary_fuzzy_regex(token):
+    """Stem = token minus last letter; matches inflection variants (корова/корове)."""
+    stem = token[:-1]
+    return (
+        _TOKEN_BOUNDARY_BEFORE + re.escape(stem) + _FUZZY_SUFFIX + _TOKEN_BOUNDARY_AFTER
+    )
+
+
 def _translate_q_any_query_token(query_tokens):
     """OR: rus_word contains at least one query token as a whole word."""
     combined = Q()
     for tok in query_tokens:
         combined |= Q(rus_word__iregex=_token_boundary_regex(tok))
+        if len(tok) >= _FUZZY_TOKEN_MIN_LEN:
+            combined |= Q(rus_word__iregex=_token_boundary_fuzzy_regex(tok))
     return combined
+
+
+def _display_label(phrase, query_words):
+    """Narrowing tag label: drop exact query tokens, keep punctuation (e.g. скобки)."""
+    label = phrase
+    for qw in sorted(query_words, key=len, reverse=True):
+        label = re.sub(
+            r"(?<![а-яё])" + re.escape(qw) + r"(?![а-яё])",
+            "",
+            label,
+            flags=re.IGNORECASE,
+        )
+    label = re.sub(r"\s+", " ", label).strip()
+    label = re.sub(r"\(\s+", "(", label)
+    label = re.sub(r"\s+\)", ")", label)
+    label = label.strip(" ,")
+    return label or phrase
 
 
 def _label_and_key_tokens(phrase, query_words, stopwords):
@@ -263,7 +298,11 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
             continue
 
         narrowing.append(
-            {"label": " ".join(label_toks), "key": key, "coverage": coverage}
+            {
+                "label": _display_label(phrase, query_words),
+                "key": key,
+                "coverage": coverage,
+            }
         )
 
     narrowing.sort(key=lambda e: e["coverage"])
@@ -341,8 +380,13 @@ def search_by_translate_linked(query: str, page=1, f=None):
     expanded_ids = expand_by_links(all_ids)
 
     # 5. Кандидаты для сужающих тегов (SPEC v2, механизм 1)
+    candidate_article_ids = expanded_ids
+    if query.strip().lower() in HIGH_FREQ_ANCHOR_QUERIES:
+        candidate_article_ids = ids_ilike
     candidates = list(
-        ArticleIndexTranslate.objects.filter(token_q, article_id__in=expanded_ids)
+        ArticleIndexTranslate.objects.filter(
+            token_q, article_id__in=candidate_article_ids
+        )
         .values_list("rus_word", flat=True)
         .distinct()
     )
