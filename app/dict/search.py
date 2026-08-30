@@ -269,7 +269,8 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
       0 < coverage < N -> narrowing;  coverage in {0, N} or empty key -> dropped.
 
     Returns narrowing: [{"label","key","coverage"}], deduped by key
-    (first label wins), sorted by ascending coverage.
+    (first label wins), sorted by descending coverage (broader tags first),
+    then by label for ties.
     """
     blobs = [b.lower() for b in page_blobs]
     N = len(blobs)
@@ -292,7 +293,7 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
 
         narrowing.append({"label": phrase, "key": key, "coverage": coverage})
 
-    narrowing.sort(key=lambda e: e["coverage"])
+    narrowing.sort(key=lambda e: (-e["coverage"], e["label"]))
 
     return narrowing
 

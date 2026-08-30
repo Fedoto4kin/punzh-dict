@@ -54,11 +54,11 @@ class SplitByCoverageTestCase(SimpleTestCase):
             ),
         )
 
-    def test_sorted_by_ascending_coverage(self):
+    def test_sorted_by_descending_coverage(self):
         self.assertEqual(
             [
-                {"label": "быстро ехать", "key": "ехать", "coverage": 1},
                 {"label": "быстро говорить", "key": "говорить", "coverage": 2},
+                {"label": "быстро ехать", "key": "ехать", "coverage": 1},
             ],
             split_by_coverage(
                 ["быстро говорить", "быстро ехать"],
