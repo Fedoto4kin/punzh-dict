@@ -12,7 +12,7 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 | Снимок + запись | `app/dict/translation_index_write.py`, миграция `0027` | готово |
 | Exact-поиск | `find_exact_match_ids` в `app/dict/search.py` | готово |
 | Service-word post-filter | `_keep_service_word_phrase` | упрощено, `9b92ba6` |
-| Боевой dry-run ~13k | prod | **в процессе** (чистый перезапуск 13036, 2026-08-29) |
+| Боевой dry-run + `--from-json` | prod | **готово** (2026-08) |
 
 Коммиты (ветка `master`, хронология):
 
@@ -181,10 +181,8 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 
 ## Открыто
 
-- [ ] Дождаться «Готово» на prod → проверка json → migrate → `--from-json`
-- [ ] DB-тест «корова» / 1717 (full vs exact vs тег)
-- [ ] prio‑фильтр для «быть» (отдельно от cleanup)
-- [ ] Ярлыки тегов и скобки в `split_by_coverage`
+- [x] Prod `--from-json`, dedupe ё/е, регрессия поиска (см. `backlog.md` §2)
+- [ ] Следующий фокус: **AI-поиск** (`docs/ai-search.md`)
 
 ---
 

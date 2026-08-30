@@ -16,7 +16,7 @@
 
 | Файл | О чём |
 |------|--------|
-| [ai-search.md](ai-search.md) | UX отдельной страницы AI-поиска |
+| [ai-search.md](ai-search.md) | UX AI-поиска — **следующий фокус разработки** |
 | [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке |
 
 ## Runbook
