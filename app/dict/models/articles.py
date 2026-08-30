@@ -6,6 +6,7 @@ from django.utils.html import format_html
 
 from ..helpers import (
     KRL_ABC,
+    canonical_rus_word,
     compact_article_html,
     expand_index_variants,
     fold_interior_hyphens,
@@ -159,6 +160,22 @@ class ArticleIndexTranslate(models.Model):
 
     def __str__(self):
         return self.rus_word
+
+    def save(self, *args, **kwargs):
+        if self.rus_word is not None:
+            self.rus_word = canonical_rus_word(self.rus_word)
+        if self.rus_word:
+            dup_qs = ArticleIndexTranslate.objects.filter(
+                article_id=self.article_id,
+                rus_word=self.rus_word,
+            )
+            if self.pk:
+                dup_qs = dup_qs.exclude(pk=self.pk)
+            if dup_qs.exists():
+                if self.pk:
+                    self.delete()
+                return
+        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = (

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from django.contrib.postgres.search import SearchVector
 from django.db import transaction
 
+from dict.helpers.rus_word import dedupe_canonical_rus_words
 from dict.models import Article, ArticleIndexTranslate, ArticleIndexTranslateSnapshot
 
 
@@ -33,7 +34,7 @@ def snapshot_translation_index(batch_id):
 
 def apply_translations(article_id, words):
     """Replace article translations; refresh search_vector (bulk_create skips signals)."""
-    cleaned = [w.strip() for w in words if isinstance(w, str) and w.strip()]
+    cleaned = dedupe_canonical_rus_words(words)
     with transaction.atomic():
         ArticleIndexTranslate.objects.filter(article_id=article_id).delete()
         if cleaned:
