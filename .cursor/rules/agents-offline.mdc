@@ -1,0 +1,15 @@
+---
+description: Оффлайн LLM-скрипты app/agents — не рантайм, заливка в БД отдельно
+globs: app/agents/**/*
+alwaysApply: false
+---
+
+# Оффлайн `app/agents/`
+
+Следовать `app/agents/AGENTS.md`. Это не HTTP и не живые запросы.
+
+- Запуск: `docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py`
+- Секреты: `agents/.env` (`DEEPSEEK_API_KEY` без кавычек), не коммитить. Рабочий JSON — `agents/data/` (gitignore).
+- По умолчанию писать JSON; в БД — management-команды. Исключение: `clean_translations --write`.
+- Не называть файлы `test_*.py` (Django примет за тесты).
+- Очистка переводов: runbook `docs/translation_cleanup.md`.

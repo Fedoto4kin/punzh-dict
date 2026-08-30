@@ -1,4 +1,6 @@
-# PUNZH-DICT — Project overview for Cursor
+# PUNZH-DICT — архитектура (подробно)
+
+Вход для Cursor: корневой **`AGENTS.md`**. Очередь задач: **`docs/plans/INDEX.md`**. Этот файл — модели, поиск, команды; не дублировать приоритеты.
 
 ## Purpose
 Веб-версия словаря карельского языка (тверские говоры) Пунжиной А. В.: статьи, навигация, поиск, админка. ~16k статей.
@@ -24,8 +26,8 @@
 - `app/punzh/` — Django-проект (settings, urls, wsgi/asgi).
 - `app/agents/` — **оффлайн** скрипты (онтология, очистка переводов, LLM). Не обслуживают живые запросы; заливку JSON в БД — `clean_translations --write` или management-команды. Промпт очистки — `translation_cleanup.py`; handoff: **`docs/translation_cleanup.md`**. См. `agents/AGENTS.md`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
-- `backlog.md` — текущие задачи (§1 kind/«от» в работе; §2 очистка переводов; §4 `from_translation`).
-- `docs/` — спеки (не обязательно реализованный код):
+- `backlog.md` — детали продуктовых задач; приоритеты — `docs/plans/INDEX.md`.
+- `docs/` — карта: `docs/README.md`. Спеки (не обязательно реализованный код):
   - `ai-search.md` — UX отдельной страницы AI-поиска;
   - `searching_upgrade.md` — реализованные подсказки русского поиска + заметки;
   - `backlog-search.md` — бэклог лексического поиска;
@@ -64,10 +66,9 @@
 - `export_adjectives_by_field`, `fill_missing_translations`, `test_timeweb`.
 - `classify_article --id` — доклассификация одной статьи: тот же замёрзший промпт, что у пакетной разметки (`dict.ai.prompts`), модель DeepSeek через Timeweb (`TIMEWEB_AI_MODEL_CLASSIFY`), онтология из `SemanticField`. Пишет `ArticleSemanticField` + `ArticleKeyword` только этой статьи. Ядро: `dict.ai.classify.classify_article` (без HTTP, можно звать из фона). `--dry-run` не пишет.
 
-## Next (не смешивать ветки)
-1. Очистить переводы (`backlog.md` §2), затем боевой прогон `from_translation` (§4). Не переклассифицировать поля и не фильтровать `/ontology/` в этой версии.
-2. AI-поиск, слой 1: разбор запроса + отдельная страница по `docs/ai-search.md` (клиент шлюза и `classify_article` уже есть; автохук после сохранения статьи — отдельно).
-3. Валидатор формы по `docs/SPEC_article_form_validator.md`: сначала В2 (автокомплит «см.»), затем В1 и проверки html↔структура.
+## Next
+
+См. **`docs/plans/INDEX.md`**. Не дублировать список здесь.
 
 ## Notes for AI (Cursor)
 - Не ломать структуру `Article`, индексов и семантических моделей.

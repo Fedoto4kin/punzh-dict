@@ -1,0 +1,11 @@
+---
+description: Django-шаблоны и статика словаря
+globs: "**/*.html,app/static/**,app/dict/static/**"
+alwaysApply: false
+---
+
+# Шаблоны
+
+- Bootstrap 4, существующие блоки и имена CSS-классов. Не подключать новый UI-фреймворк.
+- Лексический поиск и онтология / будущий AI-поиск — разные страницы и UX; не смешивать выдачу без задачи.
+- Исходники статики: `app/static`, `app/dict/static`. В проде Nginx отдаёт только `app/staticfiles` после `collectstatic`.

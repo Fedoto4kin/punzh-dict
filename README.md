@@ -2,6 +2,8 @@
 
 It's web version of classic fundamental dictionary of karelian language, tver' dialect(one of minore language of Russia).
 
+Для агентов Cursor: [`AGENTS.md`](AGENTS.md). Очередь задач: [`docs/plans/INDEX.md`](docs/plans/INDEX.md).
+
 The dictionary contains huge ethnographic and dialect materials, collected for years of work.
 
 The original book has been published in 1994, Petrozavodsk, Karelia via [Karelian Research Centre of RAS](https://en.wikipedia.org/wiki/Karelian_Research_Centre_of_RAS) 

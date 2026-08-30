@@ -1,0 +1,13 @@
+---
+description: Django/Python в app/dict и app/punzh — тесты, формат, модели
+globs: "app/dict/**/*.py,app/punzh/**/*.py"
+alwaysApply: false
+---
+
+# Python / Django (сайт)
+
+- После правок: `black` и `python manage.py test dict` в контейнере `punzh_django`, **`-w /app`**. Не запускать `manage.py test` без ярлыка `dict`.
+- Команды: `app/README.md`. Процедура: skill `django-test`.
+- Не менять форму `Article`, индексов (`ArticleIndex*`) и semantic-моделей без явной задачи.
+- Лексический `/search/` и смысловые поля / `dict/ai/` — разные контуры.
+- Management-команды пишут в БД; оффлайн-скрипты живут в `app/agents/`.
