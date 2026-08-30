@@ -10,7 +10,7 @@
 - русские переводы (`ArticleIndexTranslate`);
 - пометы (`Tag`: населённые пункты, часть речи, стилистика, говоры, фразеологизмы);
 - источники (`Source`);
-- смысловые поля и ключевые слова (`SemanticField`, `ArticleSemanticField`, `ArticleKeyword`) — справочник и разметка для ветки AI-поиска; **не** смешивать с обычным `/search/`. На связи `ArticleSemanticField.from_translation` — поле следует из переводов леммы, не из иллюстрации (несколько True нормальны; выдача `/ontology/` флаг **не** фильтрует). Код пометки готов, боевой прогон — после очистки переводов (`backlog.md` §2, затем §4).
+- смысловые поля и ключевые слова (`SemanticField`, `ArticleSemanticField`, `ArticleKeyword`) — справочник и разметка для ветки AI-поиска; **не** смешивать с обычным `/search/`. На связи `ArticleSemanticField.from_translation` — поле следует из переводов леммы, не из иллюстрации (несколько True нормальны; выдача `/ontology/` флаг **не** фильтрует). Код пометки готов; боевой прогон флага — `backlog.md` §4 (`pick_translation_fields` + `load_translation_fields`). Очистка переводов на prod закрыта — `docs/translation_cleanup.md`.
 
 Снимок разметки (dev и прод совпадали на 2026-08): 28 полей, ~28k привязок (~1.77/статью), ~48k keywords. `no_field` ~7% — норма (служебные слова и отсылки «см.»; доразметка не нужна, находятся через `ArticleLink`).
 
@@ -41,7 +41,7 @@
 Деплой: `./deploy.sh`.
 
 ## Key models (`app/dict/models/`)
-- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; в работе — связи «от», см. `backlog.md` §1).
+- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; шаги 1–4 закрыты, хвост — подсветка на сайте, см. `backlog.md` §1).
 - `semantic.py` — `SemanticField`, `ArticleSemanticField` (`from_translation`), `ArticleKeyword`.
 - `tags.py` — `Tag`.
 - `source.py` — `Source`.

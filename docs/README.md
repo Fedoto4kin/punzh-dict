@@ -9,7 +9,7 @@
 | Файл | О чём |
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
-| [../backlog.md](../backlog.md) | Продукт: связи «от», очистка переводов, `from_translation`, пометы |
+| [../backlog.md](../backlog.md) | Продукт: связи «от», `from_translation`, пометы (очистка переводов — runbook) |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
 
 ## Спеки (ещё не обязательно в коде)

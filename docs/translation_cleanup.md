@@ -181,7 +181,7 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 
 ## Открыто
 
-- [x] Prod `--from-json`, dedupe ё/е, регрессия поиска (см. `backlog.md` §2)
+- [x] Prod `--from-json`, dedupe ё/е, регрессия поиска (см. `docs/searching_upgrade.md` §0.1)
 - [ ] Следующий фокус: **AI-поиск** (`docs/ai-search.md`)
 
 ---
@@ -192,5 +192,5 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 `audit_cyrillic_lemmas`, `deploy.sh`, nginx и т.д.). Не включать их в коммиты
 и PR по очистке переводов без явного запроса.
 
-См. также: `app/agents/AGENTS.md`, `backlog.md` §2, `cursor_project_overview.md`
+См. также: `app/agents/AGENTS.md`, `cursor_project_overview.md`
 (ссылка на этот файл).

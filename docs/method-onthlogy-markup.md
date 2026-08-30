@@ -164,7 +164,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 Справочник и привязки в админке только читаются; правка — перезаливкой JSON.
 Выдача `/ontology/` **не** фильтрует по `from_translation`: статья во всех своих полях.
 
-### 4.1. Поле из перевода (`from_translation`) — после очистки переводов
+### 4.1. Поле из перевода (`from_translation`)
 
 Отдельный проход, не переклассификация и не «одно главное». Классификатор
 смотрел ещё и иллюстрации, поэтому у части статей соседний смысл примера
@@ -173,7 +173,8 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 и закрытый список полей. Несколько True — многозначность; пустой список —
 ни одно поле не про лемму. Одно поле тоже спрашиваем у модели.
 Заливка `load_translation_fields` трогает только флаг.
-Боевой прогон DeepSeek — после LLM-очистки переводов (backlog §2, затем §4).
+Боевой прогон DeepSeek — `backlog.md` §4 (очистка переводов на prod
+закрыта — `docs/translation_cleanup.md`).
 
 **Результат (dev и прод совпадают):** 28 полей, 28262 привязки (~1.77 на
 статью), 48065 keywords, `no_field` ~7% (здоровый уровень). Мёртвых полей нет —
@@ -194,9 +195,9 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 Шаги 1-3, 5 — оффлайн в `app/agents/` через DeepSeek; шаги 4, 6, 7 —
 management-команды Django.
 
-Позже, **после** очистки переводов (`backlog.md` §2): `pick_translation_fields.py`
-→ `load_translation_fields` (`backlog.md` §4). Это не шаг прогона онтологии
-выше: поля уже стоят, меняется только флаг `from_translation`.
+Отдельно от прогона онтологии выше: `pick_translation_fields.py` →
+`load_translation_fields` (`backlog.md` §4). Поля уже стоят, меняется только
+флаг `from_translation`.
 
 ---
 
