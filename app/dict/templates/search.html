@@ -117,19 +117,6 @@
         {% endif %}
     </div>
 </div>
-{% elif has_direct %}
-<div class="mt-1 alert alert-info" role="alert">
-    <p class="mb-0">
-        {% if active_f == 'exact' %}
-        <a href="/search/{{ query|urlencode }}/1" class="badge badge-primary align-middle text-white mr-1"
-           style="text-decoration:none" title="Снять фильтр">
-            точные соответствия &times;
-        </a>
-        {% endif %}
-        <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
-           class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
-    </p>
-</div>
 {% endif %}
 {% if related_queries %}
 <div class="mt-1 alert alert-secondary" role="alert">
