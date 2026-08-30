@@ -8,5 +8,5 @@ from dict.models import ArticleIndexTranslate
 @receiver(post_save, sender=ArticleIndexTranslate)
 def update_search_vector(sender, instance, **kwargs):
     ArticleIndexTranslate.objects.filter(pk=instance.pk).update(
-        search_vector=SearchVector("rus_word")
+        search_vector=SearchVector("rus_word", config="simple")
     )

@@ -5,9 +5,7 @@ from ..search import search_by_translate_linked
 
 
 # DB-backed (Postgres): exercises the full ?f= filter path in
-# search_by_translate_linked (fulltext + ilike + expand + split + filter).
-# Unlike the pure-function tests, these depend on the Postgres russian text
-# search config and the custom __ilike lookup.
+# search_by_translate_linked (ILIKE + token OR + expand + split + filter).
 
 
 class SearchFilterTestCase(TestCase):

@@ -44,7 +44,7 @@ def apply_translations(article_id, words):
                 ]
             )
             ArticleIndexTranslate.objects.filter(article_id=article_id).update(
-                search_vector=SearchVector("rus_word")
+                search_vector=SearchVector("rus_word", config="simple")
             )
 
 

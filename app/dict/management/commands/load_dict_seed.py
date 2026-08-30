@@ -104,7 +104,7 @@ class Command(BaseCommand):
 
     def _reindex_translations(self):
         n = ArticleIndexTranslate.objects.update(
-            search_vector=SearchVector("rus_word")
+            search_vector=SearchVector("rus_word", config="simple")
         )
         self.stdout.write(f"search_vector: {n}")
 

@@ -1,12 +1,7 @@
 import re
 from dataclasses import dataclass
 
-from django.contrib.postgres.search import (
-    SearchQuery,
-    SearchRank,
-    SearchVector,
-    TrigramSimilarity,
-)
+from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.db.models.functions import Length
@@ -197,6 +192,26 @@ _STOP_1B = {
 }
 STOPWORDS = _STOP_1A | _STOP_1B
 
+# Token boundary for rus_word: same alphabet as _TOKEN_RE ([а-яё\-] tokens).
+_TOKEN_BOUNDARY_BEFORE = r"(?:^|[^а-яё\-])"
+_TOKEN_BOUNDARY_AFTER = r"(?:$|[^а-яё\-])"
+
+
+def _query_tokens(query):
+    return _TOKEN_RE.findall(query.lower())
+
+
+def _token_boundary_regex(token):
+    return _TOKEN_BOUNDARY_BEFORE + re.escape(token) + _TOKEN_BOUNDARY_AFTER
+
+
+def _translate_q_any_query_token(query_tokens):
+    """OR: rus_word contains at least one query token as a whole word."""
+    combined = Q()
+    for tok in query_tokens:
+        combined |= Q(rus_word__iregex=_token_boundary_regex(tok))
+    return combined
+
 
 def _label_and_key_tokens(phrase, query_words, stopwords):
     toks = _TOKEN_RE.findall(phrase.lower())
@@ -269,9 +284,7 @@ def find_exact_match_ids(result_ids, ilike_ids, blobs_by_article, links):
     ilike_in_result = set(ilike_ids) & set(result_ids)
     translationless = set(result_ids) - set(blobs_by_article.keys())
     inherited = {
-        aid
-        for aid in translationless
-        if links.get(aid, set()) & ilike_in_result
+        aid for aid in translationless if links.get(aid, set()) & ilike_in_result
     }
     return ilike_in_result | inherited
 
@@ -285,34 +298,28 @@ def search_by_translate_linked(query: str, page=1, f=None):
         )
     )
 
-    # 2. Fulltext
-    words = query.split()
-    search_query = SearchQuery(words[0], config="russian")
-    for word in words[1:]:
-        search_query |= SearchQuery(word, config="russian")
+    # 2. Token match (OR): any query token as a whole word in rus_word (no stemmer).
+    query_tokens = _query_tokens(query)
+    token_q = _translate_q_any_query_token(query_tokens) if query_tokens else Q(pk=-1)
 
-    search_vector = SearchVector("rus_word", config="russian")
-
-    fulltext_results = (
-        ArticleIndexTranslate.objects.annotate(
-            rank=SearchRank(search_vector, search_query)
+    token_match_ids = (
+        set(
+            ArticleIndexTranslate.objects.filter(token_q).values_list(
+                "article_id", flat=True
+            )
         )
-        .filter(rank__gte=0.01)
-        .order_by("-rank")
+        - ids_ilike
     )
 
-    fulltext_ids = fulltext_results.values_list("article_id", flat=True)
-    fulltext_ids = set(fulltext_ids) - set(ids_ilike)
-
     # 3. Объединяем
-    all_ids = list(ids_ilike | set(fulltext_ids))
+    all_ids = list(ids_ilike | token_match_ids)
 
     # 4. Расширяем через связи ArticleLink
     expanded_ids = expand_by_links(all_ids)
 
     # 5. Кандидаты для сужающих тегов (SPEC v2, механизм 1)
     candidates = list(
-        fulltext_results.filter(article_id__in=expanded_ids)
+        ArticleIndexTranslate.objects.filter(token_q, article_id__in=expanded_ids)
         .values_list("rus_word", flat=True)
         .distinct()
     )
@@ -341,9 +348,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
     ).values_list("from_article_id", "to_article_id"):
         links.setdefault(fa, set()).add(ta)
         links.setdefault(ta, set()).add(fa)
-    direct_ids = find_exact_match_ids(
-        result_ids, ids_ilike, blobs_by_article, links
-    )
+    direct_ids = find_exact_match_ids(result_ids, ids_ilike, blobs_by_article, links)
 
     # Фильтр применяется ПОСЛЕ вычисления тегов/прямых (они всегда от полного
     # якоря) и ДО пагинации, чтобы номера страниц и n-граммы совпадали с
