@@ -13,11 +13,21 @@ import re
 from dict.models import ArticleIndexTranslate, Tag
 
 TAG_RE = re.compile(r"<[^>]+>")
-# Karelian/Latin tokens in gloss tail (before ~ illustrations).
-_LATIN_WORD_RE = re.compile(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ''\-]*")
+# Karelian/Latin tokens (extended Latin + typographic apostrophe U+2019).
+_KRL_LETTER = r"A-Za-z\u00C0-\u024F"
+_KRL_APOS = r"'\u2019\u02BC"
+_LATIN_WORD_RE = re.compile(rf"[{_KRL_LETTER}][{_KRL_LETTER}{_KRL_APOS}\-]*")
+# Headword form with apostrophe: «~an'e ухо» / «~än’e» (U+2019). Outside [],
+# {_KRL_APOS} would mean three chars in a row — always use a character class.
+_HEADWORD_SLOT_RE = re.compile(
+    rf"^~\s*[{_KRL_LETTER}{_KRL_APOS}\-]*[{_KRL_APOS}][{_KRL_LETTER}{_KRL_APOS}\-]*\s+[а-яё]",
+    re.I,
+)
 
 # Match build_ontology.py — function-word POS tags.
 SERVICE_POS_KEYWORDS = ["союз", "частица", "предлог", "послелог", "междомети"]
+
+_CROSSREF_TOKENS = frozenset({"см", "ср"})
 
 # Single-token auxiliaries dropped when a longer phrase in the list contains them.
 _SUBSUMED_AUX_TOKENS = frozenset(
@@ -60,7 +70,7 @@ _YO_TO_E = str.maketrans({"ё": "е", "Ё": "Е"})
 
 _POS_PREFIX_RE = re.compile(
     r"^(?:conj(?:uctio)?|particl(?:a)?|interj(?:ectio)?|verbum|adverbium|"
-    r"adjectivum|reflexivum|флк\.?)\s+",
+    r"adjectivum|reflexivum|флк\.?|примета\.?)\s+",
     re.I,
 )
 
@@ -74,7 +84,6 @@ SYSTEM_PROMPT_CLEAN_TRANSLATIONS = (
     "один <li>;\n"
     "- addendum_gloss_senses — то же из аддендумов (дополнений к статье), "
     "если есть; пустой список, если аддендумов нет;\n"
-    "- phraseme_senses — устойчивые русские фразы из блоков ◊ (фразеологизмы);\n"
     "- pos_tags, is_service_word.\n\n"
     "gloss_senses и addendum_gloss_senses — главный ориентир смыслов. "
     "translations — сырой индекс. Итог должен покрывать все значения из обоих "
@@ -132,11 +141,11 @@ SYSTEM_PROMPT_CLEAN_TRANSLATIONS = (
     "даже если они встречаются в статье. Не создавай фраз длиннее 3 слов. "
     "Эквиваленты из входного translations не удаляй (в т.ч. «да и», «но»), "
     "если это словарные формы, а не обрывки примеров.\n\n"
-    "ОТСЫЛКИ И ФРАЗЕОЛОГИЗМЫ:\n"
+    "ОТСЫЛКИ:\n"
     "- НИКОГДА не включай «см. …», «ср. …» — это не переводы, а указатели "
     "на другие статьи;\n"
-    "- phraseme_senses (блок ◊) — включай как отдельные устойчивые фразы "
-    "в translations («выйти замуж» и т.п.), если они там перечислены.\n\n"
+    "- блоки ◊ (фразеологизмы) в gloss не входят — не добавляй их в "
+    "translations, если их нет во входном списке.\n\n"
     "СКОБКИ:\n"
     "- ОСТАВЛЯЙ смысловые уточнения: (о корове), (по вкусу), (детс.) — объект, "
     "способ, область значения;\n"
@@ -179,14 +188,121 @@ _GLOSS_LABEL_WORDS = frozenset(
 )
 
 
+def _russian_text_after_spaced_tilde(part):
+    """Russian gloss tail after «lemma ~ …» in one semicolon segment."""
+    m = re.search(r"\s~\s+(.*)$", part or "", re.S)
+    if not m:
+        return ""
+    t = TAG_RE.sub(" ", m.group(1))
+    t = _LATIN_WORD_RE.sub(" ", t)
+    t = re.sub(r"\s+", " ", t).strip(" ,.")
+    t = _POS_PREFIX_RE.sub("", t).strip()
+    t = re.sub(r"^(?:перен\.?|примета\.?|impers\.?)\s*", "", t, flags=re.I)
+    return t.strip()
+
+
+def _is_possessive_collocation_phrase(text):
+    """
+    «берлога медведя», «логово волков» — употребление с род. падежом;
+    не «длинная дорога» (прилагательное + существительное).
+    """
+    words = re.findall(r"[а-яё\-]+", (text or "").lower())
+    if len(words) != 2:
+        return False
+    if re.search(r"(ый|ой|ий|ая|ое|ые|ее|ие)$", words[0]):
+        return False
+    # Genitive-like endings: медведя, волков, колокола, сети, …
+    return bool(re.search(r"(ы|и|ов|ей|я|а|ам|ах|ю)$", words[1]))
+
+
+# Adj+N collocations kept as gloss («длинная дорога», «крепкий запах»).
+_GLOSS_COLLOCATION_ADJ_STEMS = (
+    "длинн",
+    "прям",
+    "коротк",
+    "узк",
+    "широк",
+    "крепк",
+    "крут",
+    "кос",
+    "гол",
+    "гладк",
+    "остр",
+    "туп",
+    "высок",
+    "низк",
+    "глубок",
+    "мелк",
+)
+
+
+def _is_adj_noun_phrase(text):
+    words = re.findall(r"[а-яё\-]+", (text or "").lower())
+    if len(words) != 2:
+        return False
+    return bool(re.search(r"(ый|ой|ий|ая|ое|ые|ее|ие)$", words[0]))
+
+
+def _is_gloss_adj_noun_collocation(text):
+    """Fixed dictionary phrase, not a running example («длинная дорога»)."""
+    if not _is_adj_noun_phrase(text):
+        return False
+    first = re.findall(r"[а-яё\-]+", (text or "").lower())[0]
+    return any(first.startswith(stem) for stem in _GLOSS_COLLOCATION_ADJ_STEMS)
+
+
+def _is_evaluative_adj_noun_phrase(text):
+    """
+    «хорошее настроение», «большие уши» — пример с оценочным прилагательным;
+    не «длинная дорога», «крепкий запах».
+    """
+    return _is_adj_noun_phrase(text) and not _is_gloss_adj_noun_collocation(text)
+
+
 def _is_illustration_segment(part):
     """Semicolon segment that is a Karelian example, not dictionary gloss."""
     part = (part or "").strip()
     if not part:
         return True
-    # «olla ~ быть в обиде» — gloss, not an example sentence.
-    if re.search(r"\s~\s+[а-яё]", part, re.I):
+    # «~an'e ухо» — headword slot + Russian gloss (apostrophe U+2019 or ASCII).
+    if _HEADWORD_SLOT_RE.match(part):
         return False
+    # «~vavot нарезать» / «~ vavot …» — Karelian example line, not headword slot.
+    if re.match(rf"^~\s*[{_KRL_LETTER}][{_KRL_LETTER}\-]*\s+[а-яё]", part, re.I):
+        return True
+    # «~ vavot нарезать борозды» — spaced tilde + Karelian word.
+    if re.match(rf"^~\s+[{_KRL_LETTER}]", part):
+        return True
+    # Spaced tilde: «olla ~ быть» (gloss) vs «ken mahtaw el'ia, že on ~ …» (example).
+    m = re.search(r"\s~\s+", part)
+    if m:
+        before = part[: m.start()].strip()
+        after = part[m.end() :].strip()
+        latin_before = _LATIN_WORD_RE.findall(before)
+        latin_after = _LATIN_WORD_RE.findall(after)
+        if latin_before and latin_after:
+            return True
+        if len(latin_before) >= 2:
+            return True
+        if len(latin_before) == 1:
+            w = latin_before[0].lower().rstrip(".")
+            if w in _GLOSS_LABEL_WORDS:
+                return False
+        rus = _russian_text_after_spaced_tilde(part)
+        if _is_gloss_adj_noun_collocation(rus):
+            return False
+        if _is_possessive_collocation_phrase(rus):
+            return True
+        if _is_evaluative_adj_noun_phrase(rus):
+            return True
+        # «kellon ~ ухо колокола», «šuwret ~at большие уши» — example, not gloss.
+        # Keep «olla ~ быть …» (lemma + definition) as gloss.
+        if len(latin_before) == 1:
+            w = latin_before[0].lower().rstrip(".")
+            if w not in {"olla", "lienee", "ei", "on"}:
+                return True
+        return False
+
     latin_words = _LATIN_WORD_RE.findall(part)
     if not latin_words:
         return False
@@ -203,17 +319,41 @@ def _is_illustration_segment(part):
 def _is_crossref_text(text):
     """True if text is only a see/cf pointer (см./ср.), not a translation."""
     t = re.sub(r"\s+", " ", (text or "").strip())
-    if not re.search(r"(?:^|\s)(?:см|ср)\.", t, re.I):
+    t = t.strip(" .,'\"«»")
+    if not t:
+        return False
+    if t.lower() in _CROSSREF_TOKENS:
+        return True
+    if re.fullmatch(r"(?:см|ср)\.?", t, re.I):
+        return True
+    if not re.search(r"(?:^|\s)(?:см|ср)\.?", t, re.I):
         return False
     words = [
-        w for w in re.findall(r"[а-яё]+", t, re.I) if w.lower() not in ("см", "ср")
+        w for w in re.findall(r"[а-яё]+", t, re.I) if w.lower() not in _CROSSREF_TOKENS
     ]
     return len(words) == 0
 
 
 def _is_crossref_only(html_chunk):
     """Entire <li> is a cross-reference, e.g. <i>см.</i> l'is's'e."""
-    t = TAG_RE.sub(" ", html_chunk or "")
+    raw = html_chunk or ""
+    # «<i>см.</i> ajatella; …examples» — still a see-pointer sense for gloss.
+    if re.match(
+        r"\s*(?:<i[^>]*>\s*)?(?:см|ср)\.?\s*(?:</i>)?\s*",
+        raw,
+        re.I,
+    ):
+        rest = re.sub(
+            r"^\s*(?:<i[^>]*>\s*)?(?:см|ср)\.?\s*(?:</i>)?\s*",
+            "",
+            raw,
+            count=1,
+            flags=re.I,
+        )
+        # Pure «см. lemma» or «см. lemma; only Karelian examples».
+        if not re.search(r"[а-яё]{3,}", TAG_RE.sub(" ", rest), re.I):
+            return True
+    t = TAG_RE.sub(" ", raw)
     t = re.sub(r"\s+", " ", t).strip()
     t = _LATIN_WORD_RE.sub(" ", t)
     t = re.sub(r"\s+", " ", t).strip(" .'")
@@ -240,6 +380,13 @@ def _normalize_gloss_segment(part):
     part = (part or "").strip().lstrip(":").strip()
     if " ~ " in part:
         part = part.split(" ~ ", 1)[1].strip()
+    else:
+        m = re.match(
+            rf"^~\s*[{_KRL_LETTER}{_KRL_APOS}\-]*[{_KRL_APOS}][{_KRL_LETTER}{_KRL_APOS}\-]*\s+(.+)$",
+            part,
+        )
+        if m:
+            part = m.group(1).strip()
     return part
 
 
@@ -290,7 +437,7 @@ def _gloss_segments(text):
         if lat > 2 and cyr <= lat:
             break
         cleaned = _LATIN_WORD_RE.sub(" ", part)
-        cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.")
+        cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,")
         cleaned = _strip_grammar_parens(cleaned)
         cleaned = _expand_comma_parallel(cleaned)
         if cleaned and re.search(r"[а-яё]", cleaned, re.I):
@@ -311,6 +458,8 @@ def _russian_gloss_chunk(html_chunk):
     segments = _gloss_segments(t)
     if segments:
         return "; ".join(segments)
+    if _LATIN_WORD_RE.search(t):
+        return ""
     t = _LATIN_WORD_RE.sub(" ", t)
     t = re.sub(r"\s+", " ", t).strip(" \t;,")
     t = _strip_grammar_parens(t)
@@ -431,16 +580,17 @@ def build_cleanup_input(article):
         "translations": translations,
         "gloss_senses": gloss_senses_from_html(main_html),
         "addendum_gloss_senses": addendum_gloss_senses_for(article),
-        "phraseme_senses": _merge_phraseme_senses(main_html, addition_htmls),
         "pos_tags": tags,
         "is_service_word": is_service_word_article(tags),
+        "article_html": main_html,
     }
 
 
 def build_cleanup_user_prompt(art_input):
+    payload = {k: v for k, v in art_input.items() if k != "article_html"}
     return (
         "Статья:\n"
-        + json.dumps(art_input, ensure_ascii=False)
+        + json.dumps(payload, ensure_ascii=False)
         + "\n\nВерни очищенный список translations."
     )
 
@@ -511,6 +661,58 @@ def _drop_i_pro_tail_fragments(translations):
     return [t for t in translations if not re.search(r"\s+и\s+пр\.?\s*$", t, re.I)]
 
 
+def gloss_listed_single_word_forms(gloss_senses):
+    """
+    Explicit single-word items in gloss comma-lists («логово, лежбище; глаз, …»).
+
+    Skips ellipsis tails («быть в обиде, печали») and words inside phrases.
+    """
+    forms = []
+    seen = set()
+    for sense in gloss_senses or []:
+        semicolon_parts = [p.strip() for p in (sense or "").split(";") if p.strip()]
+        for seg_idx, segment in enumerate(semicolon_parts):
+            seen_multi = False
+            chunks = []
+            for chunk in segment.split(","):
+                chunk = _strip_grammar_parens(chunk.strip())
+                chunk = re.sub(r"\s+", " ", chunk).strip()
+                if chunk and re.search(r"[а-яё]", chunk, re.I):
+                    chunks.append(chunk)
+            if len(chunks) >= 2:
+                for chunk in chunks:
+                    words = re.findall(r"[а-яё\-]+", chunk.lower())
+                    if len(words) >= 2:
+                        seen_multi = True
+                        continue
+                    if len(words) != 1 or seen_multi:
+                        continue
+                    form = _normalize_yo_to_e(words[0])
+                    key = form.lower()
+                    if key in _CROSSREF_TOKENS or key in seen:
+                        continue
+                    seen.add(key)
+                    forms.append(form)
+            elif len(chunks) == 1 and len(semicolon_parts) >= 2 and seg_idx == 0:
+                words = re.findall(r"[а-яё\-]+", chunks[0].lower())
+                if len(words) == 1:
+                    form = _normalize_yo_to_e(words[0])
+                    key = form.lower()
+                    if key in _CROSSREF_TOKENS or key in seen:
+                        continue
+                    seen.add(key)
+                    forms.append(form)
+    return forms
+
+
+def _gloss_protected_lemmas(gloss_senses):
+    """Lemma keys that must not be dropped as subsumed word fragments."""
+    protected = {s.lower() for s in _gloss_standalone_equivalents(gloss_senses)}
+    for form in gloss_listed_single_word_forms(gloss_senses):
+        protected.add(form.lower())
+    return protected
+
+
 def _gloss_standalone_equivalents(gloss_senses):
     """
     Single-word equivalents explicitly listed in gloss (comma/semicolon chunks).
@@ -533,10 +735,141 @@ def _gloss_standalone_equivalents(gloss_senses):
             if has_multi:
                 continue
             key = chunk.lower()
-            if key not in seen:
-                seen.add(key)
-                forms.append(chunk)
+            if key in _CROSSREF_TOKENS or key in seen:
+                continue
+            seen.add(key)
+            forms.append(chunk)
     return forms
+
+
+def _gloss_chunk_word_count(chunk):
+    """Word count ignoring parenthetical qualifiers."""
+    without_parens = _PAREN_RE.sub("", chunk or "").strip()
+    return len(re.findall(r"[а-яё\-]+", without_parens.lower()))
+
+
+def _gloss_comma_list_segments(gloss_senses):
+    """Comma-list gloss fragments (one per semicolon segment containing commas)."""
+    segments = []
+    for sense in gloss_senses or []:
+        for part in (sense or "").split(";"):
+            part = re.sub(r"\s+", " ", part.strip())
+            part = re.sub(r"^~+\s*", "", part).strip()
+            if "," in part and re.search(r"[а-яё]", part, re.I):
+                segments.append(_normalize_yo_to_e(part))
+    return segments
+
+
+def _expand_comma_gloss_list_lines(translations, gloss_senses):
+    """
+    Split glued gloss comma-lists («ручка, ухо, ушко (у разных предметов)»)
+    into separate index lines.
+    """
+    if not gloss_senses:
+        return translations
+    gloss_lists = {s.lower() for s in _gloss_comma_list_segments(gloss_senses)}
+    out = []
+    seen = set()
+    for t in translations:
+        tn = _normalize_yo_to_e(t).lower()
+        if tn in gloss_lists:
+            chunks = [re.sub(r"\s+", " ", c.strip()) for c in t.split(",")]
+            chunks = [c for c in chunks if c]
+            single_word_list = chunks and all(
+                _gloss_chunk_word_count(c) <= 1 for c in chunks
+            )
+            for chunk in chunks:
+                piece = chunk
+                if single_word_list:
+                    piece = _PAREN_RE.sub("", piece).strip()
+                if not piece or not re.search(r"[а-яё]", piece, re.I):
+                    continue
+                c = _normalize_yo_to_e(piece)
+                key = c.lower()
+                if key in seen or key in _CROSSREF_TOKENS:
+                    continue
+                out.append(c)
+                seen.add(key)
+            continue
+        if tn not in seen:
+            out.append(t)
+            seen.add(tn)
+    return out
+
+
+def _gloss_listed_phrases(gloss_senses):
+    """
+    Multi-word gloss chunks from comma/semicolon lists.
+    «в присутствии кого-л., при ком-л.» → full phrases; skips ellipsis tails.
+    """
+    phrases = []
+    seen = set()
+    for sense in gloss_senses or []:
+        for segment in (sense or "").split(";"):
+            segment = _strip_grammar_parens(segment.strip())
+            segment = re.sub(r"\s+", " ", segment).strip()
+            if not segment:
+                continue
+            comma_chunks = []
+            for chunk in segment.split(","):
+                chunk = _strip_grammar_parens(chunk.strip())
+                chunk = re.sub(r"\s+", " ", chunk).strip()
+                if chunk and re.search(r"[а-яё]", chunk, re.I):
+                    comma_chunks.append(chunk)
+            if len(comma_chunks) >= 2:
+                if all(_gloss_chunk_word_count(c) <= 1 for c in comma_chunks):
+                    continue
+                seen_multi = False
+                for chunk in comma_chunks:
+                    words = re.findall(r"[а-яё\-]+", chunk.lower())
+                    if len(words) >= 2:
+                        seen_multi = True
+                        phrase = _normalize_yo_to_e(chunk)
+                        key = phrase.lower()
+                        if key not in seen:
+                            seen.add(key)
+                            phrases.append(phrase)
+            elif len(comma_chunks) == 1:
+                words = re.findall(r"[а-яё\-]+", comma_chunks[0].lower())
+                if len(words) >= 2:
+                    phrase = _normalize_yo_to_e(comma_chunks[0])
+                    key = phrase.lower()
+                    if key not in seen:
+                        seen.add(key)
+                        phrases.append(phrase)
+    return phrases
+
+
+def _ensure_gloss_listed_phrases(translations, gloss_senses):
+    """Re-add multi-word gloss phrases dropped or truncated by LLM."""
+    if not gloss_senses:
+        return translations
+    existing = {t.lower() for t in translations}
+    out = list(translations)
+    for phrase in _gloss_listed_phrases(gloss_senses):
+        if phrase.lower() not in existing:
+            out.append(phrase)
+            existing.add(phrase.lower())
+    return out
+
+
+def _drop_truncated_gloss_phrases(translations, gloss_senses):
+    """Drop «при» / «в присутствии» when gloss lists «при ком-л.» / «в присутствии кого-л.»."""
+    phrases = _gloss_listed_phrases(gloss_senses)
+    if not phrases:
+        return translations
+    protected = _gloss_protected_lemmas(gloss_senses)
+    phrase_lowers = [p.lower() for p in phrases]
+    out = []
+    for t in translations:
+        tl = t.lower()
+        if tl in protected:
+            out.append(t)
+            continue
+        if any(pl != tl and pl.startswith(tl + " ") for pl in phrase_lowers):
+            continue
+        out.append(t)
+    return out
 
 
 def _drop_subsumed_auxiliaries(translations, gloss_senses=None):
@@ -569,7 +902,7 @@ def _drop_subsumed_word_fragments(translations, gloss_senses=None):
     """Drop lone «печали» if «быть в печали» exists; respect gloss-protected lemmas."""
     if not translations:
         return translations
-    protected = {s.lower() for s in _gloss_standalone_equivalents(gloss_senses)}
+    protected = _gloss_protected_lemmas(gloss_senses)
     lower_phrases = [t.lower() for t in translations]
     drop = set()
     for i, t in enumerate(translations):
@@ -595,7 +928,13 @@ def _ensure_gloss_standalone_equivalents(translations, gloss_senses):
         return translations
     existing = {t.lower() for t in translations}
     out = list(translations)
-    for form in _gloss_standalone_equivalents(gloss_senses):
+    forms = _gloss_standalone_equivalents(gloss_senses)
+    forms.extend(
+        f
+        for f in gloss_listed_single_word_forms(gloss_senses)
+        if f.lower() not in {x.lower() for x in forms}
+    )
+    for form in forms:
         if form.lower() not in existing:
             out.append(form)
             existing.add(form.lower())
@@ -648,6 +987,107 @@ def _drop_non_index_entries(translations):
     return [t for t in translations if not _is_crossref_text(t)]
 
 
+def _html_body_blocks(html):
+    """Blocks with semicolon-separated gloss / illustrations."""
+    if not html:
+        return []
+    blocks = []
+    if re.search(r"<li[\s>]", html, re.I):
+        for m in re.finditer(r"<li[^>]*>(.*?)</li>", html, re.I | re.S):
+            chunk = m.group(1)
+            if _is_crossref_only(chunk):
+                continue
+            blocks.append(chunk)
+        return blocks
+    rest = re.sub(r"^[\s\S]*?</b>\s*", "", html, count=1, flags=re.I)
+    rest = re.sub(
+        r"^(?:<i[^>]*>[\s\S]*?</i>\s*)+", "", rest.strip(), count=1, flags=re.I
+    )
+    if rest:
+        blocks.append(rest)
+    return blocks
+
+
+def _russian_tail_from_illustration_segment(part):
+    part = TAG_RE.sub(" ", part or "")
+    part = re.sub(r"\s+", " ", part).strip()
+    if " ~ " in part:
+        part = part.split(" ~ ", 1)[1].strip()
+    part = re.sub(r"~[^\s;]+", " ", part)
+    part = _LATIN_WORD_RE.sub(" ", part)
+    part = re.sub(r"\s+", " ", part).strip(" ,.")
+    part = re.sub(r"[^а-яё\s\-,\.;:!?()]", " ", part, flags=re.I)
+    part = re.sub(r"\s+", " ", part).strip(" ,.")
+    part = _POS_PREFIX_RE.sub("", part).strip()
+    part = _strip_grammar_parens(part)
+    if not part or not re.search(r"[а-яё]", part, re.I):
+        return ""
+    return _normalize_yo_to_e(part)
+
+
+def phraseme_russian_phrases_from_html(html):
+    """Russian phrases from ◊ phraseme blocks (for post-LLM sanitize gate)."""
+    if not html or "◊" not in html:
+        return []
+    phrases = []
+    seen = set()
+    for m in re.finditer(r"◊([\s\S]*?)(?=</li>|$)", html, re.I):
+        block = TAG_RE.sub(" ", m.group(1))
+        block = re.sub(r"\s+", " ", block).strip()
+        for part in block.split(";"):
+            part = part.strip()
+            if not part:
+                continue
+            rus = _russian_tail_from_illustration_segment(part)
+            if not rus:
+                continue
+            key = rus.lower()
+            if key not in seen:
+                seen.add(key)
+                phrases.append(rus)
+    return phrases
+
+
+def illustration_russian_tails_from_html(html):
+    """Russian tails of illustration segments (for post-LLM sanitize gate)."""
+    tails = []
+    seen = set()
+    for block in _html_body_blocks(html):
+        plain = TAG_RE.sub(" ", block)
+        plain = re.sub(r"\s+", " ", plain).strip()
+        if "◊" in plain:
+            plain = plain.split("◊", 1)[0].strip()
+        for part in plain.split(";"):
+            part = part.strip()
+            if not part or not _is_illustration_segment(part):
+                continue
+            rus = _russian_tail_from_illustration_segment(part)
+            if not rus:
+                continue
+            key = rus.lower()
+            if key not in seen:
+                seen.add(key)
+                tails.append(rus)
+    return tails
+
+
+def _drop_illustration_lines(translations, article_html):
+    """Remove index lines matching illustration tails or ◊ phraseme phrases."""
+    if not article_html:
+        return translations
+    tails = {t.lower() for t in illustration_russian_tails_from_html(article_html)}
+    tails.update(t.lower() for t in phraseme_russian_phrases_from_html(article_html))
+    expanded = set(tails)
+    for tail in tails:
+        for piece in re.split(r"[,;]", tail):
+            piece = _normalize_yo_to_e(re.sub(r"\s+", " ", piece).strip(" ."))
+            if piece and re.search(r"[а-яё]", piece, re.I):
+                expanded.add(piece.lower())
+    if not expanded:
+        return translations
+    return [t for t in translations if (t or "").lower() not in expanded]
+
+
 def parse_cleanup_json(text):
     """Parse LLM response; return translations list or None."""
     if not text:
@@ -669,7 +1109,12 @@ def parse_cleanup_json(text):
 
 
 def sanitize_cleaned_translations(
-    raw, *, is_service_word=False, gloss_senses=None, original_translations=None
+    raw,
+    *,
+    is_service_word=False,
+    gloss_senses=None,
+    original_translations=None,
+    article_html=None,
 ):
     """
     Post-LLM: strip, dedupe, drop empties, remove aux tokens subsumed by phrases.
@@ -692,12 +1137,16 @@ def sanitize_cleaned_translations(
         seen.add(key)
         out.append(s)
     out = _expand_parallel_verb_fragments(out)
+    out = _expand_comma_gloss_list_lines(out, gloss_senses)
     out = _drop_subsumed_auxiliaries(out, gloss_senses)
     out = _drop_subsumed_word_fragments(out, gloss_senses)
     out = _ensure_gloss_standalone_equivalents(out, gloss_senses)
+    out = _ensure_gloss_listed_phrases(out, gloss_senses)
+    out = _drop_truncated_gloss_phrases(out, gloss_senses)
     out = _ensure_i_pro_parallel_phrases(out, gloss_senses)
     out = _drop_i_pro_tail_fragments(out)
     out = _drop_non_index_entries(out)
+    out = _drop_illustration_lines(out, article_html)
     if is_service_word:
         out = _filter_service_word_translations(out, gloss_senses)
         out = _preserve_original_service_equivalents(

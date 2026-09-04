@@ -94,13 +94,24 @@ docker exec --user 1000:1000 -w /app/agents punzh_web \
 
 1. dedupe, ё→е, снятие грамматических скобок
 2. параллель глагола («менее трудным» → «делать менее трудным»)
-3. subsumed aux / word fragments
-4. восстановление однословных gloss-эквивалентов (olla)
+3. subsumed aux / word fragments (однословники из gloss `слово,` / `слово;` **не** срезаются)
+4. восстановление однословных gloss-эквивалентов (olla, «глаз» при «дурной глаз»)
 5. «… и пр.» параллели из gloss
 6. отсечение «корзин и пр.»
 7. crossref (`см. …`)
 8. **если `is_service_word`:** `_filter_service_word_translations` +
    `_preserve_original_service_equivalents`
+
+### Gloss → LLM (не audit)
+
+`gloss_senses_from_html()` в `translation_cleanup.py` — единый источник и для
+`build_cleanup_input`, и для post-sanitize. Правила отсечения иллюстраций
+(длинные примеры, possessive «берлога медведя», `on ~ кто…` и т.д.) попадают в
+промпт автоматически. **Блоки ◊ в LLM не передаются** — фразеологизмы не
+подмешиваются отдельным полем.
+
+Повторный прогон cleanup после правок gloss: новый dry-run json → проверка
+выборочно → `--write --from-json`. Снимок `0027` сохранит предыдущий индекс.
 
 ### Служебные леммы (`is_service_word`)
 
@@ -124,7 +135,6 @@ POS-тег содержит: союз, частица, предлог, посл�
 | 1477 | `dai` | `да и`, `и` |
 | 8992 | `olla` | `быть`, `существовать`, `имеется` |
 | 4469 | `l'is'||t'ie` | нет «корзин и пр.»; полные «лучины…» |
-| 7636 | `män||nä` | «выйти замуж» (◊) |
 | 1717 | `enži|kandon'e` | скобки `(о корове)` |
 
 ---
@@ -179,9 +189,38 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 
 ---
 
+## Восстановление поглощённых headword (после `--write`)
+
+Cleanup иногда убирает однословную строку индекса, если в списке есть
+многословная фраза с тем же токеном (`глаз` при наличии `дурной глаз`).
+Exact-поиск по целой строке `rus_word` из‑за этого теряет соответствие.
+
+**1. Цифры (снимок vs текущий индекс):**
+
+По умолчанию — только слова, которые в `article_html` стоят в списке gloss
+(`слово,` или `слово;` сразу после однословника). Широкий режим: `--broad`.
+
+```bash
+docker exec -w /app punzh_web python manage.py audit_subsumed_headwords
+docker exec -w /app punzh_web python manage.py audit_subsumed_headwords --csv > subsumed.csv
+```
+
+**2. Интерактивное добавление** (нумерованный выбор, только add-only):
+
+```bash
+docker exec -i -w /app punzh_web python manage.py restore_subsumed_headwords --limit 20
+```
+
+Ввод: `1`, `1,2`, пусто — пропуск, `u` — отмена последнего сохранения по статье,
+`q` — выход. Логика: `dict/subsumed_headword_audit.py`. Полезно **после** `--write`,
+если sanitize ещё не восстановил однословник из gloss.
+
+---
+
 ## Открыто
 
 - [x] Prod `--from-json`, dedupe ё/е, регрессия поиска (см. `docs/searching_upgrade.md` §0.1)
+- [ ] Повторный LLM-cleanup с улучшенным gloss (pahna, phraseme off, listed singles)
 - [ ] Следующий фокус: **AI-поиск** (`docs/ai-search.md`)
 
 ---

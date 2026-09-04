@@ -84,6 +84,84 @@ PANNA_ADDENDUM_HTML = (
     "<i>(о мужчине или самце животного)</i></li></ol>"
 )
 
+DENGak_HTML = (
+    "<b>d'engak||aš</b> <i>a</i> денежный, имеющий деньги; "
+    "hiän n'üt ~kahalla ruavolla on он теперь на денежной работе; "
+    "ken mahtaw el'ia, že on ~ кто умеет жить, тот денежный"
+)
+
+KORVA_HTML = (
+    "<b>korv||a I</b> <i>s</i>\n<ol>\n"
+    "  <li>~an'e ухо; šuwret ~at большие уши; korhistua ~at навострить уши, "
+    "прислушаться; ~ kuwlow, šil'mä n'ägöw, a šiämi čusvuiččow <i>флк.</i> "
+    "ухо слышит, глаз видит, а сердце чувствует;\n"
+    "    ~at vuwvetah zolotuhua уши текут от золотухи </li>\n"
+    "  <li>~an'e ручка, ухо, ушко <i>(у разных предметов)</i>; "
+    "kellon ~ ухо колокола; korvon ~at уши ушата; otti samvuaran ~ista "
+    "он взял самовар за ручки</li>\n"
+    "  <li>место около чего-л.; olla oven ~ašša быть у дверей, "
+    "быть на пороге ◊ l'äbi ~ista мимо ушей</li>\n"
+    "</ol>"
+)
+
+KORVA_UNICODE_HTML = KORVA_HTML.replace("an'e", "an\u2019e").replace(
+    "n'ägöw", "n\u2019ägöw"
+)
+
+PAHNA_HTML = (
+    "<b>pahna</b> <i>s</i> логово, лежбище, лёжка зверя; kondien ~ берлога медведя; "
+    "šijan ~ лёжка свиньи; šuon tagana on hukin ~ за болотом логово волков; "
+    "mužikat noššettih kondien ~šta мужики подняли медведя из берлоги; "
+    "šiga kun roiččiečow ~šša, n'in vihma l'iew <i>примета</i> "
+    "свинья в лёжке роется: быть дождю"
+)
+
+MIELI_HTML = (
+    "<b>miel'||i</b> <i>s</i><ol>"
+    "<li>ум, разум; pien'en lapšen ~ ум малолетнего ребёнка</li>"
+    "<li>мысль, намерение; t'äšt'ä mat'erjašta on ~ ommella pal'to</li>"
+    "<li>настроение, душевное состояние; hüvä ~ хорошее настроение; "
+    "t'üt'öt kuwnellah hüväl'l'ä ~iin</li>"
+    "<li>память; воспоминание; muistuo ~eh помнить</li>"
+    "<li>душа; нрав; t'ämä paikkan'e miwla ~d'ä müöt'</li>"
+    "</ol>"
+)
+
+DOROGA_HTML = (
+    "<b>dorog||a</b> <i>s</i> дорога, путь; pit'kä ~ длинная дорога; "
+    "kohal'l'in'e ~ прямая дорога; pöwrün jäl'geh ~at oldih ummet "
+    "после метели дороги были занесены снегом"
+)
+
+SHILMA_HTML = (
+    "<b>šil'm||ä, ~än'e</b> <i>s</i> <ol>"
+    "<li>глаз; harmuat ~ät серые глаза; ei kaikki šuwh, mid'ä n'ägöw ~ "
+    "<i>флк.</i> не все в рот, что глаз видит </li>"
+    "<li>ушко, отверстие, ячея; n'ieglan ~än'e игольное ушко</li>"
+    "<li>окно <i>(в болоте, трясине)</i>; "
+    "◊ paha ~ дурной глаз; peššä ~ät умыться; "
+    "~is's'ä на глазах, на виду</li>"
+    "</ol>"
+)
+
+AIGANA_HTML = (
+    "<b>aigana</b> <i>adv</i> в присутствии кого-л., при ком-л., перед кем-л.; "
+    "mužikoin aigana myö emmä pagize karielakši при мужьях мы не "
+    "разговариваем по-карельски;"
+)
+
+
+AJEL_HTML = (
+    "<b>ajel||la</b> <i>v</i> <ol>"
+    "<li> <i>freq</i> от ajua 1, 2; huomena ~ stančalla съездить завтра на станцию; "
+    "l'ien' i pühäkeški, ruvettih ~omah suatot наступил мясоед, начали ходить сватать</li>"
+    "<li> <i>см.</i> ajatella; korkat piiraih ~et, panet šiän'd'ä "
+    "раскатаешь корки для пирогов, положишь начинку </li>"
+    "<li> проходить плугом, бороной, оставляя след; ~ vavot нарезать борозды; "
+    "pehmie mua on, n'in kahteh piih ~et земля мягкая, так на два следа проборонишь</li>"
+    "</ol>"
+)
+
 
 class GlossSensesFromHtmlTestCase(SimpleTestCase):
     def test_mai_jata_two_senses_no_karelian(self):
@@ -147,6 +225,88 @@ class GlossSensesFromHtmlTestCase(SimpleTestCase):
         self.assertIn("идти на лад", senses[0])
         self.assertIn("получаться", senses[0])
         self.assertNotIn("выйти замуж", senses[0])
+
+    def test_dengak_skips_illustration_after_spaced_tilde(self):
+        senses = gloss_senses_from_html(DENGak_HTML)
+        self.assertEqual(senses, ["денежный, имеющий деньги"])
+        joined = " ".join(senses).lower()
+        self.assertNotIn("кто умеет жить", joined)
+        self.assertNotIn("денежной работе", joined)
+
+    def test_korva_ol_three_senses_without_illustrations(self):
+        senses = gloss_senses_from_html(KORVA_HTML)
+        self.assertEqual(len(senses), 3)
+        self.assertEqual(senses[0], "ухо")
+        self.assertIn("ручка", senses[1])
+        self.assertIn("ухо", senses[1])
+        self.assertIn("ушко", senses[1])
+        self.assertNotIn("ухо колокола", senses[1])
+        self.assertEqual(senses[2], "место около чего-л.")
+        joined = " ".join(senses).lower()
+        self.assertNotIn("слышит", joined)
+        self.assertNotIn("самовар", joined)
+        self.assertNotIn("мимо ушей", joined)
+        self.assertNotRegex(joined, r"[A-Za-z]")
+
+    def test_korva_unicode_apostrophe_gloss(self):
+        senses = gloss_senses_from_html(KORVA_UNICODE_HTML)
+        self.assertEqual(senses[0], "ухо")
+        self.assertIn("ухо", senses[1])
+        self.assertIn("ручка", senses[1])
+        self.assertNotIn("ухо колокола", senses[1])
+        self.assertEqual(senses[2], "место около чего-л.")
+
+    def test_korva_sanitize_restores_uho(self):
+        senses = gloss_senses_from_html(KORVA_UNICODE_HTML)
+        raw = [
+            "ухо колокола",
+            "навострить уши",
+            "прислушаться",
+            "место около чего-л.",
+            "ручка, ухо, ушко (у разных предметов)",
+            "ручка",
+        ]
+        cleaned = sanitize_cleaned_translations(
+            raw,
+            gloss_senses=senses,
+            article_html=KORVA_UNICODE_HTML,
+        )
+        lowered = [t.lower() for t in cleaned]
+        self.assertIn("ухо", lowered)
+        self.assertNotIn("навострить уши", lowered)
+        self.assertNotIn("прислушаться", lowered)
+        self.assertNotIn("ухо колокола", lowered)
+        self.assertNotIn("ручка, ухо, ушко (у разных предметов)", lowered)
+        self.assertIn("ручка", lowered)
+        self.assertIn("ушко", lowered)
+
+    def test_pahna_gloss_without_possessive_collocations(self):
+        senses = gloss_senses_from_html(PAHNA_HTML)
+        self.assertEqual(len(senses), 1)
+        gloss = senses[0].lower()
+        self.assertIn("логово", gloss)
+        self.assertIn("лежбище", gloss)
+        self.assertIn("лёжка зверя", gloss)
+        self.assertNotIn("берлога медведя", gloss)
+        self.assertNotIn("лёжка свиньи", gloss)
+        self.assertNotIn("логово волков", gloss)
+        self.assertNotIn("мужики подняли", gloss)
+        self.assertNotRegex(gloss, r"[A-Za-z]")
+
+    def test_mieli_gloss_without_evaluative_adj_noun(self):
+        senses = gloss_senses_from_html(MIELI_HTML)
+        self.assertEqual(len(senses), 5)
+        joined = " | ".join(senses).lower()
+        self.assertIn("настроение", joined)
+        self.assertIn("душевное состояние", joined)
+        self.assertNotIn("хорошее настроение", joined)
+
+    def test_doroga_keeps_gloss_adj_noun_collocations(self):
+        senses = gloss_senses_from_html(DOROGA_HTML)
+        joined = " | ".join(senses).lower()
+        self.assertIn("длинная дорога", joined)
+        self.assertIn("прямая дорога", joined)
+        self.assertNotIn("после метели", joined)
 
 
 class DropSubsumedAuxTestCase(SimpleTestCase):
@@ -213,6 +373,13 @@ class TranslationCleanupPromptTestCase(TestCase):
         self.assertEqual(len(payload["addendum_gloss_senses"]), 1)
         self.assertIn("половую связь", payload["addendum_gloss_senses"][0])
         self.assertIn("addendum_gloss_senses", SYSTEM_PROMPT_CLEAN_TRANSLATIONS)
+
+    def test_build_cleanup_input_excludes_phrasemes(self):
+        art = Article.objects.create(word="män||nä", article_html=MANNA_PHRASEME_HTML)
+        ArticleIndexTranslate.objects.create(article=art, rus_word="идти на лад")
+        payload = build_cleanup_input(art)
+        self.assertNotIn("phraseme_senses", payload)
+        self.assertNotIn("выйти замуж", " ".join(payload["gloss_senses"]))
 
     def test_service_word_detected_from_pos_tag(self):
         art = Article.objects.create(word="a")
@@ -289,23 +456,114 @@ class SanitizeCleanedTranslationsTestCase(SimpleTestCase):
             "см. ' ' '",
         ]
         gloss = gloss_senses_from_html(LIS_HTML)
+        cleaned = sanitize_cleaned_translations(raw, gloss_senses=gloss)
+        lowered = [t.lower() for t in cleaned]
+        self.assertIn("очищать", lowered)
+        self.assertIn("разравнивать полосы лыка", lowered)
+        self.assertIn("обрывать листья", lowered)
+        self.assertNotIn("см.", lowered)
+        self.assertNotIn("см", lowered)
+
+    def test_preserves_gloss_listed_single_when_longer_phrase_exists(self):
+        gloss = ["глаз, зрение"]
+        raw = ["глаз", "дурной глаз"]
         self.assertEqual(
             sanitize_cleaned_translations(raw, gloss_senses=gloss),
-            ["разравнивать полосы лыка", "обрывать листья"],
+            ["глаз", "дурной глаз", "зрение"],
         )
 
-    def test_phraseme_senses_from_lozenge_block(self):
-        from translation_cleanup import _phraseme_senses_from_html
+    def test_sanitize_drops_phraseme_from_lozenge_block(self):
+        raw = [
+            "глаз",
+            "глазки",
+            "дурной глаз",
+            "ушко",
+            "отверстие",
+            "на глазах, на виду",
+            "умыться",
+        ]
+        cleaned = sanitize_cleaned_translations(
+            raw,
+            gloss_senses=gloss_senses_from_html(SHILMA_HTML),
+            article_html=SHILMA_HTML,
+        )
+        lowered = [t.lower() for t in cleaned]
+        self.assertIn("глаз", lowered)
+        self.assertNotIn("дурной глаз", lowered)
+        self.assertNotIn("на глазах, на виду", lowered)
+        self.assertNotIn("умыться", lowered)
 
-        senses = _phraseme_senses_from_html(MANNA_PHRASEME_HTML)
-        self.assertIn("выйти замуж", senses)
+    def test_aigana_restores_full_comma_gloss_phrases(self):
+        gloss = gloss_senses_from_html(AIGANA_HTML)
+        raw = ["в присутствии", "перед", "при"]
+        cleaned = sanitize_cleaned_translations(
+            raw,
+            gloss_senses=gloss,
+            article_html=AIGANA_HTML,
+        )
         self.assertEqual(
-            sanitize_cleaned_translations(
-                ["идти на лад", "получаться", "выйти замуж"],
-                gloss_senses=gloss_senses_from_html(MANNA_PHRASEME_HTML),
+            sorted(t.lower() for t in cleaned),
+            sorted(
+                [
+                    "в присутствии кого-л.",
+                    "перед кем-л.",
+                    "при ком-л.",
+                ]
             ),
-            ["идти на лад", "получаться", "выйти замуж"],
         )
+
+    def test_ajel_drops_sm_crossref_and_illustration_gloss(self):
+        gloss = gloss_senses_from_html(AJEL_HTML)
+        joined = " | ".join(gloss).lower()
+        self.assertNotIn("съездить", joined)
+        self.assertNotIn("раскатаешь", joined)
+        self.assertNotIn("см.", joined)
+        raw = [
+            "оставляя след",
+            "проходить бороной",
+            "проходить плугом",
+            "см",
+            "съездить завтра на станцию",
+        ]
+        cleaned = sanitize_cleaned_translations(
+            raw,
+            gloss_senses=gloss,
+            article_html=AJEL_HTML,
+        )
+        lowered = [t.lower() for t in cleaned]
+        self.assertIn("проходить плугом", lowered)
+        self.assertNotIn("см", lowered)
+        self.assertNotIn("съездить завтра на станцию", lowered)
+
+    def test_restores_gloss_listed_single_dropped_by_llm(self):
+        gloss = ["логово, лежбище, лежка зверя"]
+        raw = ["лежбище", "лежка зверя"]
+        self.assertEqual(
+            sanitize_cleaned_translations(raw, gloss_senses=gloss),
+            ["лежбище", "лежка зверя", "логово"],
+        )
+
+    def test_sanitize_drops_illustration_tail_from_html(self):
+        raw = [
+            "ум",
+            "разум",
+            "мысль",
+            "намерение",
+            "настроение",
+            "душевное состояние",
+            "хорошее настроение",
+            "память",
+            "воспоминание",
+            "душа",
+            "нрав",
+        ]
+        cleaned = sanitize_cleaned_translations(
+            raw,
+            gloss_senses=gloss_senses_from_html(MIELI_HTML),
+            article_html=MIELI_HTML,
+        )
+        self.assertNotIn("хорошее настроение", [t.lower() for t in cleaned])
+        self.assertIn("настроение", [t.lower() for t in cleaned])
 
     def test_service_word_filter_drops_illustration_phrases(self):
         gloss = [

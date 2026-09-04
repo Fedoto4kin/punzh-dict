@@ -89,6 +89,7 @@ def clean_with_llm(client, model, art_input):
         is_service_word=art_input["is_service_word"],
         gloss_senses=all_gloss_senses(art_input),
         original_translations=art_input["translations"],
+        article_html=art_input.get("article_html"),
     )
     if cleaned is None:
         return None, "bad_json"
