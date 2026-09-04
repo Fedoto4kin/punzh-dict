@@ -3,7 +3,7 @@ import re
 from django import template
 
 from ..helpers import normalization
-from ..see_audit import link_see_lemmas
+from ..see_audit import link_deriv_lemmas, link_see_lemmas
 
 register = template.Library()
 
@@ -33,7 +33,7 @@ def highlight_rus(text):
 
 @register.filter
 def make_link(text):
-    return link_see_lemmas(text)
+    return link_deriv_lemmas(link_see_lemmas(text))
 
 
 @register.filter

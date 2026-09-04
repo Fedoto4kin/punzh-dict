@@ -286,6 +286,34 @@ def link_see_lemmas(html):
     return SEE_LIST.sub(repl, html)
 
 
+# loose: сохраняем префикс (начало / пробел / >), чтобы не съесть HTML-тег
+_DERIV_LOOSE_LINK = re.compile(rf"(^|[\s>])от\s+({KARELIAN})")
+
+
+def link_deriv_lemmas(html):
+    """
+    Обернуть лемму после «от» (tagged freq|caus|mom|refl и loose).
+    Само «от» не в <i>; русское «от берега» не трогаем (за «от» — кириллица).
+    """
+    html = html or ""
+
+    def link_lemma(lemma):
+        href = lemma.replace(" ", "%20")
+        return f'<a href="/search/{href}">{lemma}</a>'
+
+    def repl_tagged(m):
+        tag, lemma = m.group(1), m.group(2)
+        return f"<i>{tag}</i> от {link_lemma(lemma)}"
+
+    html = DERIV_TAGGED.sub(repl_tagged, html)
+
+    def repl_loose(m):
+        prefix, lemma = m.group(1), m.group(2)
+        return f"{prefix}от {link_lemma(lemma)}"
+
+    return _DERIV_LOOSE_LINK.sub(repl_loose, html)
+
+
 def article_headword_keys(article):
     """
     Формы основного заголовка (до запятой), без нарезки сложений по «|».

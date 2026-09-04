@@ -8,6 +8,7 @@ from dict.see_audit import (
     html_see_lemmas,
     html_see_mentions,
     is_see_marker,
+    link_deriv_lemmas,
     link_see_lemmas,
     marker_issues,
     propose_html_fix,
@@ -200,3 +201,25 @@ class SeeAuditTest(SimpleTestCase):
         self.assertNotIn(
             'href="/search/kurpa"', html.replace('href="/search/kurpat"', "")
         )
+
+    def test_link_deriv_tagged(self):
+        html = link_deriv_lemmas("<b>abewt||ella</b> <i>freq</i> от abewttua; kanat")
+        self.assertIn("<i>freq</i> от ", html)
+        self.assertIn('<a href="/search/abewttua">abewttua</a>', html)
+        self.assertNotIn('href="/search/kanat"', html)
+
+    def test_link_deriv_loose(self):
+        html = link_deriv_lemmas("<b>armaššuš</b> от armaštua")
+        self.assertIn('<a href="/search/armaštua">armaštua</a>', html)
+        self.assertIn(" от ", html)
+
+    def test_link_deriv_skips_russian_ot(self):
+        src = "<b>kalas</b> взял рыбу от берега"
+        self.assertEqual(link_deriv_lemmas(src), src)
+
+    def test_make_link_chains_see_and_deriv(self):
+        from dict.templatetags.dict_extras import make_link
+
+        html = make_link("<i>см.</i> ruttoh; <i>freq</i> от abewttua")
+        self.assertIn('<a href="/search/ruttoh">ruttoh</a>', html)
+        self.assertIn('<a href="/search/abewttua">abewttua</a>', html)
