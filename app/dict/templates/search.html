@@ -102,19 +102,16 @@
         </button>
     </div>
     <div class="collapse" id="narrowingBox">
-        <p class="mt-2">
+        <p class="mt-2 mb-0">
+            {% if has_direct %}
+            <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
+               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
+            {% endif %}
             {% for tag in narrowing %}
             <a href="/search/{{ query|urlencode }}/1?f={{ tag.key|urlencode }}"
                class="btn btn-sm m-1 {% if active_f == tag.key %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ tag.label }}</a>
             {% endfor %}
         </p>
-        {% if has_direct %}
-        <hr>
-        <p class="mb-0">
-            <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
-               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
-        </p>
-        {% endif %}
     </div>
 </div>
 {% endif %}
