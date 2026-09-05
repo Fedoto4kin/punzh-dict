@@ -2,18 +2,24 @@
 """
 LLM-очистка ArticleIndexTranslate (backlog §2).
 
-Dry-run (default): отчёт в data/*.json.
+Dry-run (default): отчёт в data/*.json (results: word / before / after).
 --write: снимок индекса + запись в БД (миграция 0027).
 
 Примеры:
-  # dry-run пилот
-  python clean_translations.py --out clean_final_test.json --id 8992
+  # dry-run (итоговый json: word, before, after + report)
+  python clean_translations.py --out clean_prod.json
+
+  # отладка: after_llm / after_llm_review / pos / removed / added
+  python clean_translations.py --out x.json --debug --id 8992
+
+  # один проход без ревью
+  python clean_translations.py --out x.json --no-review --id 8992
+
+  # сырой текст ответов модели (включает --debug)
+  python clean_translations.py --out x.json --save-llm-text --id 8992
 
   # запись из json (без повторного LLM)
-  python clean_translations.py --write --from-json data/clean_final_test.json
-
-  # полный прогон с LLM и записью
-  python clean_translations.py --write --out clean_prod.json
+  python clean_translations.py --write --from-json data/clean_prod.json
 """
 
 import argparse
@@ -55,8 +61,10 @@ django.setup()
 from openai import OpenAI  # noqa: E402
 from translation_cleanup import (  # noqa: E402
     SYSTEM_PROMPT_CLEAN_TRANSLATIONS,
+    SYSTEM_PROMPT_REVIEW_TRANSLATIONS,
     all_gloss_senses,
     build_cleanup_input,
+    build_cleanup_review_user_prompt,
     build_cleanup_user_prompt,
     diff_translations,
     parse_cleanup_json,
@@ -72,28 +80,74 @@ from dict.translation_index_write import (
 )
 
 
-def clean_with_llm(client, model, art_input):
+def _chat_json_translations(client, model, system_prompt, user_prompt):
+    """One chat completion → (parsed_list_or_None, raw_text)."""
     resp = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT_CLEAN_TRANSLATIONS},
-            {"role": "user", "content": build_cleanup_user_prompt(art_input)},
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ],
         temperature=0,
     )
-    raw = parse_cleanup_json(resp.choices[0].message.content)
-    if raw is None:
-        return None, "bad_json"
+    text = resp.choices[0].message.content
+    return parse_cleanup_json(text), text
+
+
+def clean_with_llm(
+    client,
+    model,
+    art_input,
+    *,
+    save_llm_text=False,
+    review=True,
+):
+    """
+    Two-pass LLM cleanup (review optional) + ё→е sanitize.
+
+    Returns (cleaned, meta, err).
+    meta: after_llm, after_llm_review (if review); optionally llm_text / llm_text_review.
+    """
+    raw1, text1 = _chat_json_translations(
+        client,
+        model,
+        SYSTEM_PROMPT_CLEAN_TRANSLATIONS,
+        build_cleanup_user_prompt(art_input),
+    )
+    meta = {"after_llm": raw1}
+    if save_llm_text:
+        meta["llm_text"] = text1
+    if raw1 is None:
+        return None, meta, "bad_json"
+
+    draft = raw1
+    if review:
+        time.sleep(0.15)
+        raw2, text2 = _chat_json_translations(
+            client,
+            model,
+            SYSTEM_PROMPT_REVIEW_TRANSLATIONS,
+            build_cleanup_review_user_prompt(art_input, draft),
+        )
+        meta["after_llm_review"] = raw2
+        if save_llm_text:
+            meta["llm_text_review"] = text2
+        if raw2 is None:
+            # Keep pass-1 draft rather than aborting the article.
+            meta["review_error"] = "bad_json"
+        else:
+            draft = raw2
+
     cleaned = sanitize_cleaned_translations(
-        raw,
+        draft,
         is_service_word=art_input["is_service_word"],
         gloss_senses=all_gloss_senses(art_input),
         original_translations=art_input["translations"],
         article_html=art_input.get("article_html"),
     )
     if cleaned is None:
-        return None, "bad_json"
-    return cleaned, None
+        return None, meta, "bad_json"
+    return cleaned, meta, None
 
 
 def select_articles(args):
@@ -143,6 +197,40 @@ def main():
         action="store_true",
         help="Dry-run: перепроцессить id даже если уже в --out json.",
     )
+    ap.add_argument(
+        "--debug",
+        action="store_true",
+        help=(
+            "В results писать отладку: after_llm / after_llm_review, pos, "
+            "removed / added и т.п. По умолчанию только word / before / after."
+        ),
+    )
+    ap.add_argument(
+        "--save-llm",
+        action="store_true",
+        help="Синоним --debug (совместимость).",
+    )
+    ap.add_argument(
+        "--no-save-llm",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    ap.add_argument(
+        "--save-llm-text",
+        action="store_true",
+        help="Сырой llm_text / llm_text_review (включает режим отладки).",
+    )
+    ap.add_argument(
+        "--review",
+        action="store_true",
+        default=True,
+        help="Второй LLM-проход (ревью draft по gloss). По умолчанию вкл.",
+    )
+    ap.add_argument(
+        "--no-review",
+        action="store_true",
+        help="Только один LLM-проход (без ревью).",
+    )
     ap.add_argument("--model", default="deepseek-chat")
     ap.add_argument("--out", default="clean_translations.json")
     ap.add_argument("--limit", type=int, default=0)
@@ -163,6 +251,9 @@ def main():
         help="id статьи (можно несколько --id).",
     )
     args = ap.parse_args()
+    save_llm_text = bool(args.save_llm_text)
+    debug = bool(args.debug or args.save_llm or save_llm_text) and not args.no_save_llm
+    do_review = args.review and not args.no_review
 
     dry_run = not args.write
 
@@ -223,9 +314,20 @@ def main():
     client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
     def _flush():
+        n_changed = sum(
+            1
+            for r in results.values()
+            if isinstance(r.get("after"), list) and r.get("before") != r.get("after")
+        )
         payload = {
             "results": results,
             "errors": errors,
+            "report": {
+                "articles": len(results),
+                "errors": len(errors),
+                "changed": n_changed,
+                "unchanged": len(results) - n_changed,
+            },
             "meta": {
                 "dry_run": dry_run,
                 "model": args.model,
@@ -233,8 +335,10 @@ def main():
                 "order": args.order,
                 "words": args.words,
                 "ids": args.ids,
-                "n_done": len(results),
                 "batch_id": batch_id,
+                "debug": debug,
+                "save_llm_text": save_llm_text,
+                "review": do_review,
             },
         }
         with open(out_path, "w", encoding="utf-8") as f:
@@ -245,22 +349,71 @@ def main():
         if not art_input["translations"]:
             continue
         try:
-            cleaned, err = clean_with_llm(client, args.model, art_input)
+            cleaned, llm_meta, err = clean_with_llm(
+                client,
+                args.model,
+                art_input,
+                save_llm_text=save_llm_text,
+                review=do_review,
+            )
         except Exception as e:  # noqa: BLE001
-            errors[str(article.id)] = str(e)
+            errors[str(article.id)] = {"word": article.word, "error": str(e)}
             continue
         if err:
-            errors[str(article.id)] = err
+            errors[str(article.id)] = {"word": article.word, "error": err}
+            if debug and llm_meta:
+                results[str(article.id)] = {
+                    "word": article.word,
+                    "before": art_input["translations"],
+                    "after": None,
+                    "error": err,
+                    "pos": art_input.get("pos"),
+                    "pos_tags": art_input["pos_tags"],
+                    "is_service_word": art_input["is_service_word"],
+                    "after_llm": llm_meta.get("after_llm"),
+                    **(
+                        {"after_llm_review": llm_meta.get("after_llm_review")}
+                        if "after_llm_review" in llm_meta
+                        else {}
+                    ),
+                    **(
+                        {"llm_text": llm_meta["llm_text"]}
+                        if save_llm_text and llm_meta.get("llm_text") is not None
+                        else {}
+                    ),
+                    **(
+                        {"llm_text_review": llm_meta["llm_text_review"]}
+                        if save_llm_text and llm_meta.get("llm_text_review") is not None
+                        else {}
+                    ),
+                    **(
+                        {"review_error": llm_meta["review_error"]}
+                        if llm_meta.get("review_error")
+                        else {}
+                    ),
+                }
             continue
         before = art_input["translations"]
-        results[str(article.id)] = {
+        entry = {
             "word": article.word,
             "before": before,
             "after": cleaned,
-            **diff_translations(before, cleaned),
-            "pos_tags": art_input["pos_tags"],
-            "is_service_word": art_input["is_service_word"],
         }
+        if debug:
+            entry.update(diff_translations(before, cleaned))
+            entry["pos"] = art_input.get("pos")
+            entry["pos_tags"] = art_input["pos_tags"]
+            entry["is_service_word"] = art_input["is_service_word"]
+            entry["after_llm"] = llm_meta.get("after_llm")
+            if "after_llm_review" in llm_meta:
+                entry["after_llm_review"] = llm_meta.get("after_llm_review")
+            if llm_meta.get("review_error"):
+                entry["review_error"] = llm_meta["review_error"]
+            if save_llm_text and llm_meta.get("llm_text") is not None:
+                entry["llm_text"] = llm_meta["llm_text"]
+            if save_llm_text and llm_meta.get("llm_text_review") is not None:
+                entry["llm_text_review"] = llm_meta["llm_text_review"]
+        results[str(article.id)] = entry
         if args.write:
             if not snap_done and not args.skip_snapshot:
                 batch_id = args.batch_id or make_batch_id()
@@ -275,7 +428,19 @@ def main():
             _flush()
 
     _flush()
-    msg = f"\nГотово. Статей: {len(results)}. Ошибок: {len(errors)}. -> {out_path}"
+    rep = {
+        "articles": len(results),
+        "errors": len(errors),
+        "changed": sum(
+            1
+            for r in results.values()
+            if isinstance(r.get("after"), list) and r.get("before") != r.get("after")
+        ),
+    }
+    msg = (
+        f"\nГотово. Статей: {rep['articles']}. Изменено: {rep['changed']}. "
+        f"Ошибок: {rep['errors']}. -> {out_path}"
+    )
     if batch_id:
         msg += f"  batch_id={batch_id}"
     print(msg)

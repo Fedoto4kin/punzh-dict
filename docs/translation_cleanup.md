@@ -30,7 +30,8 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 ```
 clean_translations.py          translation_cleanup.py
        │                                │
-       │ LLM (DeepSeek)                 │ SYSTEM_PROMPT, gloss, sanitize
+       │ LLM ×2 (draft + review)        │ SYSTEM_PROMPT(_REVIEW), gloss
+       │ + ё→е sanitize                 │ sanitize (trim/dedupe only)
        ▼                                ▼
   data/*.json  ── --write --from-json ──► translation_index_write.py
                                               │ snapshot (0027)
@@ -60,6 +61,19 @@ docker exec --user 1000:1000 -w /app/agents punzh_web \
 
 ### Dry-run (пилот / полный корпус)
 
+Итоговый json (без `--debug`):
+
+```json
+{
+  "report": {"articles": N, "changed": M, "unchanged": K, "errors": 0},
+  "meta": {"dry_run": true, "model": "deepseek-chat", "review": true, ...},
+  "errors": {},
+  "results": {
+    "1526": {"word": "…", "before": ["…"], "after": ["…"]}
+  }
+}
+```
+
 ```bash
 LOG=~/clean_prod_dry_$(date +%Y%m%d_%H%M%S).log
 
@@ -73,13 +87,23 @@ echo $! > ~/clean_prod_dry.pid
 - `python -u` — небуферизованный вывод в лог.
 - **`LOG=...` задать до nohup** (пустой `$LOG` → Exit 1).
 - Автодокат: id из `--out` json пропускаются; `--force` — перепроцессить.
-- Готово: строка `Готово. Статей: N. Ошибок: 0.` в логе.
+- Dual-pass LLM включён; `--no-review` — один проход.
+- Отладка пилота: `--debug` (after_llm*, pos, removed/added).
+- Готово: `Готово. Статей: N. Изменено: M. Ошибок: 0.` в логе.
+
+Пилот (dev):
+
+```bash
+./app/agents/run_cleanup_pilot_v2.sh
+```
 
 ### Заливка после dry-run
 
-```bash
-docker exec --user 1000:1000 -w /app punzh_web python manage.py migrate --noinput
+1. Проверить `report` и выборочно `before`/`after` в `clean_prod.json`.
+2. Миграции (если ещё не на проде): `migrate --noinput`.
+3. Запись:
 
+```bash
 docker exec --user 1000:1000 -w /app/agents punzh_web \
   python -u clean_translations.py --write --from-json clean_prod.json
 ```
@@ -136,6 +160,19 @@ POS-тег содержит: союз, частица, предлог, посл�
 | 8992 | `olla` | `быть`, `существовать`, `имеется` |
 | 4469 | `l'is'||t'ie` | нет «корзин и пр.»; полные «лучины…» |
 | 1717 | `enži|kandon'e` | скобки `(о корове)` |
+| 1526 | `doid’i||e` | нет осколка «до сердца» при «доходить до сердца» |
+| 8998 | `olu||t` | «пиво»; без «крепкое пиво» из иллюстрации |
+| 10460 | `bašk||a` | без «например» в индексе |
+| 10949 | `ajua` | нет голого «деготь» / «вбить» |
+| 12527 | `rakaš` | «охочий» и «любящий …» отдельными строками |
+
+### Что улучшилось (sanitize + промпт)
+
+- пометы (`перен.`, `всг.`, `техн.`, …) не остаются в индексе;
+- карельские иллюстрации отсекаются; **остаток закрыт:** `Krl ~ adj+N`
+  (`крепкое пиво`, `длинная дорога` после прилагательного) больше не считается gloss;
+- осколки параллели (`до сердца`), «например»-мусор, orphan после усечения
+  глагольных фраз — post-LLM sanitize.
 
 ---
 
