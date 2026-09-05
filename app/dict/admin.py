@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.db import models
 from django.db.models import Count
 from django.forms import Textarea
+from django.shortcuts import render
+from django.urls import path
 from django.utils.html import format_html
 
 from .helpers import normalization
@@ -17,6 +19,18 @@ from .models import (
     Tag,
 )
 from .search import krl_article_ids
+from .search_debug import explain_rus_search
+from .translation_browser import (
+    MODE_CONTAINS,
+    MODE_EXACT,
+    MODE_PREFIX,
+    SORT_HIT,
+    SORT_WORD,
+    build_translation_cards,
+    normalize_mode,
+    normalize_sort,
+    paginate_cards,
+)
 
 # CodeMirror 5 (CDN) — HTML source highlighting in admin, no WYSIWYG.
 CODEMIRROR_VERSION = "5.65.16"
@@ -98,6 +112,66 @@ class ArticleLinkReverseInline(admin.TabularInline):
 class TranslateInline(admin.TabularInline):
     extra = 0
     model = ArticleIndexTranslate
+
+
+@admin.register(ArticleIndexTranslate)
+class ArticleIndexTranslateAdm(admin.ModelAdmin):
+    """
+    Card browser: find articles by rus_word (exact / contains / prefix),
+    show headword + HTML + full translation list. Day-to-day edits go
+    through the article form inline; no standalone «Add» in the sidebar.
+    """
+
+    list_display = ("id", "rus_word", "article")
+    search_fields = ("rus_word",)
+    autocomplete_fields = ("article",)
+    ordering = ("rus_word", "article_id")
+
+    def has_module_permission(self, request):
+        return request.user.is_staff
+
+    def has_add_permission(self, request):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        query = (request.GET.get("q") or "").strip()
+        mode = normalize_mode(request.GET.get("mode"))
+        sort = normalize_sort(request.GET.get("sort"), mode)
+        try:
+            page = int(request.GET.get("p") or 1)
+        except (TypeError, ValueError):
+            page = 1
+
+        cards = build_translation_cards(query, mode=mode, sort=sort) if query else []
+        page_obj = paginate_cards(cards, page=page) if cards else None
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Переводы (индекс)",
+            "opts": self.model._meta,
+            "query": query,
+            "mode": mode,
+            "sort": sort,
+            "page_obj": page_obj,
+            "found_count": len(cards),
+            "modes": (
+                (MODE_EXACT, "точное"),
+                (MODE_CONTAINS, "содержит"),
+                (MODE_PREFIX, "префикс"),
+            ),
+            "sorts": (
+                (SORT_WORD, "по заголовку"),
+                (SORT_HIT, "по совпавшему переводу"),
+            ),
+            "has_query": bool(query),
+        }
+        if extra_context:
+            context.update(extra_context)
+        return render(
+            request,
+            "admin/dict/articleindextranslate/browse.html",
+            context,
+        )
 
 
 class ArticleAdditionInline(admin.StackedInline):
@@ -248,6 +322,37 @@ class ArticleAdm(admin.ModelAdmin):
     class Media:
         js = ("admin/js/article_field_reorder.js",)
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "search-debug/",
+                self.admin_site.admin_view(self.search_debug_view),
+                name="dict_article_search_debug",
+            ),
+        ]
+        return custom + urls
+
+    def search_debug_view(self, request):
+        raw_query = (request.GET.get("q") or "").strip()
+        f = request.GET.get("f") or None
+        try:
+            page = int(request.GET.get("p") or 1)
+        except (TypeError, ValueError):
+            page = 1
+
+        result = explain_rus_search(raw_query, f=f, page=page) if raw_query else None
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Отладка русского поиска",
+            "opts": self.model._meta,
+            "query": raw_query,
+            "f": f or "",
+            "result": result,
+            "has_query": bool(raw_query),
+        }
+        return render(request, "admin/dict/article/search_debug.html", context)
+
     def get_search_results(self, request, queryset, search_term):
         term = (search_term or "").strip()
         if not term:
@@ -336,3 +441,27 @@ class SemanticFieldAdm(admin.ModelAdmin):
         return format_html('<a href="/ontology/{}/" target="_blank">🔗</a>', obj.pk)
 
     site_link.short_description = "Сайт"
+
+
+# Sidebar order under Dict: Слова, then Переводы, then the rest (alpha).
+_DICT_MODEL_ORDER = {
+    "article": 0,
+    "articleindextranslate": 1,
+}
+
+
+def _dict_app_list(request):
+    app_list = admin.AdminSite.get_app_list(admin.site, request)
+    for app in app_list:
+        if app.get("app_label") != "dict":
+            continue
+        app["models"].sort(
+            key=lambda m: (
+                _DICT_MODEL_ORDER.get(m["object_name"].lower(), 50),
+                m["name"].lower(),
+            )
+        )
+    return app_list
+
+
+admin.site.get_app_list = _dict_app_list

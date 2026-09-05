@@ -118,6 +118,37 @@ class SplitByCoverageTestCase(SimpleTestCase):
             ),
         )
 
+    def test_paren_gloss_key_when_head_is_only_query(self):
+        self.assertEqual(
+            [
+                {
+                    "label": "случаться (о домашних животных)",
+                    "key": "домашних животных",
+                    "coverage": 1,
+                },
+                {
+                    "label": "случаться припадкам эпилепсии",
+                    "key": "припадкам эпилепсии",
+                    "coverage": 1,
+                },
+            ],
+            split_by_coverage(
+                [
+                    "случаться (о домашних животных)",
+                    "случаться припадкам эпилепсии",
+                ],
+                [
+                    "случаться (о домашних животных)",
+                    "случаться припадкам эпилепсии",
+                    "случаться",
+                    "другой случай",
+                    "ещё один",
+                ],
+                {"случаться"},
+                STOPS,
+            ),
+        )
+
     def test_query_form_variant_needs_full_key_tokens_in_blob(self):
         self.assertEqual(
             [

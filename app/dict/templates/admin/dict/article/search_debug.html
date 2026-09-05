@@ -1,0 +1,277 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static dict_extras %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .sd-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    align-items: flex-end;
+    margin: 12px 0 16px;
+    padding: 12px 14px;
+    background: var(--darkened-bg, #f8f8f8);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+  }
+  .sd-form label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .sd-form input[type="text"] { min-width: 240px; }
+  .sd-meta, .sd-summary {
+    margin: 0 0 14px;
+    color: var(--body-quiet-color, #666);
+  }
+  .sd-summary code {
+    background: var(--darkened-bg, #eee);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+  .sd-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+  }
+  .sd-counts li {
+    padding: 4px 10px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 3px;
+    background: var(--body-bg, #fff);
+    font-size: 0.92rem;
+  }
+  .sd-counts strong { font-size: 1.05em; }
+  .sd-tags, .sd-related {
+    margin: 0 0 16px;
+  }
+  .sd-tags a, .sd-related a {
+    display: inline-block;
+    margin: 0 6px 6px 0;
+    padding: 3px 8px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 3px;
+    text-decoration: none;
+  }
+  .sd-tags a.is-active, .sd-related a.is-active {
+    background: #417690;
+    color: #fff;
+    border-color: #417690;
+  }
+  .sd-card {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+    background: var(--body-bg, #fff);
+  }
+  .sd-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .sd-card__word {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .sd-badges { margin: 0 0 8px; }
+  .sd-badge {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .sd-badge--ilike { background: #d4edda; color: #155724; }
+  .sd-badge--token { background: #cce5ff; color: #004085; }
+  .sd-badge--token.is-fuzzy { background: #b8daff; }
+  .sd-badge--link { background: #e2e3e5; color: #383d41; }
+  .sd-badge--exact { background: #fff3cd; color: #856404; }
+  .sd-badge--exact.is-inherited { background: #ffe8a1; }
+  .sd-card__html {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    background: var(--darkened-bg, #f8f8f8);
+    border-radius: 3px;
+    max-height: 8em;
+    overflow: auto;
+    line-height: 1.45;
+  }
+  .sd-card__html .text-rus { color: #0b5; }
+  .sd-card__translations {
+    margin: 0 0 10px;
+    padding-left: 1.2em;
+  }
+  .sd-card__translations .is-matched {
+    font-weight: 700;
+    background: #fff3cd;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+  .sd-card__via {
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    color: var(--body-quiet-color, #666);
+  }
+  .sd-pager { margin: 16px 0; }
+  .sd-pager a, .sd-pager span { margin-right: 8px; }
+  .sd-nav { margin: 0 0 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  <p class="sd-nav">
+    <a href="{% url 'admin:dict_articleindextranslate_changelist' %}">← Переводы (индекс)</a>
+    ·
+    <a href="/search/{% if query %}{{ query }}{% endif %}" target="_blank">сайт /search/</a>
+  </p>
+
+  <form class="sd-form" method="get" action="">
+    <div>
+      <label for="id_q">Русский запрос</label>
+      <input id="id_q" type="text" name="q" value="{{ query }}" autofocus>
+    </div>
+    <div>
+      <label for="id_f">Фильтр ?f=</label>
+      <input id="id_f" type="text" name="f" value="{{ f }}" placeholder="exact или ключ тега">
+    </div>
+    <div>
+      <button type="submit" class="default">Искать</button>
+    </div>
+  </form>
+
+  {% if not has_query %}
+    <p class="sd-meta">Те же этапы, что у `/search/` по-русски: точное равенство → слово в фразе → см./от → теги / точные. По каждой карточке — почему она в выдаче.</p>
+  {% elif result and not result.query %}
+    <p class="sd-meta">Пустой запрос после нормализации.</p>
+  {% else %}
+    <p class="sd-summary">
+      запрос: <code>{{ result.raw_query }}</code>
+      → <code>{{ result.query }}</code>
+      · слова: {% for t in result.query_tokens %}<code>{{ t }}</code> {% empty %}—{% endfor %}
+      {% if result.high_freq_anchor %}· <strong>частотный якорь</strong> (теги только из точных совпадений){% endif %}
+      {% if result.f %}· активный <code>?f={{ result.f }}</code>{% endif %}
+    </p>
+
+    <ul class="sd-counts">
+      <li>равенство <strong>{{ result.counts.ilike }}</strong></li>
+      <li>слово в фразе <strong>{{ result.counts.token }}</strong></li>
+      <li>якорь <strong>{{ result.counts.seed }}</strong></li>
+      <li>со связями <strong>{{ result.counts.result }}</strong></li>
+      <li>точные соотв. <strong>{{ result.counts.exact }}</strong></li>
+      <li>в выдаче <strong>{{ result.found_count }}</strong></li>
+    </ul>
+
+    {% if result.narrowing or result.direct_ids %}
+      <div class="sd-tags">
+        <strong>Уточнить:</strong>
+        {% if result.direct_ids %}
+          <a href="?q={{ query|urlencode }}&amp;f=exact"{% if f == "exact" %} class="is-active"{% endif %}>
+            точные ({{ result.counts.exact }})
+          </a>
+        {% endif %}
+        {% for tag in result.narrowing %}
+          <a href="?q={{ query|urlencode }}&amp;f={{ tag.key|urlencode }}"{% if f == tag.key %} class="is-active"{% endif %}
+             title="key={{ tag.key }}">
+            {{ tag.label }} <small>×{{ tag.coverage }}</small>
+          </a>
+        {% endfor %}
+        {% if f %}
+          <a href="?q={{ query|urlencode }}">сбросить ?f=</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if result.related_queries %}
+      <div class="sd-related">
+        <strong>Связанные запросы:</strong>
+        {% for rq in result.related_queries %}
+          <a href="?q={{ rq|urlencode }}">{{ rq }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if result.found_count == 0 %}
+      <p class="sd-meta">Пустая выдача{% if f %} при ?f={{ f }}{% endif %}.</p>
+    {% else %}
+      {% for card in result.cards %}
+        <article class="sd-card">
+          <div class="sd-card__head">
+            <h2 class="sd-card__word">
+              {% if card.article.word_normalized %}
+                {{ card.article.word_normalized }}
+              {% else %}
+                {{ card.article.word|clear }}
+              {% endif %}
+              <small>#{{ card.article.id }}</small>
+            </h2>
+            <span>
+              <a href="{{ card.article.get_admin_url }}" target="_blank">править</a>
+              ·
+              <a href="{% url 'admin:dict_articleindextranslate_changelist' %}?q={{ query|urlencode }}&amp;mode=exact" target="_blank">индекс</a>
+            </span>
+          </div>
+
+          <div class="sd-badges">
+            {% for r in card.reasons %}
+              <span class="sd-badge sd-badge--{{ r.code }}{% if r.fuzzy %} is-fuzzy{% endif %}{% if r.inherited %} is-inherited{% endif %}"
+                    title="{{ r.detail }}">
+                {{ r.label }}
+              </span>
+            {% endfor %}
+          </div>
+
+          {% for r in card.reasons %}
+            {% if r.code == "link" and r.via %}
+              <p class="sd-card__via">
+                через:
+                {% for v in r.via %}
+                  {{ v.kind_label }} <em>{{ v.word }}</em>{% if not forloop.last %},{% endif %}
+                {% endfor %}
+              </p>
+            {% endif %}
+          {% endfor %}
+
+          {% if card.translations %}
+            <ul class="sd-card__translations">
+              {% for tr in card.translations %}
+                <li{% if tr in card.matched_translations %} class="is-matched"{% endif %}>{{ tr }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="sd-card__via"><em>нет переводов в индексе</em></p>
+          {% endif %}
+
+          <div class="sd-card__html">
+            {% if card.article.article_html %}
+              {{ card.article.article_html|make_link|nice|make_break|highlight_rus|safe }}
+            {% else %}
+              <em>нет HTML</em>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+
+      {% if result.page_obj.has_other_pages %}
+        <nav class="sd-pager">
+          {% if result.page_obj.has_previous %}
+            <a href="?q={{ query|urlencode }}&amp;f={{ f|urlencode }}&amp;p={{ result.page_obj.previous_page_number }}">← предыдущая</a>
+          {% endif %}
+          <span>{{ result.page_obj.number }} / {{ result.page_obj.paginator.num_pages }}</span>
+          {% if result.page_obj.has_next %}
+            <a href="?q={{ query|urlencode }}&amp;f={{ f|urlencode }}&amp;p={{ result.page_obj.next_page_number }}">следующая →</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}

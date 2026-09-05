@@ -29,7 +29,7 @@
 
 | Файл | О чём |
 |------|--------|
-| [searching_upgrade.md](searching_upgrade.md) | Реализованные подсказки русского поиска, эталон «быстро» |
+| [searching_upgrade.md](searching_upgrade.md) | Реализованные подсказки русского поиска, эталон «быстро»; staff: Переводы + Отладка (§0.2) |
 | [method-onthlogy-markup.md](method-onthlogy-markup.md) | Как строили онтологию и разметку |
 
 ## Архив (не источник истины)

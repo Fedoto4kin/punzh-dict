@@ -33,5 +33,6 @@
 - Сужающие теги `?f=`, `find_exact_match_ids`, UI (блок «Уточнить запрос» только при наличии тегов).
 - «Связанные запросы», prio «быть», эталон «корова»/1717 (тесты + fuzzy одна буква, key без скобок, `?f=` AND).
 - `kind` на `ArticleLink`, инвентаризация, автосоздание однозначных `deriv`, админка kind — `backlog.md` §1.
+- Админка: браузер **Переводы** (карточки по `rus_word`) + **Отладка** русского поиска (`rus_search_core`) — `docs/searching_upgrade.md` §0.2.
 
 Подробно: `docs/searching_upgrade.md`, `docs/backlog-search.md`.

@@ -15,17 +15,16 @@ from .helpers import (
 from .models import (
     Article,
     ArticleAddition,
+    ArticleIndexTag,
     ArticleIndexTranslate,
     ArticleIndexWord,
     ArticleIndexWordNormalization,
-    ArticleIndexTag,
-    Tag,
     ArticleLink,
     ArticleSemanticField,
-    SemanticField,
     Levenshtein,
+    SemanticField,
+    Tag,
 )
-
 
 num_by_page = 18
 
@@ -233,8 +232,16 @@ def _translate_q_any_query_token(query_tokens):
 
 
 def _strip_parens_for_key(phrase):
-    """Parenthetical glosses (о корове), (детс.) — for label only, not filter key."""
+    """Parenthetical glosses (о корове), (детс.) — excluded from key unless head is only the query."""
     return re.sub(r"\([^)]*\)", " ", phrase)
+
+
+def _paren_gloss_tokens(phrase):
+    """Lowercase tokens taken from (…) segments."""
+    gloss = " ".join(re.findall(r"\(([^)]*)\)", phrase))
+    if not gloss:
+        return []
+    return _TOKEN_RE.findall(gloss.lower())
 
 
 def _label_and_key_tokens(phrase, query_words, stopwords):
@@ -242,6 +249,12 @@ def _label_and_key_tokens(phrase, query_words, stopwords):
     toks = _TOKEN_RE.findall(key_source.lower())
     label_toks = [t for t in toks if t not in query_words]
     key_toks = [t for t in label_toks if t not in stopwords]
+    if not key_toks:
+        # «случаться (о домашних животных)»: distinguisher lives only in parens.
+        paren_toks = _paren_gloss_tokens(phrase)
+        key_toks = [
+            t for t in paren_toks if t not in query_words and t not in stopwords
+        ]
     return label_toks, key_toks
 
 
@@ -265,6 +278,8 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
 
     LABEL = full candidate phrase (shown on the button).
     KEY   = phrase minus parens, query words, stopwords -> matched by ?f= (AND).
+      If that yields an empty key, tokens from (…) are used instead
+      («случаться (о домашних животных)» -> key «домашних животных»).
     COVERAGE = cards whose blob contains every key token as a substring.
       0 < coverage < N -> narrowing;  coverage in {0, N} or empty key -> dropped.
 
@@ -339,9 +354,34 @@ def find_related_queries(ilike_ids, blobs_by_article, query_words):
     return related
 
 
-def search_by_translate_linked(query: str, page=1, f=None):
+@dataclass
+class RusSearchCore:
+    """Intermediate sets for the Russian search pipeline (public + debug)."""
 
-    # 1. ILIKE (exact rus_word match, case-insensitive; query already ё→е in views)
+    query: str
+    query_tokens: list
+    ids_ilike: set
+    token_match_ids: set
+    seed_ids: set
+    expanded_ids: set
+    result_ids: set
+    blobs_by_article: dict
+    links: dict
+    narrowing: list
+    direct_ids: set
+    related_queries: list
+    filtered_ids: set
+    f: object
+    high_freq_anchor: bool
+    candidates: list
+
+
+def rus_search_core(query: str, f=None) -> RusSearchCore:
+    """
+    Full Russian lexical pipeline without pagination.
+    `query` must already be ё→е normalized (as in views.search).
+    """
+    # 1. ILIKE (exact rus_word match, case-insensitive)
     ids_ilike = set(
         ArticleIndexTranslate.objects.filter(rus_word__ilike=query).values_list(
             "article_id", flat=True
@@ -362,15 +402,15 @@ def search_by_translate_linked(query: str, page=1, f=None):
     )
 
     # 3. Объединяем
-    all_ids = list(ids_ilike | token_match_ids)
+    seed_ids = ids_ilike | token_match_ids
+    all_ids = list(seed_ids)
 
     # 4. Расширяем через связи ArticleLink
     expanded_ids = expand_by_links(all_ids)
 
     # 5. Кандидаты для сужающих тегов (SPEC v2, механизм 1)
-    candidate_article_ids = expanded_ids
-    if query.strip().lower() in HIGH_FREQ_ANCHOR_QUERIES:
-        candidate_article_ids = ids_ilike
+    high_freq_anchor = query.strip().lower() in HIGH_FREQ_ANCHOR_QUERIES
+    candidate_article_ids = ids_ilike if high_freq_anchor else expanded_ids
     candidates = list(
         ArticleIndexTranslate.objects.filter(
             token_q, article_id__in=candidate_article_ids
@@ -422,9 +462,36 @@ def search_by_translate_linked(query: str, page=1, f=None):
                 kept.add(aid)
         filtered_ids = set(result_ids) & kept
 
-    page_obj, found_count = get_sorted_articles(filtered_ids, page)
+    return RusSearchCore(
+        query=query,
+        query_tokens=query_tokens,
+        ids_ilike=ids_ilike,
+        token_match_ids=token_match_ids,
+        seed_ids=seed_ids,
+        expanded_ids=expanded_ids,
+        result_ids=result_ids,
+        blobs_by_article=blobs_by_article,
+        links=links,
+        narrowing=narrowing,
+        direct_ids=direct_ids,
+        related_queries=related_queries,
+        filtered_ids=filtered_ids,
+        f=f,
+        high_freq_anchor=high_freq_anchor,
+        candidates=candidates,
+    )
 
-    return page_obj, found_count, narrowing, direct_ids, related_queries
+
+def search_by_translate_linked(query: str, page=1, f=None):
+    core = rus_search_core(query, f=f)
+    page_obj, found_count = get_sorted_articles(core.filtered_ids, page)
+    return (
+        page_obj,
+        found_count,
+        core.narrowing,
+        core.direct_ids,
+        core.related_queries,
+    )
 
 
 # ------------------------------------------------------------

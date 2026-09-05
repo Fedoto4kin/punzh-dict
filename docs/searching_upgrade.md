@@ -83,6 +83,30 @@ DB-тест: `test_search_korova.py`.
 
 ---
 
+## 0.2 Staff-инструменты в админке
+
+Не публичный UX: те же данные индекса и те же этапы русского поиска, для правки
+и отладки.
+
+| Страница | URL | Код |
+|----------|-----|-----|
+| **Переводы** (индекс) | `/admin/dict/articleindextranslate/` | `translation_browser.py`, `ArticleIndexTranslateAdm` |
+| **Отладка** русского поиска | `/admin/dict/article/search-debug/` | `search_debug.py`, `ArticleAdm.search_debug_view` |
+
+**Переводы.** Поиск по `rus_word` (точное / содержит / префикс, канон ё→е).
+Выдача — карточки по статьям: заголовок → все переводы индекса (hit сверху) →
+HTML статьи. Сортировка: по заголовку или по совпавшему переводу. В меню Dict —
+сразу под «Слова»; кнопки «Добавить» нет (правка через inline статьи).
+
+**Отладка.** Вызов `rus_search_core` (общее ядро с `search_by_translate_linked`):
+счётчики этапов, теги `?f=`, связанные запросы, по карточке бейджи
+«равенство / слово в фразе / связь / точные». Ссылки на индекс переводов и
+публичный `/search/`.
+
+Тесты: `test_translation_browser.py`, `test_search_debug.py`.
+
+---
+
 ## 1. Реализовано: сужающие теги — `split_by_coverage`
 
 `split_by_coverage(candidates, page_blobs, query_words, stopwords) -> narrowing`

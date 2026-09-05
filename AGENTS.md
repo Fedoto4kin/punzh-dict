@@ -8,7 +8,8 @@
 
 | Контур | Где | Роль |
 |--------|-----|------|
-| Лексический поиск `/search/` | `app/dict/search.py`, views | ILIKE, FTS, Левенштейн, `?f=` |
+| Лексический поиск `/search/` | `app/dict/search.py`, views | ILIKE, token-OR, Левенштейн, `?f=` |
+| Staff: переводы / отладка | админка Dict | индекс `rus_word`; explain `rus_search_core` |
 | Онтология `/ontology/` | semantic-модели, views | поля/keywords; **не** фильтровать по `from_translation` |
 | Рантайм-AI | `app/dict/ai/` | шлюз Timeweb; AI-поиск в URL ещё нет |
 | Оффлайн LLM | `app/agents/` | пакет → JSON; в БД — management-команды (исключение: `clean_translations --write`) |

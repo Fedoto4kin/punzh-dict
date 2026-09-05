@@ -1,0 +1,176 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static dict_extras %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .tr-browser-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    align-items: flex-end;
+    margin: 12px 0 20px;
+    padding: 12px 14px;
+    background: var(--darkened-bg, #f8f8f8);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+  }
+  .tr-browser-form label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tr-browser-form input[type="text"] {
+    min-width: 220px;
+  }
+  .tr-browser-meta {
+    margin: 0 0 16px;
+    color: var(--body-quiet-color, #666);
+  }
+  .tr-card {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+    background: var(--body-bg, #fff);
+  }
+  .tr-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .tr-card__word {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .tr-card__html {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    background: var(--darkened-bg, #f8f8f8);
+    border-radius: 3px;
+    max-height: 9.5em;
+    overflow: auto;
+    line-height: 1.45;
+  }
+  .tr-card__html .text-rus {
+    color: #0b5;
+  }
+  .tr-card__translations {
+    margin: 0 0 10px;
+    padding-left: 1.2em;
+  }
+  .tr-card__translations li {
+    margin: 2px 0;
+  }
+  .tr-card__hit {
+    font-weight: 700;
+    background: #fff3cd;
+    padding: 0 4px;
+    border-radius: 2px;
+  }
+  .tr-card__empty {
+    color: var(--body-quiet-color, #666);
+    font-style: italic;
+  }
+  .tr-pager {
+    margin: 16px 0;
+  }
+  .tr-pager a, .tr-pager span {
+    margin-right: 8px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  <p style="margin:0 0 8px">
+    <a href="{% url 'admin:dict_article_search_debug' %}">Отладка русского поиска</a>
+  </p>
+
+  <form class="tr-browser-form" method="get" action="">
+    <div>
+      <label for="id_q">Перевод</label>
+      <input id="id_q" type="text" name="q" value="{{ query }}" autofocus>
+    </div>
+    <div>
+      <label for="id_mode">Совпадение</label>
+      <select id="id_mode" name="mode">
+        {% for value, label in modes %}
+          <option value="{{ value }}"{% if mode == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="id_sort">Сортировка</label>
+      <select id="id_sort" name="sort">
+        {% for value, label in sorts %}
+          <option value="{{ value }}"{% if sort == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit" class="default">Найти</button>
+    </div>
+  </form>
+
+  {% if not has_query %}
+    <p class="tr-browser-meta">Введите русский перевод. По умолчанию — точное вхождение в индексе (как для «точных соответствий» на сайте).</p>
+  {% elif found_count == 0 %}
+    <p class="tr-browser-meta">Ничего не найдено для «{{ query }}».</p>
+  {% else %}
+    <p class="tr-browser-meta">Найдено статей: <strong>{{ found_count }}</strong>
+      {% if page_obj and page_obj.paginator.num_pages > 1 %}
+        · страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+      {% endif %}
+    </p>
+
+    {% for card in page_obj %}
+      <article class="tr-card">
+        <div class="tr-card__head">
+          <h2 class="tr-card__word">
+            {% if card.article.word_normalized %}
+              {{ card.article.word_normalized }}
+            {% else %}
+              {{ card.article.word|clear }}
+            {% endif %}
+          </h2>
+          <a href="{{ card.article.get_admin_url }}" target="_blank">править статью</a>
+        </div>
+        {% if card.translations %}
+          <ul class="tr-card__translations">
+            {% for tr in card.translations %}
+              <li{% if tr in card.hit_translations %} class="tr-card__hit"{% endif %}>{{ tr }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="tr-card__empty">нет переводов в индексе</p>
+        {% endif %}
+        <div class="tr-card__html">
+          {% if card.article.article_html %}
+            {{ card.article.article_html|make_link|nice|make_break|highlight_rus|safe }}
+          {% else %}
+            <span class="tr-card__empty">нет HTML</span>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+      <nav class="tr-pager">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query|urlencode }}&amp;mode={{ mode }}&amp;sort={{ sort }}&amp;p={{ page_obj.previous_page_number }}">← предыдущая</a>
+        {% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?q={{ query|urlencode }}&amp;mode={{ mode }}&amp;sort={{ sort }}&amp;p={{ page_obj.next_page_number }}">следующая →</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}
