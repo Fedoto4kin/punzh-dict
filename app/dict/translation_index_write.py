@@ -1,35 +1,10 @@
-"""Write cleaned rus_word lists; snapshot before batch (backlog §2)."""
-
-from datetime import datetime, timezone
+"""Write cleaned rus_word lists (backlog §2)."""
 
 from django.contrib.postgres.search import SearchVector
 from django.db import transaction
 
 from dict.helpers.rus_word import dedupe_canonical_rus_words
-from dict.models import Article, ArticleIndexTranslate, ArticleIndexTranslateSnapshot
-
-
-def make_batch_id():
-    return datetime.now(timezone.utc).strftime("cleanup_%Y%m%dT%H%M%SZ")
-
-
-def snapshot_translation_index(batch_id):
-    """Copy entire ArticleIndexTranslate into snapshot table."""
-    rows = list(ArticleIndexTranslate.objects.values_list("article_id", "rus_word"))
-    if not rows:
-        return 0
-    ArticleIndexTranslateSnapshot.objects.bulk_create(
-        [
-            ArticleIndexTranslateSnapshot(
-                batch_id=batch_id,
-                article_id=aid,
-                rus_word=rw,
-            )
-            for aid, rw in rows
-        ],
-        batch_size=2000,
-    )
-    return len(rows)
+from dict.models import ArticleIndexTranslate
 
 
 def apply_translations(article_id, words):
@@ -49,15 +24,11 @@ def apply_translations(article_id, words):
             )
 
 
-def apply_from_results(results, batch_id=None, *, do_snapshot=True):
+def apply_from_results(results):
     """
     Apply {article_id_str: {after: [...]}} from clean_translations json.
-    Returns (batch_id, n_applied).
+    Returns n_applied.
     """
-    if batch_id is None:
-        batch_id = make_batch_id()
-    if do_snapshot:
-        snapshot_translation_index(batch_id)
     n = 0
     for key, rec in results.items():
         after = rec.get("after")
@@ -65,4 +36,4 @@ def apply_from_results(results, batch_id=None, *, do_snapshot=True):
             continue
         apply_translations(int(key), after)
         n += 1
-    return batch_id, n
+    return n

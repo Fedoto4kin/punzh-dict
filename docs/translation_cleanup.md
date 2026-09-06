@@ -9,7 +9,7 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 |-----------|-----|--------|
 | Промпт + sanitize | `app/agents/translation_cleanup.py` | готово |
 | Dry-run / write | `app/agents/clean_translations.py` | готово |
-| Снимок + запись | `app/dict/translation_index_write.py`, миграция `0027` | готово |
+| Запись | `app/dict/translation_index_write.py` | готово |
 | Exact-поиск | `find_exact_match_ids` в `app/dict/search.py` | готово |
 | Service-word post-filter | `_keep_service_word_phrase` | упрощено, `9b92ba6` |
 | Боевой dry-run + `--from-json` | prod | **готово** (2026-08) |
@@ -19,7 +19,7 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 - `ac9ba86` — preserve однословных эквивалентов служебных лемм из index («но» у `da I`)
 - `9b92ba6` — упрощение service-filter: `_keep_service_word_phrase` (≤3 слова)
 - `30533af` — этот handoff + black/isort для cleanup-модуля
-- ранее — основа cleanup, снимок `0027`, `find_exact_match_ids` (см. `git log --grep=cleanup`)
+- ранее — основа cleanup, `find_exact_match_ids` (см. `git log --grep=cleanup`)
 
 **Не в репо:** `pick_*_ids.py`, `pilot_selection.py` (разовые утилиты удалены).
 
@@ -34,7 +34,6 @@ clean_translations.py          translation_cleanup.py
        │ + ё→е sanitize                 │ sanitize (trim/dedupe only)
        ▼                                ▼
   data/*.json  ── --write --from-json ──► translation_index_write.py
-                                              │ snapshot (0027)
                                               ▼
                                     ArticleIndexTranslate
 ```
@@ -108,8 +107,6 @@ docker exec --user 1000:1000 -w /app/agents punzh_web \
   python -u clean_translations.py --write --from-json clean_prod.json
 ```
 
-При обрыве повторной заливки: `--skip-snapshot` (снимок уже есть).
-
 ---
 
 ## Post-LLM sanitize
@@ -135,7 +132,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_web \
 подмешиваются отдельным полем.
 
 Повторный прогон cleanup после правок gloss: новый dry-run json → проверка
-выборочно → `--write --from-json`. Снимок `0027` сохранит предыдущий индекс.
+выборочно → `--write --from-json`.
 
 ### Служебные леммы (`is_service_word`)
 
@@ -223,34 +220,6 @@ docker exec --user 1000:1000 -w /app punzh_django python manage.py test \
 
 Семантика `?f=exact`: `find_exact_match_ids` — ILIKE на **целую** строку
 `rus_word`, не подстрока. Подробно: `docs/searching_upgrade.md` §0.1.
-
----
-
-## Восстановление поглощённых headword (после `--write`)
-
-Cleanup иногда убирает однословную строку индекса, если в списке есть
-многословная фраза с тем же токеном (`глаз` при наличии `дурной глаз`).
-Exact-поиск по целой строке `rus_word` из‑за этого теряет соответствие.
-
-**1. Цифры (снимок vs текущий индекс):**
-
-По умолчанию — только слова, которые в `article_html` стоят в списке gloss
-(`слово,` или `слово;` сразу после однословника). Широкий режим: `--broad`.
-
-```bash
-docker exec -w /app punzh_web python manage.py audit_subsumed_headwords
-docker exec -w /app punzh_web python manage.py audit_subsumed_headwords --csv > subsumed.csv
-```
-
-**2. Интерактивное добавление** (нумерованный выбор, только add-only):
-
-```bash
-docker exec -i -w /app punzh_web python manage.py restore_subsumed_headwords --limit 20
-```
-
-Ввод: `1`, `1,2`, пусто — пропуск, `u` — отмена последнего сохранения по статье,
-`q` — выход. Логика: `dict/subsumed_headword_audit.py`. Полезно **после** `--write`,
-если sanitize ещё не восстановил однословник из gloss.
 
 ---
 

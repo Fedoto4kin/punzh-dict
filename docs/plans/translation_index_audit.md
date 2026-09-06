@@ -10,18 +10,13 @@
 
 - **Dry-run** (default): json в `app/agents/data/` — на статью только
   `word` / `before` / `after`; сверху `report` и `meta`. Отладка — `--debug`.
-- **Заливка:** `--write --from-json …` со снимком индекса (миграция `0027`).
+- **Заливка:** `--write --from-json …` (`dict/translation_index_write.py`).
 - **Sanitize** на стабильном контуре минимальный: ё→е, trim, dedupe.
   Фразовая чистка — ответственность промптов; агрессивные пост-хелперы
   (склейка запятых и т.п.) в прод не возвращаем без отдельного решения.
 - Ложные разбиения фраз поиск в целом терпит; exact-match и качество
   выдачи от части артефактов страдают — это зона аудита, не «тихой»
   починки в sanitize.
-
-Уже есть узкий пост-write аудит поглощённых однословников:
-`audit_subsumed_headwords` / `restore_subsumed_headwords`
-(`dict/subsumed_headword_audit.py`). Новый контур **не дублирует** его,
-а закрывает остальные классы дефектов.
 
 ---
 
@@ -40,8 +35,7 @@
 | Фаза | Вход | Когда |
 |------|------|--------|
 | **A** | `clean_prod.json` (`before` / `after`, `report`) | после dry-run |
-| **B** | `ArticleIndexTranslateSnapshot` vs текущий индекс | после `--write` |
-| **C** | текущий индекс + `gloss_senses_from_html` | ongoing QA |
+| **B** | текущий индекс + `gloss_senses_from_html` | ongoing QA |
 
 ---
 
@@ -71,7 +65,9 @@ V-вершинами параллели из gloss.
 
 ### 5. Поглощённый headword
 
-Не изобретать: `manage.py audit_subsumed_headwords` (+ `--broad` по желанию).
+Однословник из `before`/gloss пропал, в индексе осталась только многословная
+фраза с тем же токеном (`глаз` при `дурной глаз`). Источник — json cleanup,
+не таблица снимка.
 
 ### 6. Расхождение с gloss (мягко)
 
@@ -120,7 +116,7 @@ python manage.py audit_translation_index --from-db --batch-id <id>
 | **0** | Этот план + строка в INDEX | ✓ |
 | **1** | Парсер json + checks 1–2 на фикстурах | тесты |
 | **2** | Прогон на `clean_prod.json` → частоты | политика: чинить / игнор |
-| **3** | `--from-db` + snapshot; check 5 = wrap subsumed | post-write QA |
+| **3** | `--from-db` + json before/after; check 5 = wrap subsumed | post-write QA |
 | **4** | Checks 3–4, 6 по мере шума | уточнение правил |
 | **5** | Отдельный контур правок (не смешивать с аудитом) | restore / `--id` |
 
@@ -130,7 +126,7 @@ python manage.py audit_translation_index --from-db --batch-id <id>
 dry-run json ──► audit A ──► (ок) ──► --write
                     │
                     └── правки / повтор dry-run по --id
---write ──► snapshot ──► audit_subsumed + audit B/C
+--write ──► audit B (индекс + gloss)
 ```
 
 ---

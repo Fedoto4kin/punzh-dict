@@ -3,7 +3,7 @@
 LLM-очистка ArticleIndexTranslate (backlog §2).
 
 Dry-run (default): отчёт в data/*.json (results: word / before / after).
---write: снимок индекса + запись в БД (миграция 0027).
+--write: запись в БД.
 
 Примеры:
   # dry-run (итоговый json: word, before, after + report)
@@ -72,11 +72,9 @@ from translation_cleanup import (  # noqa: E402
 )
 
 from dict.models import Article  # noqa: E402
-from dict.translation_index_write import apply_from_results  # noqa: E402
-from dict.translation_index_write import (
+from dict.translation_index_write import (  # noqa: E402
+    apply_from_results,
     apply_translations,
-    make_batch_id,
-    snapshot_translation_index,
 )
 
 
@@ -176,21 +174,12 @@ def main():
     ap.add_argument(
         "--write",
         action="store_true",
-        help="Снимок индекса + запись ArticleIndexTranslate в БД.",
+        help="Запись ArticleIndexTranslate в БД.",
     )
     ap.add_argument(
         "--from-json",
         metavar="PATH",
         help="При --write: применить готовый json (results), без LLM.",
-    )
-    ap.add_argument(
-        "--batch-id",
-        help="Имя снимка (по умолчанию cleanup_YYYYMMDDTHHMMSSZ).",
-    )
-    ap.add_argument(
-        "--skip-snapshot",
-        action="store_true",
-        help="При --write: не создавать снимок (только для повторных тестов).",
     )
     ap.add_argument(
         "--force",
@@ -265,14 +254,8 @@ def main():
         if not results:
             print(f"Нет results в {path}", file=sys.stderr)
             sys.exit(1)
-        batch_id = args.batch_id or make_batch_id()
-        if not args.skip_snapshot:
-            n_snap = snapshot_translation_index(batch_id)
-            print(f"Снимок {batch_id}: {n_snap} строк.")
-        else:
-            print("Снимок пропущен (--skip-snapshot).")
-        batch_id, n = apply_from_results(results, batch_id, do_snapshot=False)
-        print(f"Записано статей: {n}. batch_id={batch_id}")
+        n = apply_from_results(results)
+        print(f"Записано статей: {n}.")
         return
 
     out_path = data_path(args.out)
@@ -298,14 +281,6 @@ def main():
     if not articles:
         print("Нечего обрабатывать.")
         return
-
-    batch_id = None
-    snap_done = False
-    if args.write and not args.skip_snapshot:
-        batch_id = args.batch_id or make_batch_id()
-        n_snap = snapshot_translation_index(batch_id)
-        snap_done = True
-        print(f"Снимок {batch_id}: {n_snap} строк.")
 
     api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
@@ -335,7 +310,6 @@ def main():
                 "order": args.order,
                 "words": args.words,
                 "ids": args.ids,
-                "batch_id": batch_id,
                 "debug": debug,
                 "save_llm_text": save_llm_text,
                 "review": do_review,
@@ -415,11 +389,6 @@ def main():
                 entry["llm_text_review"] = llm_meta["llm_text_review"]
         results[str(article.id)] = entry
         if args.write:
-            if not snap_done and not args.skip_snapshot:
-                batch_id = args.batch_id or make_batch_id()
-                snapshot_translation_index(batch_id)
-                snap_done = True
-                print(f"Снимок {batch_id}: создан.")
             apply_translations(article.id, cleaned)
         time.sleep(0.2)
 
@@ -437,13 +406,10 @@ def main():
             if isinstance(r.get("after"), list) and r.get("before") != r.get("after")
         ),
     }
-    msg = (
+    print(
         f"\nГотово. Статей: {rep['articles']}. Изменено: {rep['changed']}. "
         f"Ошибок: {rep['errors']}. -> {out_path}"
     )
-    if batch_id:
-        msg += f"  batch_id={batch_id}"
-    print(msg)
 
 
 if __name__ == "__main__":

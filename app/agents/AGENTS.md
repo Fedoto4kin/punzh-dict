@@ -14,7 +14,7 @@
 | **Когда** | Пакет/разово (16k статей, пилот, json) | На лету (запрос пользователя, одна статья) |
 | **Кто вызывает** | Скрипты вручную (`docker … -w /app/agents`) | Views, management-команды, фон |
 | **LLM** | DeepSeek напрямую (`agents/.env`) | Timeweb-шлюз (`dict.ai.client`) |
-| **Запись в БД** | Обычно json; `clean_translations --write` — снимок + запись (`dict/translation_index_write`) | Да (`classify_article` и т.п.) |
+| **Запись в БД** | Обычно json; `clean_translations --write` — запись (`dict/translation_index_write`) | Да (`classify_article` и т.п.) |
 | **Примеры** | `clean_translations.py`, `translation_cleanup.py`, `pick_translation_fields.py` | `client.py`, `classify.py`, `prompts.py` |
 
 **Исключение:** `dict.ai.prompts` лежит в рантайм-пакете, потому что **один**
@@ -67,8 +67,8 @@ docker exec --user 1000:1000 -w /app/agents punzh_django python <tool>.py [фл�
 
 **Заливка в БД.** По умолчанию инструменты пишут json; заливкой занимаются
 management-команды в `dict/` (`load_semantic_*`, `load_keywords`,
-`load_translation_fields`). Исключение: `clean_translations --write` (снимок
-индекса + запись через `dict/translation_index_write`).
+`load_translation_fields`). Исключение: `clean_translations --write` (запись
+через `dict/translation_index_write`).
 
 ---
 
@@ -106,7 +106,7 @@ LLM-очистка индекса переводов. Промпт, gloss и san
 ≤3 слова; иллюстрации («ну а», «а ну», длинные фразы) отсекаются; короткие
 строки из **исходного** index восстанавливаются (страховка: «но», «да и»).
 
-**Запись:** `--write` — снимок всего индекса + запись в БД (миграция 0027);
+**Запись:** `--write` — запись в БД (`dict/translation_index_write`);
 `--from-json PATH` — применить готовый json без повторного LLM.
 
 **Prod (рекомендуется):** dry-run в json (nohup) → проверка → migrate →
@@ -158,7 +158,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_web \\
    DeepSeek (ключ/base_url/retry/парсинг) в общий модуль (напр.
    `deepseek_client.py`), чтобы инструменты не дублировали инициализацию.
 4. Заливку результата в БД — management-командой в `dict/` (или `--write` у
-   `clean_translations`, если нужен снимок индекса).
+   `clean_translations`).
 5. Дописать раздел в «Каталог» этого файла.
 
 ---
