@@ -531,8 +531,271 @@ def krl_article_ids(query: str):
     )
 
 
-def word_search(query: str, page: int) -> Paginator:
-    return get_sorted_articles(krl_article_ids(query), page)
+# Facet groups for Karelian search tag filters (same Tag.type buckets as /tags/,
+# except type 5 — boolean «с фразеологизмами» via ?ph=1, not radio chips).
+# Grammar (type 2): only parent labels (level=0); children like comparativus stay
+# on the subject index only.
+_KRL_TAG_GROUP_ORDER = (2, 3, 1, 4)
+_KRL_TAG_GROUP_TITLES = {
+    1: "Населенные пункты",
+    2: "Грамматические пометы",
+    3: "Нормативно-стилистические и экспрессивно-оценочные пометы",
+    4: "Говоры",
+}
+_KRL_PHRASE_TAG_TYPE = 5
+_KRL_PHRASE_LABEL = "словарные статьи с фразеологизмами"
+
+
+def parse_krl_tag_param(raw):
+    """Parse ?t=12,34 into a list of ints; empty / junk -> []."""
+    if not raw or not str(raw).strip():
+        return []
+    out = []
+    for part in str(raw).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            out.append(int(part))
+        except ValueError:
+            continue
+    return out
+
+
+def parse_krl_phrase_param(raw):
+    """True when ?ph=1 (or true/yes/on)."""
+    return str(raw or "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def normalize_krl_tag_ids(tag_ids):
+    """
+    At most one tag per Tag.type; drop unknown ids, grammar children (level=1),
+    and type=5 (phraseologism — use ?ph=1 instead).
+    Order follows _KRL_TAG_GROUP_ORDER for stable ?t= query strings.
+    """
+    if not tag_ids:
+        return []
+    rows = list(Tag.objects.filter(id__in=tag_ids).values_list("id", "type", "level"))
+    by_id = {tid: (ttype, level) for tid, ttype, level in rows}
+    chosen = {}
+    for tid in tag_ids:
+        meta = by_id.get(tid)
+        if meta is None:
+            continue
+        ttype, level = meta
+        if ttype == _KRL_PHRASE_TAG_TYPE:
+            continue
+        if ttype == 2 and level != 0:
+            continue
+        if ttype in chosen:
+            continue
+        chosen[ttype] = tid
+    return [chosen[t] for t in _KRL_TAG_GROUP_ORDER if t in chosen]
+
+
+def format_krl_filter_query(tag_ids, phrase=False):
+    """GET suffix: '', '?t=1,2', '?ph=1', or '?t=1,2&ph=1'."""
+    parts = []
+    if tag_ids:
+        parts.append("t=" + ",".join(str(i) for i in tag_ids))
+    if phrase:
+        parts.append("ph=1")
+    return ("?" + "&".join(parts)) if parts else ""
+
+
+def format_krl_t_query(tag_ids):
+    """Backward-compatible alias: tags only, no ?ph=."""
+    return format_krl_filter_query(tag_ids, phrase=False)
+
+
+def article_ids_with_phraseologism():
+    """Articles that have any Tag.type=5 (фразеологизмы) index row."""
+    return set(
+        ArticleIndexTag.objects.filter(tag__type=_KRL_PHRASE_TAG_TYPE).values_list(
+            "article_id", flat=True
+        )
+    )
+
+
+def _tag_ids_without_type(selected_ids, type_id):
+    if not selected_ids:
+        return []
+    drop = set(
+        Tag.objects.filter(id__in=selected_ids, type=type_id).values_list(
+            "id", flat=True
+        )
+    )
+    return [tid for tid in selected_ids if tid not in drop]
+
+
+def _facet_eligible_tag_rows(article_ids):
+    """
+    (tag_id, type, name, sorting) for radio-facet tags on articles.
+    Grammar type=2: parents only (level=0). Type 5 excluded (boolean ?ph=).
+    """
+    if not article_ids:
+        return []
+    q = (
+        ArticleIndexTag.objects.filter(article_id__in=article_ids)
+        .exclude(tag__type=_KRL_PHRASE_TAG_TYPE)
+        .exclude(tag__type=2, tag__level=1)
+        .values_list("tag_id", "tag__type", "tag__name", "tag__sorting")
+        .distinct()
+    )
+    return list(q)
+
+
+def _apply_krl_filters(base_ids, selected_ids, phrase, exclude_type=None):
+    ids = set(base_ids)
+    sel = (
+        _tag_ids_without_type(selected_ids, exclude_type)
+        if exclude_type is not None
+        else list(selected_ids or [])
+    )
+    if sel:
+        ids &= article_ids_by_tags(sel)
+    if phrase:
+        ids &= article_ids_with_phraseologism()
+    return ids
+
+
+def krl_tag_facets(base_ids, selected_ids, phrase=False):
+    """
+    Facet UI for KRL search: (groups, phrase_filter).
+
+    groups — radio chip groups (≥2 options each), or [].
+    phrase_filter — dict for the phraseologism checkbox, or None.
+    Empty ( [], None) when the whole filter block should be hidden.
+    """
+    base_ids = set(base_ids)
+    selected_ids = list(selected_ids or [])
+    phrase = bool(phrase)
+    if not base_ids:
+        return [], None
+
+    eligible_in_base = _facet_eligible_tag_rows(base_ids)
+    ph_ids = article_ids_with_phraseologism()
+    phrase_diverse = bool((base_ids & ph_ids) and (base_ids - ph_ids))
+    wide = (
+        len(base_ids) > num_by_page
+        or len({r[0] for r in eligible_in_base}) >= 2
+        or phrase_diverse
+    )
+    if not wide:
+        return [], None
+
+    selected_types = dict(
+        Tag.objects.filter(id__in=selected_ids).values_list("id", "type")
+    )
+    groups = []
+    for ttype in _KRL_TAG_GROUP_ORDER:
+        facet_ids = _apply_krl_filters(
+            base_ids, selected_ids, phrase, exclude_type=ttype
+        )
+        rows = _facet_eligible_tag_rows(facet_ids)
+        options_map = {}
+        for tid, row_type, name, sorting in rows:
+            if row_type != ttype:
+                continue
+            options_map[tid] = (name, sorting if sorting is not None else 10**9)
+        if len(options_map) < 2:
+            continue
+        selected_in_group = next(
+            (tid for tid in selected_ids if selected_types.get(tid) == ttype),
+            None,
+        )
+        sel_wo = _tag_ids_without_type(selected_ids, ttype)
+        options = []
+        for tid, (name, sorting) in sorted(
+            options_map.items(), key=lambda item: (item[1][1], item[1][0], item[0])
+        ):
+            selected = tid == selected_in_group
+            # Active chip toggles off (same as phrase ?ph=); inactive selects.
+            if selected:
+                t_query = format_krl_filter_query(sel_wo, phrase=phrase)
+            else:
+                new_sel = normalize_krl_tag_ids(sel_wo + [tid])
+                t_query = format_krl_filter_query(new_sel, phrase=phrase)
+            options.append(
+                {
+                    "id": tid,
+                    "label": name,
+                    "selected": selected,
+                    "t_query": t_query,
+                }
+            )
+        groups.append(
+            {
+                "type": ttype,
+                "title": _KRL_TAG_GROUP_TITLES[ttype],
+                "options": options,
+                "clear_t_query": format_krl_filter_query(sel_wo, phrase=phrase),
+            }
+        )
+
+    # Phrase as its own untitled group (chip style), after stylistic (type 3).
+    tagged_only = _apply_krl_filters(base_ids, selected_ids, phrase=False)
+    with_ph = tagged_only & ph_ids
+    without_ph = tagged_only - ph_ids
+    phrase_filter = None
+    if phrase or (with_ph and without_ph):
+        phrase_filter = {
+            "checked": phrase,
+            "label": _KRL_PHRASE_LABEL,
+            "t_query": format_krl_filter_query(selected_ids, phrase=not phrase),
+        }
+        phrase_group = {
+            "type": "ph",
+            "title": None,
+            "options": [
+                {
+                    "id": "ph",
+                    "label": phrase_filter["label"],
+                    "selected": phrase_filter["checked"],
+                    "t_query": phrase_filter["t_query"],
+                }
+            ],
+            "clear_t_query": format_krl_filter_query(selected_ids, phrase=False),
+        }
+        # After stylistic (3); else after grammar (2); else before areal (1/4); else end.
+        insert_at = len(groups)
+        for i, g in enumerate(groups):
+            if g["type"] == 3:
+                insert_at = i + 1
+                break
+        else:
+            for i, g in enumerate(groups):
+                if g["type"] in (1, 4):
+                    insert_at = i
+                    break
+                if g["type"] == 2:
+                    insert_at = i + 1
+        groups.insert(insert_at, phrase_group)
+
+    if not groups:
+        return [], None
+    return groups, phrase_filter
+
+
+def word_search(query: str, page: int, tag_ids=None, phrase=False):
+    """
+    Karelian headword search, optional ?t= / ?ph= filters.
+
+    Returns (page_obj, found_count, tag_filter_groups, phrase_filter, t_query).
+    """
+    base_ids = set(krl_article_ids(query))
+    selected = normalize_krl_tag_ids(tag_ids or [])
+    phrase = bool(phrase)
+    filtered_ids = _apply_krl_filters(base_ids, selected, phrase)
+    page_obj, found_count = get_sorted_articles(filtered_ids, page)
+    groups, phrase_filter = krl_tag_facets(base_ids, selected, phrase)
+    return (
+        page_obj,
+        found_count,
+        groups,
+        phrase_filter,
+        format_krl_filter_query(selected, phrase),
+    )
 
 
 # ------------------------------------------------------------

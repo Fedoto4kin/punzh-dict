@@ -22,12 +22,13 @@
 | 5 | бэклог | Поиск неразмеченных помет | `backlog.md` §3 |
 | 6 | план | Аудит индекса переводов после cleanup (read-only) | `plans/translation_index_audit.md` |
 | 6 | бэклог | **Стоп-токены в token-OR** (вариант A: «о корове» без раздува от «о») | `docs/plans/search-query-stopwords.md` |
+| 7 | **в работе** | **KRL `/search/`: фильтры по пометам** (группы как `/tags/`, одна на тип) | `plans/krl-search-tag-filters.md` |
 
 ## Лексический `/search/` — baseline готов
 
 Основная ветка **не блокирует** AI-поиск. Доработки по желанию:
 `docs/backlog-search.md` (**P1-stop** стоп-токены; P2 fuzzy на пустой выдаче —
-**не срочно**; P3 стеммер; P4 keywords в индекс).
+**не срочно**; P3 стеммер; P4 keywords в индекс; **KRL-фильтры помет** — `plans/krl-search-tag-filters.md`).
 
 ## Сделано (не трогать без регрессии)
 

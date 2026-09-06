@@ -18,9 +18,7 @@ class PrepareKrlIlikeQueryPublicTestCase(SimpleTestCase):
         self.assertEqual("mullin", prepare_krl_ilike_query("mul'l'in"))
         self.assertEqual("mullin", prepare_krl_ilike_query("mulʼlʼin"))
         self.assertEqual("mullin mallin", prepare_krl_ilike_query("mul’l’in-mal’l’in"))
-        self.assertEqual(
-            "mullin mallin", prepare_krl_ilike_query("mulʼlʼin-malʼlʼin")
-        )
+        self.assertEqual("mullin mallin", prepare_krl_ilike_query("mulʼlʼin-malʼlʼin"))
         self.assertEqual("siksi", prepare_krl_ilike_query("šiksi…"))
         self.assertEqual("siksi sto", prepare_krl_ilike_query("šiksi… što"))
 
@@ -237,6 +235,6 @@ class WordSearchHttpTestCase(TestCase):
         self.assertContains(response, "mullin mallin")
 
     def test_word_search_paginator(self):
-        page_obj, found_count = word_search("aiga", 1)
+        page_obj, found_count, *_ = word_search("aiga", 1)
         self.assertEqual(found_count, 1)
         self.assertEqual([a.word for a in page_obj.object_list], ["aiga"])

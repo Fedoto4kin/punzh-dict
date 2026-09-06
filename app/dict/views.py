@@ -19,6 +19,8 @@ from .search import (
     word_search,
     detect_direction,
     compatible_disable,
+    parse_krl_tag_param,
+    parse_krl_phrase_param,
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
 
@@ -85,6 +87,9 @@ def search(request, query="", page=1):
     direction = detect_direction(query)
     f = request.GET.get("f") or None
     active_label = None
+    tag_filter_groups = []
+    phrase_filter = None
+    t_query = ""
     if direction == "rus":
         translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
         page_obj, found_count, narrowing, direct_ids, related_queries = (
@@ -103,7 +108,15 @@ def search(request, query="", page=1):
                 active_label = f
     else:
         direction = "krl"
-        page_obj, found_count = word_search(query, page)
+        tag_ids = parse_krl_tag_param(request.GET.get("t"))
+        phrase = parse_krl_phrase_param(request.GET.get("ph"))
+        (
+            page_obj,
+            found_count,
+            tag_filter_groups,
+            phrase_filter,
+            t_query,
+        ) = word_search(query, page, tag_ids, phrase)
         narrowing = []
         direct_ids = set()
         related_queries = []
@@ -127,6 +140,9 @@ def search(request, query="", page=1):
         "found_count": found_count,
         "direction": direction,
         "trigrams": trigrams,
+        "tag_filter_groups": tag_filter_groups,
+        "phrase_filter": phrase_filter,
+        "t_query": t_query,
     }
     return render(request, "search.html", context)
 

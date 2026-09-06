@@ -12,6 +12,44 @@
     .collapse-toggle.collapsed .when-open { display: none; }
     .collapse-toggle.collapsed .when-closed { display: inline; }
     .collapse-toggle .tgl { font-size: .8rem; font-weight: 400; color: #007bff; margin-left: .5rem; }
+    .krl-tag-filters {
+        border-top: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        padding: .5rem 0;
+        margin: .5rem 0 1rem;
+        font-size: .8rem;
+        line-height: 1.35;
+    }
+    .krl-tag-filters .krl-tag-group + .krl-tag-group { margin-top: .35rem; }
+    .krl-tag-filters .krl-tag-group-title {
+        display: block;
+        color: #6c757d;
+        margin-bottom: .15rem;
+        font-weight: 600;
+    }
+    .krl-tag-filters .krl-tag-opt {
+        display: inline-block;
+        padding: .05rem .35rem;
+        margin: .1rem .15rem .1rem 0;
+        border: 1px solid #ced4da;
+        border-radius: .2rem;
+        color: #495057;
+        background: #fff;
+        text-decoration: none;
+        font-size: .75rem;
+        line-height: 1.3;
+        white-space: nowrap;
+    }
+    .krl-tag-filters .krl-tag-opt:hover {
+        border-color: #007bff;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .krl-tag-filters .krl-tag-opt.is-active {
+        border-color: #007bff;
+        background: #007bff;
+        color: #fff;
+    }
 </style>
 <div class="mt-5 mb-3 row">
     <div class="col-lg-6">
@@ -25,7 +63,7 @@
 <nav class="navbar navbar-expand navbar-light row">
     <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
         {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}{{ t_query }}">&laquo;</a></li>
         {% else %}
         <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
         {% endif %}
@@ -33,11 +71,11 @@
         {% if page_obj.number == i %}
         <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
         {% else %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}{{ t_query }}">{{ trigrams|get_item:i }}</a></li>
         {% endif %}
         {% endfor %}
         {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}{{ t_query }}">&raquo;</a></li>
         {% else %}
         <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
         {% endif %}
@@ -65,6 +103,22 @@
         {% endfor %}
     </p>
     {% endif %}
+</div>
+{% endif %}
+
+{% if direction == 'krl' and tag_filter_groups %}
+<div class="krl-tag-filters" id="krlTagFilters">
+    {% for group in tag_filter_groups %}
+    <div class="krl-tag-group">
+        {% if group.title %}
+        <span class="krl-tag-group-title">{{ group.title }}:</span>
+        {% endif %}
+        {% for opt in group.options %}
+        <a href="/search/{{ query|urlencode }}/1{{ opt.t_query }}"
+           class="krl-tag-opt{% if opt.selected %} is-active{% endif %}">{{ opt.label }}{% if opt.selected %} &times;{% endif %}</a>
+        {% endfor %}
+    </div>
+    {% endfor %}
 </div>
 {% endif %}
 
@@ -138,7 +192,7 @@
 <nav class="navbar navbar-expand navbar-light row">
     <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
         {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}">&laquo;</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}{{ t_query }}">&laquo;</a></li>
         {% else %}
         <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
         {% endif %}
@@ -146,11 +200,11 @@
         {% if page_obj.number == i %}
         <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
         {% else %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}">{{ trigrams|get_item:i }}</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}{{ t_query }}">{{ trigrams|get_item:i }}</a></li>
         {% endif %}
         {% endfor %}
         {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}">&raquo;</a></li>
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}{{ t_query }}">&raquo;</a></li>
         {% else %}
         <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
         {% endif %}
