@@ -173,8 +173,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 и закрытый список полей. Несколько True — многозначность; пустой список —
 ни одно поле не про лемму. Одно поле тоже спрашиваем у модели.
 Заливка `load_translation_fields` трогает только флаг.
-Боевой прогон DeepSeek — `backlog.md` §4 (очистка переводов на prod
-закрыта — `docs/translation_cleanup.md`).
+Массовый прогон DeepSeek на prod **сделан** (`backlog.md` §4).
 
 **Результат (dev и прод совпадают):** 28 полей, 28262 привязки (~1.77 на
 статью), 48065 keywords, `no_field` ~7% (здоровый уровень). Мёртвых полей нет —
@@ -196,8 +195,8 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
 management-команды Django.
 
 Отдельно от прогона онтологии выше: `pick_translation_fields.py` →
-`load_translation_fields` (`backlog.md` §4). Поля уже стоят, меняется только
-флаг `from_translation`.
+`load_translation_fields`. Поля уже стоят, меняется только флаг
+`from_translation`. На prod массовая заливка флага закрыта (`backlog.md` §4).
 
 ---
 

@@ -11,7 +11,7 @@
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
 | [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
 | [plans/krl-search-tag-filters.md](plans/krl-search-tag-filters.md) | Фильтры помет в карельском `/search/` |
-| [../backlog.md](../backlog.md) | Продукт: связи «от», `from_translation`, пометы (очистка переводов — runbook) |
+| [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
 
 ## Спеки (ещё не обязательно в коде)

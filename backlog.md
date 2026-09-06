@@ -70,7 +70,6 @@ python manage.py fix_deriv_refs --queue unresolved
 ## 2. Очистить переводы — **сделано (prod, 2026-09)**
 
 LLM-очистка на prod (`clean_translations --write`), регрессия поиска закрыта.
-Блокер для §4 снят.
 
 - Runbook: **`docs/translation_cleanup.md`**
 - Контракт UX после cleanup: **`docs/searching_upgrade.md`** §0.1
@@ -96,13 +95,14 @@ LLM-очистка на prod (`clean_translations --write`), регрессия 
 
 ---
 
-## 4. Поля из перевода — **в работе**
-Код готов: флаг `from_translation` на `ArticleSemanticField`,
-`pick_translation_fields.py`, заливка `load_translation_fields`.
+## 4. Поля из перевода — **сделано (prod, 2026-09)**
+
+Массовая пометка `from_translation`: `pick_translation_fields.py` +
+`load_translation_fields`. Связи не удаляли и не создавали.
 Выдача `/ontology/` флаг не фильтрует.
 
-**Блокер снят:** переводы на prod очищены (§2). Можно полный прогон DeepSeek
-и заливку флага. Связи не удалять и не создавать.
+Новые статьи: `manage.py classify_article --id` ставит флаг сразу
+(второй LLM-вызов).
 
 **Не делаем в этой версии:** переклассификация полей; чистка keywords;
 снятие «лишних» полей из иллюстраций; фильтр `/ontology/` и AI-поиска по

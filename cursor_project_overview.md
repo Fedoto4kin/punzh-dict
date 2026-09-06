@@ -10,7 +10,7 @@
 - русские переводы (`ArticleIndexTranslate`);
 - пометы (`Tag`: населённые пункты, часть речи, стилистика, говоры, фразеологизмы);
 - источники (`Source`);
-- смысловые поля и ключевые слова (`SemanticField`, `ArticleSemanticField`, `ArticleKeyword`) — справочник и разметка для ветки AI-поиска; **не** смешивать с обычным `/search/`. На связи `ArticleSemanticField.from_translation` — поле следует из переводов леммы, не из иллюстрации (несколько True нормальны; выдача `/ontology/` флаг **не** фильтрует). Код пометки готов; боевой прогон флага — `backlog.md` §4 (`pick_translation_fields` + `load_translation_fields`). Очистка переводов на prod закрыта — `docs/translation_cleanup.md`.
+- смысловые поля и ключевые слова (`SemanticField`, `ArticleSemanticField`, `ArticleKeyword`) — справочник и разметка для ветки AI-поиска; **не** смешивать с обычным `/search/`. На связи `ArticleSemanticField.from_translation` — поле следует из переводов леммы, не из иллюстрации (несколько True нормальны; выдача `/ontology/` флаг **не** фильтрует). Массовая пометка флага на prod закрыта (`backlog.md` §4). Очистка переводов на prod закрыта — `docs/translation_cleanup.md`.
 
 Снимок разметки (dev и прод совпадали на 2026-08): 28 полей, ~28k привязок (~1.77/статью), ~48k keywords. `no_field` ~7% — норма (служебные слова и отсылки «см.»; доразметка не нужна, находятся через `ArticleLink`).
 
