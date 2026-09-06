@@ -19,8 +19,7 @@ from .search import (
     word_search,
     detect_direction,
     compatible_disable,
-    parse_krl_tag_param,
-    parse_krl_phrase_param,
+    tag_filters_from_request,
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
 
@@ -108,8 +107,7 @@ def search(request, query="", page=1):
                 active_label = f
     else:
         direction = "krl"
-        tag_ids = parse_krl_tag_param(request.GET.get("t"))
-        phrase = parse_krl_phrase_param(request.GET.get("ph"))
+        tag_ids, phrase = tag_filters_from_request(request)
         (
             page_obj,
             found_count,
@@ -143,6 +141,7 @@ def search(request, query="", page=1):
         "tag_filter_groups": tag_filter_groups,
         "phrase_filter": phrase_filter,
         "t_query": t_query,
+        "tag_list_base": "/search/%s/" % quote(query),
     }
     return render(request, "search.html", context)
 
@@ -216,13 +215,18 @@ def ontology_index(request):
 
 def ontology_view(request, field_id, page=1):
     field = get_object_or_404(SemanticField, pk=field_id)
-    content = search_by_semantic_field(field.id, page)
+    tag_ids, phrase = tag_filters_from_request(request)
+    content = search_by_semantic_field(field.id, page, tag_ids, phrase)
     context = {
         "ABC": KRL_ABC,
         "field": field,
         "all_fields": semantic_fields_with_counts(),
         "page_obj": content.page_obj,
         "trigrams": content.trigrams_dict,
+        "tag_filter_groups": content.tag_filter_groups or [],
+        "phrase_filter": content.phrase_filter,
+        "t_query": content.t_query or "",
+        "tag_list_base": "/ontology/%s/" % field.id,
     }
     return render(request, "ontology_view.html", context)
 

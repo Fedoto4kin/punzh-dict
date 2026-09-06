@@ -137,3 +137,74 @@ class OntologyViewTestCase(TestCase):
             for a in search_by_semantic_field(self.animals.id, 1).page_obj.object_list
         ]
         self.assertIn("rutoldi", words)
+
+
+class OntologyTagFiltersTestCase(TestCase):
+    def setUp(self):
+        self.c = Client()
+        self.field = SemanticField.objects.create(name="Поле", definition="", sorting=1)
+        self.adj = Tag.objects.create(
+            tag="a", name="adjectivum", type=2, sorting=1, level=0
+        )
+        self.noun = Tag.objects.create(
+            tag="s", name="substantivum", type=2, sorting=2, level=0
+        )
+        self.phr = Tag.objects.create(tag="phr", name="фразеологизм", type=5, sorting=1)
+        self.a_adj = self._article("onta", [self.adj])
+        self.a_noun = self._article("ontb", [self.noun])
+        self.a_phr = self._article("ontc", [self.adj, self.phr])
+
+    def _article(self, word, tags):
+        art = Article.objects.create(word=word)
+        ArticleSemanticField.objects.create(article=art, field=self.field)
+        for tag in tags:
+            ArticleIndexTag.objects.create(article=art, tag=tag)
+        return art
+
+    def test_helper_filters_by_tag(self):
+        content = search_by_semantic_field(self.field.id, 1, [self.noun.id])
+        words = {a.word for a in content.page_obj.object_list}
+        self.assertEqual(words, {"ontb"})
+        self.assertEqual(content.t_query, "?t=%s" % self.noun.id)
+        self.assertTrue(content.tag_filter_groups)
+
+    def test_helper_phrase_filter(self):
+        content = search_by_semantic_field(self.field.id, 1, phrase=True)
+        words = {a.word for a in content.page_obj.object_list}
+        self.assertEqual(words, {"ontc"})
+        self.assertEqual(content.t_query, "?ph=1")
+
+    def test_view_shows_facets_and_filters(self):
+        resp = self.c.get("/ontology/%s/" % self.field.id, {"t": str(self.adj.id)})
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, 'id="krlTagFilters"')
+        words = {a.word for a in resp.context["page_obj"].object_list}
+        self.assertEqual(words, {"onta", "ontc"})
+        self.assertContains(resp, "?t=%s" % self.adj.id)
+
+    def test_view_preserves_filters_in_pagination(self):
+        for i in range(num_by_page + 1):
+            self._article("ontp%02d" % i, [self.adj if i < 5 else self.noun])
+        resp = self.c.get("/ontology/%s/1" % self.field.id, {"t": str(self.adj.id)})
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "?t=%s" % self.adj.id)
+
+    def test_field_switcher_drops_filters(self):
+        other = SemanticField.objects.create(name="Другое", sorting=2)
+        resp = self.c.get("/ontology/%s/" % self.field.id, {"t": str(self.adj.id)})
+        self.assertContains(resp, 'href="/ontology/%s/"' % other.id)
+        html = resp.content.decode()
+        # switcher links must not carry ?t=
+        self.assertNotRegex(
+            html,
+            r'href="/ontology/%s/\?t=' % other.id,
+        )
+
+    def test_empty_after_filter_message(self):
+        resp = self.c.get(
+            "/ontology/%s/" % self.field.id,
+            {"t": str(self.noun.id), "ph": "1"},
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual([], list(resp.context["page_obj"].object_list))
+        self.assertContains(resp, "С такими пометами")

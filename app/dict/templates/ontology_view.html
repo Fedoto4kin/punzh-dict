@@ -54,13 +54,15 @@
     </div>
 </div>
 
+{% include "partials/tag_filters.html" with tag_filter_groups=tag_filter_groups list_base=tag_list_base %}
+
 <nav class="navbar navbar-expand-lg mb-2 navbar-light">
     <div class="container">
         {% if page_obj.has_other_pages %}
         <div class="btn-group navbar-toggler ml-0 mr-auto">
             {% if page_obj.has_previous %}
             <a class="btn btn-light btn-link"
-               href="{% url 'ontology_field_page' field.id page_obj.previous_page_number %}"><i class='fa fa-chevron-circle-left'></i></a>
+               href="{% url 'ontology_field_page' field.id page_obj.previous_page_number %}{{ t_query }}"><i class='fa fa-chevron-circle-left'></i></a>
             {% endif %}
             <button class="btn-sm btn btn-link" type="button"
                     data-toggle="collapse"
@@ -72,7 +74,7 @@
             </button>
             {% if page_obj.has_next %}
             <a class="btn btn-light btn-link"
-               href="{% url 'ontology_field_page' field.id page_obj.next_page_number %}"><i class='fa fa-chevron-circle-right'></i></a>
+               href="{% url 'ontology_field_page' field.id page_obj.next_page_number %}{{ t_query }}"><i class='fa fa-chevron-circle-right'></i></a>
             {% endif %}
         </div>
         <ul class="pagination navbar-collapse collapse flex-wrap mx-auto mt-1 small justify-content-center"
@@ -84,7 +86,7 @@
             </li>
             {% else %}
             <li class="page-item">
-                <a class="page-link" href="{% url 'ontology_field_page' field.id i %}">{{ trigrams|get_item:i }}</a>
+                <a class="page-link" href="{% url 'ontology_field_page' field.id i %}{{ t_query }}">{{ trigrams|get_item:i }}</a>
             </li>
             {% endifequal %}
             {% endfor %}
@@ -96,7 +98,11 @@
 {% if not page_obj.object_list %}
 <div class="row">
     <div class="col-sm-12 text-center">
+        {% if t_query %}
+        С такими пометами в этом смысловом поле ничего не найдено
+        {% else %}
         В этом смысловом поле пока нет статей
+        {% endif %}
     </div>
 </div>
 {% endif %}

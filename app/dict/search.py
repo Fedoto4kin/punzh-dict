@@ -37,6 +37,9 @@ class Content:
     last_page_word: str = ""
     first_page_word: str = ""
     trigrams_dict: object = None
+    tag_filter_groups: object = None
+    phrase_filter: object = None
+    t_query: str = ""
 
 
 # ------------------------------------------------------------
@@ -799,25 +802,44 @@ def krl_tag_facets(base_ids, selected_ids, phrase=False):
     return groups, phrase_filter
 
 
+def tag_filters_from_request(request):
+    """Parse and normalize ?t= / ?ph= from a Django request."""
+    tag_ids = normalize_krl_tag_ids(parse_krl_tag_param(request.GET.get("t")))
+    phrase = parse_krl_phrase_param(request.GET.get("ph"))
+    return tag_ids, phrase
+
+
+def tag_filtered_ids_and_facets(base_ids, tag_ids=None, phrase=False):
+    """
+    Apply tag/?ph filters to a base article-id set and build facet UI data.
+
+    Shared by KRL /search/ and /ontology/. Returns
+    (filtered_ids, tag_filter_groups, phrase_filter, t_query).
+    """
+    selected = normalize_krl_tag_ids(tag_ids or [])
+    phrase = bool(phrase)
+    base_ids = set(base_ids)
+    filtered_ids = _apply_krl_filters(base_ids, selected, phrase)
+    groups, phrase_filter = krl_tag_facets(base_ids, selected, phrase)
+    return (
+        filtered_ids,
+        groups,
+        phrase_filter,
+        format_krl_filter_query(selected, phrase),
+    )
+
+
 def word_search(query: str, page: int, tag_ids=None, phrase=False):
     """
     Karelian headword search, optional ?t= / ?ph= filters.
 
     Returns (page_obj, found_count, tag_filter_groups, phrase_filter, t_query).
     """
-    base_ids = set(krl_article_ids(query))
-    selected = normalize_krl_tag_ids(tag_ids or [])
-    phrase = bool(phrase)
-    filtered_ids = _apply_krl_filters(base_ids, selected, phrase)
-    page_obj, found_count = get_sorted_articles(filtered_ids, page)
-    groups, phrase_filter = krl_tag_facets(base_ids, selected, phrase)
-    return (
-        page_obj,
-        found_count,
-        groups,
-        phrase_filter,
-        format_krl_filter_query(selected, phrase),
+    filtered_ids, groups, phrase_filter, t_query = tag_filtered_ids_and_facets(
+        krl_article_ids(query), tag_ids, phrase
     )
+    page_obj, found_count = get_sorted_articles(filtered_ids, page)
+    return page_obj, found_count, groups, phrase_filter, t_query
 
 
 # ------------------------------------------------------------
@@ -994,13 +1016,23 @@ def semantic_fields_with_counts():
     return fields
 
 
-def search_by_semantic_field(field_id, page):
-    articles = Article.objects.filter(
-        pk__in=article_ids_for_semantic_field(field_id)
-    ).prefetch_related("additions")
+def search_by_semantic_field(field_id, page, tag_ids=None, phrase=False):
+    """
+    Articles in a semantic field, optional ?t= / ?ph= filters (same as KRL search).
+    """
+    filtered_ids, groups, phrase_filter, t_query = tag_filtered_ids_and_facets(
+        article_ids_for_semantic_field(field_id), tag_ids, phrase
+    )
+    articles = Article.objects.filter(pk__in=filtered_ids).prefetch_related("additions")
     page_obj, sorted_articles = sort_and_paginate(articles, page)
     trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
-    return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
+    return Content(
+        page_obj=page_obj,
+        trigrams_dict=trigrams_dict,
+        tag_filter_groups=groups or [],
+        phrase_filter=phrase_filter,
+        t_query=t_query,
+    )
 
 
 # ------------------------------------------------------------
