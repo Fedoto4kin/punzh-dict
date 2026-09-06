@@ -17,7 +17,7 @@
     <a href="{% url 'ontology_field' f.id %}" class="list-group-item list-group-item-action">
         <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">{{ f.name }}</h5>
-            <small>{{ f.article_count }}</small>
+            <small>{{ f.translation_count }}/{{ f.article_count }}</small>
         </div>
         {% if f.definition %}
         <p class="mb-1 text-muted">{{ f.definition }}</p>

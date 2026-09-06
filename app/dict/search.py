@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 from django.db.models.functions import Length
 
 from .helpers import (
@@ -596,14 +596,21 @@ def normalize_krl_tag_ids(tag_ids):
     return [chosen[t] for t in _KRL_TAG_GROUP_ORDER if t in chosen]
 
 
-def format_krl_filter_query(tag_ids, phrase=False):
-    """GET suffix: '', '?t=1,2', '?ph=1', or '?t=1,2&ph=1'."""
+def format_krl_filter_query(tag_ids, phrase=False, include_all=False):
+    """GET suffix for ?t= / ?ph= / ontology ?all=1 (illustrations mode)."""
     parts = []
     if tag_ids:
         parts.append("t=" + ",".join(str(i) for i in tag_ids))
     if phrase:
         parts.append("ph=1")
+    if include_all:
+        parts.append("all=1")
     return ("?" + "&".join(parts)) if parts else ""
+
+
+def parse_ontology_all_param(raw):
+    """True when ?all=1 — ontology listing includes illustration-only fields."""
+    return parse_krl_phrase_param(raw)
 
 
 def format_krl_t_query(tag_ids):
@@ -809,24 +816,60 @@ def tag_filters_from_request(request):
     return tag_ids, phrase
 
 
-def tag_filtered_ids_and_facets(base_ids, tag_ids=None, phrase=False):
+def tag_filtered_ids_and_facets(
+    base_ids, tag_ids=None, phrase=False, include_all=False
+):
     """
     Apply tag/?ph filters to a base article-id set and build facet UI data.
 
     Shared by KRL /search/ and /ontology/. Returns
     (filtered_ids, tag_filter_groups, phrase_filter, t_query).
+    include_all — ontology illustrations mode (?all=1) in facet/pagination queries.
     """
     selected = normalize_krl_tag_ids(tag_ids or [])
     phrase = bool(phrase)
+    include_all = bool(include_all)
     base_ids = set(base_ids)
     filtered_ids = _apply_krl_filters(base_ids, selected, phrase)
     groups, phrase_filter = krl_tag_facets(base_ids, selected, phrase)
+    if include_all:
+        groups = _ontology_queries_with_all(groups)
+        if phrase_filter is not None:
+            phrase_filter = dict(phrase_filter)
+            phrase_filter["t_query"] = _with_all_param(phrase_filter["t_query"])
     return (
         filtered_ids,
         groups,
         phrase_filter,
-        format_krl_filter_query(selected, phrase),
+        format_krl_filter_query(selected, phrase, include_all=include_all),
     )
+
+
+def _with_all_param(t_query):
+    """Append ontology ?all=1 / &all=1 to a filter query string."""
+    if not t_query:
+        return "?all=1"
+    if "all=1" in t_query:
+        return t_query
+    return t_query + "&all=1"
+
+
+def _ontology_queries_with_all(groups):
+    if not groups:
+        return groups
+    out = []
+    for group in groups:
+        g = dict(group)
+        if g.get("clear_t_query") is not None:
+            g["clear_t_query"] = _with_all_param(g["clear_t_query"])
+        opts = []
+        for opt in g.get("options") or []:
+            o = dict(opt)
+            o["t_query"] = _with_all_param(o.get("t_query") or "")
+            opts.append(o)
+        g["options"] = opts
+        out.append(g)
+    return out
 
 
 def word_search(query: str, page: int, tag_ids=None, phrase=False):
@@ -975,9 +1018,9 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
 
 
-def article_ids_for_semantic_field(field_id):
+def article_ids_for_semantic_field(field_id, include_all=True):
     """
-    Articles in a semantic field, plus unmarked «см.» referrers.
+    Articles in a semantic field, plus unmarked «см.» referrers when include_all.
 
     Lemmas classified into the field are the core set. Articles that only
     point at those lemmas via ArticleLink (см. / от, no translation for the
@@ -985,7 +1028,16 @@ def article_ids_for_semantic_field(field_id):
     expand_by_links in Russian search, but one-way: we do not follow
     outgoing links, which would leak unrelated targets into the listing.
     Referrers that already have any semantic field keep their own markup.
+
+    include_all=False — only assignments with from_translation=True (no
+    illustration-only fields, no unmarked referrer inheritance).
     """
+    if not include_all:
+        return set(
+            ArticleSemanticField.objects.filter(
+                field_id=field_id, from_translation=True
+            ).values_list("article_id", flat=True)
+        )
     classified = set(
         ArticleSemanticField.objects.filter(field_id=field_id).values_list(
             "article_id", flat=True
@@ -1010,18 +1062,39 @@ def article_ids_for_semantic_field(field_id):
 
 
 def semantic_fields_with_counts():
+    """
+    Attach badge counts to each SemanticField:
+    translation_count — articles with from_translation=True (x);
+    article_count — full listing size incl. illustrations + unmarked
+    referrers (y). Templates show x/y.
+    """
     fields = list(SemanticField.objects.all())
+    translation_counts = {
+        row["field_id"]: row["n"]
+        for row in ArticleSemanticField.objects.filter(from_translation=True)
+        .values("field_id")
+        .annotate(n=Count("article_id", distinct=True))
+    }
     for field in fields:
+        field.translation_count = translation_counts.get(field.pk, 0)
         field.article_count = len(article_ids_for_semantic_field(field.pk))
     return fields
 
 
-def search_by_semantic_field(field_id, page, tag_ids=None, phrase=False):
+def search_by_semantic_field(
+    field_id, page, tag_ids=None, phrase=False, include_all=False
+):
     """
-    Articles in a semantic field, optional ?t= / ?ph= filters (same as KRL search).
+    Articles in a semantic field, optional ?t= / ?ph= / ?all=1.
+
+    Default include_all=False — only from_translation assignments.
     """
+    include_all = bool(include_all)
     filtered_ids, groups, phrase_filter, t_query = tag_filtered_ids_and_facets(
-        article_ids_for_semantic_field(field_id), tag_ids, phrase
+        article_ids_for_semantic_field(field_id, include_all=include_all),
+        tag_ids,
+        phrase,
+        include_all=include_all,
     )
     articles = Article.objects.filter(pk__in=filtered_ids).prefetch_related("additions")
     page_obj, sorted_articles = sort_and_paginate(articles, page)

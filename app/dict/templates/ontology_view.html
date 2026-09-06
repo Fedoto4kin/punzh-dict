@@ -12,6 +12,11 @@
   .collapse-toggle.collapsed .when-open { display: none; }
   .collapse-toggle.collapsed .when-closed { display: inline; }
   .collapse-toggle .tgl { font-size: .8rem; font-weight: 400; color: #007bff; margin-left: .5rem; }
+  .ontology-mode-filters .btn {
+      font-size: .95rem;
+      padding: .4rem .9rem;
+      font-weight: 500;
+  }
 </style>
 <div class="row mt-5 mb-3">
     <div class="col-12">
@@ -22,6 +27,15 @@
         {% if field.definition %}
         <p class="text-muted">{{ field.definition }}</p>
         {% endif %}
+    </div>
+</div>
+
+<div class="mb-3" id="ontologyModeFilters">
+    <div class="btn-group ontology-mode-filters" role="group" aria-label="Режим онтологии">
+        <a href="{% url 'ontology_field' field.id %}{{ mode_tr_query }}"
+           class="btn {% if not include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">По значениям</a>
+        <a href="{% url 'ontology_field' field.id %}{{ mode_all_query }}"
+           class="btn {% if include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">Переводы и примеры</a>
     </div>
 </div>
 
@@ -42,10 +56,9 @@
             <div id="collapseFields" class="collapse" aria-labelledby="headingFields" data-parent="#ontologyFields">
                 <div class="card-body">
                     {% for f in all_fields %}
-                    <a href="{% url 'ontology_field' f.id %}"
+                    <a href="{% url 'ontology_field' f.id %}{{ mode_query }}"
                        class="btn btn-sm mb-1 {% if f.id == field.id %}btn-primary{% else %}btn-outline-secondary{% endif %}">
                         {{ f.name }}
-                        <span class="badge badge-light">{{ f.article_count }}</span>
                     </a>
                     {% endfor %}
                 </div>
@@ -98,7 +111,7 @@
 {% if not page_obj.object_list %}
 <div class="row">
     <div class="col-sm-12 text-center">
-        {% if t_query %}
+        {% if has_tag_or_phrase_filter %}
         С такими пометами в этом смысловом поле ничего не найдено
         {% else %}
         В этом смысловом поле пока нет статей

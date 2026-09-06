@@ -8,7 +8,7 @@ from ..models import (
     SemanticField,
     Tag,
 )
-from ..search import num_by_page, search_by_semantic_field
+from ..search import num_by_page, search_by_semantic_field, semantic_fields_with_counts
 
 
 class OntologyViewTestCase(TestCase):
@@ -36,9 +36,13 @@ class OntologyViewTestCase(TestCase):
         self.other = Article.objects.create(word="muu")
 
         ArticleSemanticField.objects.create(article=self.ciga, field=self.animals)
-        ArticleSemanticField.objects.create(article=self.aiga, field=self.animals)
+        ArticleSemanticField.objects.create(
+            article=self.aiga, field=self.animals, from_translation=True
+        )
         ArticleSemanticField.objects.create(article=self.bua, field=self.animals)
-        ArticleSemanticField.objects.create(article=self.other, field=self.flax)
+        ArticleSemanticField.objects.create(
+            article=self.other, field=self.flax, from_translation=True
+        )
 
         self.see_also = Article.objects.create(word="aah")
         ArticleLink.objects.create(from_article=self.see_also, to_article=self.aiga)
@@ -53,19 +57,52 @@ class OntologyViewTestCase(TestCase):
         self.assertContains(response, "Животные")
         self.assertContains(response, "Лён")
 
+    def test_index_counts_are_translation_over_total(self):
+        # animals: 1 from_translation + 2 illustration-only + unmarked см. → 1/4
+        # flax: 1 from_translation, no referrers → 1/1
+        # empty: 0/0
+        counts = {f.name: f for f in semantic_fields_with_counts()}
+        self.assertEqual(1, counts["Животные"].translation_count)
+        self.assertEqual(4, counts["Животные"].article_count)
+        self.assertEqual(1, counts["Лён"].translation_count)
+        self.assertEqual(1, counts["Лён"].article_count)
+        self.assertEqual(0, counts["Пустое поле"].translation_count)
+        self.assertEqual(0, counts["Пустое поле"].article_count)
+
+        index = self.c.get("/ontology/")
+        self.assertContains(index, "1/4")
+        self.assertContains(index, "1/1")
+        self.assertContains(index, "0/0")
+
+    def test_default_lists_translation_only(self):
+        response = self.c.get("/ontology/%s/" % self.animals.id)
+        self.assertEqual(200, response.status_code)
+        words = [a.word for a in response.context["page_obj"].object_list]
+        self.assertEqual(["aiga"], words)
+        self.assertFalse(response.context["include_all"])
+        self.assertContains(response, 'id="ontologyModeFilters"')
+        self.assertContains(response, "По значениям")
+        self.assertContains(response, "Переводы и примеры")
+
+    def test_all_mode_lists_illustrations_and_referrers(self):
+        response = self.c.get("/ontology/%s/" % self.animals.id, {"all": "1"})
+        self.assertEqual(200, response.status_code)
+        words = [a.word for a in response.context["page_obj"].object_list]
+        self.assertEqual(["aah", "aiga", "bua", "ciga"], words)
+        self.assertTrue(response.context["include_all"])
+        self.assertContains(response, "?all=1")
+
     def test_unknown_id_is_404(self):
         response = self.c.get("/ontology/99999/")
         self.assertEqual(404, response.status_code)
 
-    def test_field_lists_only_its_articles_in_krl_order(self):
-        response = self.c.get("/ontology/%s/" % self.animals.id)
-        self.assertEqual(200, response.status_code)
-        words = [a.word for a in response.context["page_obj"].object_list]
-        self.assertEqual(["aah", "aiga", "bua", "ciga"], words)
-        self.assertNotIn("muu", words)
-
-    def test_search_helper_matches_view(self):
+    def test_search_helper_default_is_translation_only(self):
         content = search_by_semantic_field(self.animals.id, 1)
+        words = [a.word for a in content.page_obj.object_list]
+        self.assertEqual(["aiga"], words)
+
+    def test_search_helper_all_matches_full_listing(self):
+        content = search_by_semantic_field(self.animals.id, 1, include_all=True)
         words = [a.word for a in content.page_obj.object_list]
         self.assertEqual(["aah", "aiga", "bua", "ciga"], words)
 
@@ -88,7 +125,9 @@ class OntologyViewTestCase(TestCase):
     def test_pagination_second_page(self):
         for i in range(num_by_page):
             art = Article.objects.create(word="zextra%02d" % i)
-            ArticleSemanticField.objects.create(article=art, field=self.animals)
+            ArticleSemanticField.objects.create(
+                article=art, field=self.animals, from_translation=True
+            )
         response = self.c.get("/ontology/%s/2" % self.animals.id)
         self.assertEqual(200, response.status_code)
         self.assertEqual(2, response.context["page_obj"].number)
@@ -96,19 +135,21 @@ class OntologyViewTestCase(TestCase):
 
     def test_see_also_without_markup_inherits_target_field(self):
         self.assertFalse(self.see_also.semantic_assignments.exists())
-        content = search_by_semantic_field(self.animals.id, 1)
+        content = search_by_semantic_field(self.animals.id, 1, include_all=True)
         words = [a.word for a in content.page_obj.object_list]
         self.assertIn("aah", words)
         flax_words = [
             a.word
-            for a in search_by_semantic_field(self.flax.id, 1).page_obj.object_list
+            for a in search_by_semantic_field(
+                self.flax.id, 1, include_all=True
+            ).page_obj.object_list
         ]
         self.assertEqual(["muu"], flax_words)
 
     def test_marked_referrer_does_not_inherit_another_field(self):
         # aiga (animals) → muu (flax): outgoing from animals must not pull muu.
         # muu already has its own field, so it also must not inherit animals.
-        content = search_by_semantic_field(self.animals.id, 1)
+        content = search_by_semantic_field(self.animals.id, 1, include_all=True)
         words = [a.word for a in content.page_obj.object_list]
         self.assertNotIn("muu", words)
 
@@ -121,7 +162,9 @@ class OntologyViewTestCase(TestCase):
         )
         words = [
             a.word
-            for a in search_by_semantic_field(self.animals.id, 1).page_obj.object_list
+            for a in search_by_semantic_field(
+                self.animals.id, 1, include_all=True
+            ).page_obj.object_list
         ]
         self.assertNotIn("cflink", words)
 
@@ -134,9 +177,30 @@ class OntologyViewTestCase(TestCase):
         )
         words = [
             a.word
-            for a in search_by_semantic_field(self.animals.id, 1).page_obj.object_list
+            for a in search_by_semantic_field(
+                self.animals.id, 1, include_all=True
+            ).page_obj.object_list
         ]
         self.assertIn("rutoldi", words)
+
+    def test_field_switcher_keeps_all_mode(self):
+        resp = self.c.get("/ontology/%s/" % self.animals.id, {"all": "1"})
+        self.assertContains(resp, 'href="/ontology/%s/?all=1"' % self.flax.id)
+
+    def test_field_switcher_drops_tag_filters(self):
+        resp = self.c.get(
+            "/ontology/%s/" % self.animals.id,
+            {"t": "1", "all": "1"},
+        )
+        html = resp.content.decode()
+        self.assertNotRegex(
+            html,
+            r'href="/ontology/%s/\?t=' % self.flax.id,
+        )
+        self.assertRegex(
+            html,
+            r'href="/ontology/%s/\?all=1"' % self.flax.id,
+        )
 
 
 class OntologyTagFiltersTestCase(TestCase):
@@ -156,7 +220,9 @@ class OntologyTagFiltersTestCase(TestCase):
 
     def _article(self, word, tags):
         art = Article.objects.create(word=word)
-        ArticleSemanticField.objects.create(article=art, field=self.field)
+        ArticleSemanticField.objects.create(
+            article=art, field=self.field, from_translation=True
+        )
         for tag in tags:
             ArticleIndexTag.objects.create(article=art, tag=tag)
         return art
@@ -174,6 +240,12 @@ class OntologyTagFiltersTestCase(TestCase):
         self.assertEqual(words, {"ontc"})
         self.assertEqual(content.t_query, "?ph=1")
 
+    def test_helper_all_mode_keeps_all_in_t_query(self):
+        content = search_by_semantic_field(
+            self.field.id, 1, [self.noun.id], include_all=True
+        )
+        self.assertEqual(content.t_query, "?t=%s&all=1" % self.noun.id)
+
     def test_view_shows_facets_and_filters(self):
         resp = self.c.get("/ontology/%s/" % self.field.id, {"t": str(self.adj.id)})
         self.assertEqual(200, resp.status_code)
@@ -188,6 +260,16 @@ class OntologyTagFiltersTestCase(TestCase):
         resp = self.c.get("/ontology/%s/1" % self.field.id, {"t": str(self.adj.id)})
         self.assertEqual(200, resp.status_code)
         self.assertContains(resp, "?t=%s" % self.adj.id)
+
+    def test_view_preserves_all_in_pagination(self):
+        for i in range(num_by_page + 1):
+            self._article("onta%02d" % i, [self.adj if i < 5 else self.noun])
+        resp = self.c.get(
+            "/ontology/%s/1" % self.field.id,
+            {"t": str(self.adj.id), "all": "1"},
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, "all=1")
 
     def test_field_switcher_drops_filters(self):
         other = SemanticField.objects.create(name="Другое", sorting=2)
@@ -208,3 +290,9 @@ class OntologyTagFiltersTestCase(TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertEqual([], list(resp.context["page_obj"].object_list))
         self.assertContains(resp, "С такими пометами")
+
+    def test_all_alone_empty_is_not_tag_message(self):
+        empty = SemanticField.objects.create(name="Пусто", sorting=9)
+        resp = self.c.get("/ontology/%s/" % empty.id, {"all": "1"})
+        self.assertContains(resp, "пока нет статей")
+        self.assertNotContains(resp, "С такими пометами")

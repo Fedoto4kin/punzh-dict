@@ -19,6 +19,8 @@ from .search import (
     word_search,
     detect_direction,
     compatible_disable,
+    format_krl_filter_query,
+    parse_ontology_all_param,
     tag_filters_from_request,
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
@@ -216,7 +218,10 @@ def ontology_index(request):
 def ontology_view(request, field_id, page=1):
     field = get_object_or_404(SemanticField, pk=field_id)
     tag_ids, phrase = tag_filters_from_request(request)
-    content = search_by_semantic_field(field.id, page, tag_ids, phrase)
+    include_all = parse_ontology_all_param(request.GET.get("all"))
+    content = search_by_semantic_field(
+        field.id, page, tag_ids, phrase, include_all=include_all
+    )
     context = {
         "ABC": KRL_ABC,
         "field": field,
@@ -227,6 +232,11 @@ def ontology_view(request, field_id, page=1):
         "phrase_filter": content.phrase_filter,
         "t_query": content.t_query or "",
         "tag_list_base": "/ontology/%s/" % field.id,
+        "include_all": include_all,
+        "has_tag_or_phrase_filter": bool(tag_ids or phrase),
+        "mode_query": format_krl_filter_query([], False, include_all=include_all),
+        "mode_tr_query": format_krl_filter_query(tag_ids, phrase, include_all=False),
+        "mode_all_query": format_krl_filter_query(tag_ids, phrase, include_all=True),
     }
     return render(request, "ontology_view.html", context)
 
