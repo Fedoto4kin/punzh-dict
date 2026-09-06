@@ -140,7 +140,7 @@
         {% endif %}
         <div class="tr-card__html">
           {% if card.article.article_html %}
-            {{ card.article.article_html|make_link|nice|make_break|highlight_rus|safe }}
+            {{ card.article.article_html|make_link|nice|make_break|highlight_tags|highlight_rus|safe }}
           {% else %}
             <span class="tr-card__empty">нет HTML</span>
           {% endif %}

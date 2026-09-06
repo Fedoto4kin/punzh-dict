@@ -21,7 +21,7 @@ from .models import (
 )
 from .search import krl_article_ids
 from .search_debug import explain_rus_search
-from .templatetags.dict_extras import highlight_rus, make_break, make_link, nice
+from .tag_highlight import format_article_html
 from .translation_browser import (
     MODE_CONTAINS,
     MODE_EXACT,
@@ -385,14 +385,13 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<span style='color:#999'>—</span>")
 
     def _article_html(self, obj):
-        # Same pipeline as translation browser; styles in article_html_preview.css.
+        # Same pipeline as translation browser / public cards.
         html = obj.article_html or ""
         if not html:
             return ""
-        rendered = highlight_rus(make_break(nice(make_link(html))))
         return format_html(
             '<div class="article-html-preview">{}</div>',
-            mark_safe(rendered),
+            mark_safe(format_article_html(html)),
         )
 
     _article_html.short_description = "Словарная статья"

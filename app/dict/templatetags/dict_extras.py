@@ -4,6 +4,7 @@ from django import template
 
 from ..helpers import normalization
 from ..see_audit import link_deriv_lemmas, link_see_lemmas
+from ..tag_highlight import highlight_tags as highlight_tags_html
 
 register = template.Library()
 
@@ -29,6 +30,11 @@ def get_item(dictionary, key):
 @register.filter
 def highlight_rus(text):
     return re.sub(r"([А-Яа-яЁё]+)", r'<span class="text-rus">\1</span>', text)
+
+
+@register.filter
+def highlight_tags(text):
+    return highlight_tags_html(text)
 
 
 @register.filter

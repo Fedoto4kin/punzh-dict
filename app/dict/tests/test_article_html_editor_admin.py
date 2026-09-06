@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from ..models import Article
+from ..models import Article, Tag
+from ..tag_highlight import clear_italic_tag_cache
 
 
 class ArticleHtmlEditorAdminTestCase(TestCase):
@@ -9,8 +10,10 @@ class ArticleHtmlEditorAdminTestCase(TestCase):
         self.user = User.objects.create_superuser("admin", "a@example.com", "x")
         self.article = Article.objects.create(
             word="kohde",
-            article_html="<b>koh||de</b> <i>см.</i> lemma быстро",
+            article_html="<b>koh||de</b> <i>s</i> <i>см.</i> lemma быстро",
         )
+        Tag.objects.create(tag="s", name="substantivum", type=2, sorting=1)
+        clear_italic_tag_cache()
         self.client.force_login(self.user)
 
     def test_change_form_loads_codemirror_and_html_source_widget(self):
@@ -32,6 +35,7 @@ class ArticleHtmlEditorAdminTestCase(TestCase):
         self.assertIn("admin/css/article_html_preview.css", html)
         self.assertIn('class="article-html-preview"', html)
         self.assertIn('class="text-rus"', html)
+        self.assertIn('class="text-tag"', html)
         self.assertNotIn('style="color:#0b5"', html)
         self.assertIn("быстро", html)
         self.assertIn('class="text-muted font-weight-normal"', html)

@@ -242,7 +242,7 @@
 
           <div class="sd-card__html">
             {% if card.article.article_html %}
-              {{ card.article.article_html|make_link|nice|make_break|highlight_rus|safe }}
+              {{ card.article.article_html|make_link|nice|make_break|highlight_tags|highlight_rus|safe }}
             {% else %}
               <em>нет HTML</em>
             {% endif %}

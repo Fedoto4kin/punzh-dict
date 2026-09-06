@@ -25,6 +25,11 @@ footer {
     color: #82551e;
 }
 
+.text-tag,
+.text-tag .text-rus {
+    color: #1B4332;
+}
+
 #btn-back-to-top {
     position: fixed;
     bottom: 20px;

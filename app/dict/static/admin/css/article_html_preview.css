@@ -33,3 +33,12 @@
 .sd-card__html .font-weight-normal {
   font-weight: 400;
 }
+
+.article-html-preview .text-tag,
+.article-html-preview .text-tag .text-rus,
+.tr-card__html .text-tag,
+.tr-card__html .text-tag .text-rus,
+.sd-card__html .text-tag,
+.sd-card__html .text-tag .text-rus {
+  color: #1B4332 !important;
+}
