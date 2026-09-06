@@ -698,12 +698,34 @@ def krl_tag_facets(base_ids, selected_ids, phrase=False):
             if row_type != ttype:
                 continue
             options_map[tid] = (name, sorting if sorting is not None else 10**9)
-        if len(options_map) < 2:
-            continue
         selected_in_group = next(
             (tid for tid in selected_ids if selected_types.get(tid) == ttype),
             None,
         )
+        if selected_in_group:
+            # Keep the active chip visible even when narrowing left only one
+            # tag of this type; do not list siblings that are not in play.
+            if selected_in_group not in options_map:
+                row = (
+                    Tag.objects.filter(pk=selected_in_group)
+                    .values_list("name", "sorting")
+                    .first()
+                )
+                if row:
+                    name, sorting = row
+                    options_map[selected_in_group] = (
+                        name,
+                        sorting if sorting is not None else 10**9,
+                    )
+            options_map = {
+                tid: meta
+                for tid, meta in options_map.items()
+                if tid == selected_in_group
+            }
+        elif len(options_map) < 2:
+            continue
+        if not options_map:
+            continue
         sel_wo = _tag_ids_without_type(selected_ids, ttype)
         options = []
         for tid, (name, sorting) in sorted(

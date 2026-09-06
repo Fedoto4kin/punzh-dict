@@ -163,14 +163,45 @@ class KrlSearchTagFiltersTestCase(TestCase):
             [self.adj.id],
         )
         gram = next(g for g in groups if g["type"] == 2)
-        by_id = {o["id"]: o for o in gram["options"]}
-        self.assertTrue(by_id[self.adj.id]["selected"])
-        self.assertEqual(by_id[self.adj.id]["t_query"], "")  # clear all tags
-        self.assertFalse(by_id[self.noun.id]["selected"])
+        # Selected group shows only the active chip (siblings hidden).
+        self.assertEqual(len(gram["options"]), 1)
+        opt = gram["options"][0]
+        self.assertEqual(opt["id"], self.adj.id)
+        self.assertTrue(opt["selected"])
+        self.assertEqual(opt["t_query"], "")
+
+    def test_selected_group_stays_visible_when_narrowed(self):
+        # folklor-like style + grammar: after picking grammar, style group would
+        # have <2 options in the facet — still show the selected style chip alone.
+        style1 = Tag.objects.create(tag="folk", name="фольклор", type=3, sorting=1)
+        style2 = Tag.objects.create(tag="pern", name="перен.", type=3, sorting=2)
+        a_folk_adj = self._article("kaafolk", [style1, self.adj])
+        a_pern_noun = self._article("kaapern", [style2, self.noun])
+        a_folk_only = self._article("kaafonly", [style1])
+        base = {
+            a_folk_adj.id,
+            a_pern_noun.id,
+            a_folk_only.id,
+            self.a_adj.id,
+            self.a_noun.id,
+        }
+        # Both styles available without selection
+        groups0, _ = krl_tag_facets(base, [])
+        style_g0 = next(g for g in groups0 if g["type"] == 3)
+        self.assertGreaterEqual(len(style_g0["options"]), 2)
+
+        # folklor then adjectivum — style group must still show folklor only
+        groups, _ = krl_tag_facets(base, [style1.id, self.adj.id])
+        style_g = next(g for g in groups if g["type"] == 3)
+        self.assertEqual([o["id"] for o in style_g["options"]], [style1.id])
+        self.assertTrue(style_g["options"][0]["selected"])
+        # clearing style keeps grammar
         self.assertEqual(
-            by_id[self.noun.id]["t_query"],
-            "?t=%s" % self.noun.id,
+            style_g["options"][0]["t_query"],
+            "?t=%s" % self.adj.id,
         )
+        gram = next(g for g in groups if g["type"] == 2)
+        self.assertEqual([o["id"] for o in gram["options"]], [self.adj.id])
 
     def test_hide_uniform_group(self):
         # grammar varies (adj+noun); geo only geo1 -> hide geo group
