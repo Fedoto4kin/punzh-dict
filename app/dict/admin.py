@@ -283,7 +283,6 @@ class ArticleAdm(admin.ModelAdmin):
         "_word",
         "_article_html",
     )
-    list_filter = ("semantic_assignments__field",)
     readonly_fields = [
         "_word",
         "_article_html",
