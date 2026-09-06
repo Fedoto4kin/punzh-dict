@@ -60,6 +60,24 @@
             text-overflow: ellipsis;
         }
     }
+    /* Russian search: ~15% smaller refine / related headings and buttons */
+    .search-refine .alert-heading {
+        font-size: 1.0625rem; /* h5 1.25rem × 0.85 */
+    }
+    .search-refine .collapse-toggle .tgl {
+        font-size: .68rem; /* .8rem × 0.85 */
+    }
+    .search-refine .btn.btn-sm {
+        font-size: .744rem; /* .875rem × 0.85 */
+        padding: .21rem .425rem;
+        margin: .2125rem .181rem !important; /* vertical m-1×0.85; horizontal −15% again */
+        line-height: 1.5;
+        border-radius: .17rem;
+    }
+    .search-refine .badge {
+        font-size: .733rem; /* restore +15% after refine scale-down */
+        padding: .23em .46em;
+    }
 </style>
 <div class="mt-5 mb-3 row">
     <div class="col-lg-6">
@@ -149,7 +167,7 @@
 </div>
 {% endif %}
 {% if narrowing %}
-<div class="mt-1 alert alert-info" role="alert">
+<div class="mt-1 alert alert-info search-refine" role="alert">
     <h5 class="alert-heading mb-0 collapse-toggle d-flex justify-content-between align-items-center collapsed"
         data-toggle="collapse" data-target="#narrowingBox"
         aria-expanded="false" aria-controls="narrowingBox" role="button">
@@ -180,7 +198,7 @@
 </div>
 {% endif %}
 {% if related_queries %}
-<div class="mt-1 alert alert-secondary" role="alert">
+<div class="mt-1 alert alert-secondary search-refine" role="alert">
     <h5 class="alert-heading mb-2">Связанные запросы</h5>
     <p class="mb-0">
         {% for syn in related_queries %}
