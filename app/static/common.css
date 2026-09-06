@@ -41,3 +41,13 @@ footer {
 .page-link  {
     border-color: #fff !important;
 }
+
+/* Dictionary article nested sense lists — tighten browser default ~40px */
+.card-body ol {
+ padding-left: 1.25em;
+ margin-bottom: 0.35rem;
+}
+
+.card-body ol ol {
+ padding-left: 1.1em;
+}
