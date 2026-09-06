@@ -3,6 +3,7 @@
 
 {% block extrastyle %}
 {{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/article_html_preview.css' %}">
 <style>
   .tr-browser-form {
     display: flex;
@@ -45,18 +46,6 @@
     font-size: 1.15rem;
     font-weight: 700;
     margin: 0;
-  }
-  .tr-card__html {
-    margin: 0 0 10px;
-    padding: 8px 10px;
-    background: var(--darkened-bg, #f8f8f8);
-    border-radius: 3px;
-    max-height: 9.5em;
-    overflow: auto;
-    line-height: 1.45;
-  }
-  .tr-card__html .text-rus {
-    color: #0b5;
   }
   .tr-card__translations {
     margin: 0 0 10px;

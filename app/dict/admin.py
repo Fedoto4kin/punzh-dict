@@ -322,6 +322,7 @@ class ArticleAdm(admin.ModelAdmin):
     }
 
     class Media:
+        css = {"all": ("admin/css/article_html_preview.css",)}
         js = ("admin/js/article_field_reorder.js",)
 
     def get_urls(self):
@@ -384,16 +385,11 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<span style='color:#999'>—</span>")
 
     def _article_html(self, obj):
-        # Same pipeline + look as translation browser /search/ cards.
-        # Inline color: admin CSS often fails to paint .text-rus here.
+        # Same pipeline as translation browser; styles in article_html_preview.css.
         html = obj.article_html or ""
         if not html:
             return ""
         rendered = highlight_rus(make_break(nice(make_link(html))))
-        rendered = rendered.replace(
-            'class="text-rus"',
-            'class="text-rus" style="color:#0b5"',
-        )
         return format_html(
             '<div class="article-html-preview">{}</div>',
             mark_safe(rendered),

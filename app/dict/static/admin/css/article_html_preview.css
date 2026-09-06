@@ -1,0 +1,35 @@
+/* Shared article-HTML preview: article change, translation browser, search debug. */
+
+.article-html-preview,
+.tr-card__html,
+.sd-card__html {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  background: var(--darkened-bg, #f8f8f8);
+  border-radius: 3px;
+  max-height: 9.5em;
+  overflow: auto;
+  line-height: 1.45;
+}
+
+.article-html-preview {
+  margin: 0;
+}
+
+.article-html-preview .text-rus,
+.tr-card__html .text-rus,
+.sd-card__html .text-rus {
+  color: rgb(25, 114, 40) !important;
+}
+
+.article-html-preview .text-muted,
+.tr-card__html .text-muted,
+.sd-card__html .text-muted {
+  color: #6c757d;
+}
+
+.article-html-preview .font-weight-normal,
+.tr-card__html .font-weight-normal,
+.sd-card__html .font-weight-normal {
+  font-weight: 400;
+}

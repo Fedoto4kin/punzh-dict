@@ -137,6 +137,7 @@ class TranslationBrowserAdminViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ruttoh")
         self.assertContains(response, "text-rus")
+        self.assertContains(response, "admin/css/article_html_preview.css")
         self.assertContains(response, "быстро")
         self.assertContains(response, "скоро")
         self.assertContains(response, "править статью")
