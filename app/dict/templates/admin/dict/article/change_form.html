@@ -16,5 +16,25 @@
   #articleindextranslate_set-group .tabular tr.has_original td {
     padding-top: 8px !important;
   }
+
+  /* Same article-HTML preview look as translation browser cards. */
+  .article-html-preview {
+    margin: 0;
+    padding: 8px 10px;
+    background: var(--darkened-bg, #f8f8f8);
+    border-radius: 3px;
+    max-height: 9.5em;
+    overflow: auto;
+    line-height: 1.45;
+  }
+  .article-html-preview .text-rus {
+    color: #0b5 !important;
+  }
+  .article-html-preview .text-muted {
+    color: #6c757d;
+  }
+  .article-html-preview .font-weight-normal {
+    font-weight: 400;
+  }
 </style>
 {% endblock %}

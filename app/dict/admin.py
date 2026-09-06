@@ -5,6 +5,7 @@ from django.forms import Textarea
 from django.shortcuts import render
 from django.urls import path
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from .helpers import normalization
 from .models import (
@@ -20,6 +21,7 @@ from .models import (
 )
 from .search import krl_article_ids
 from .search_debug import explain_rus_search
+from .templatetags.dict_extras import highlight_rus, make_break, make_link, nice
 from .translation_browser import (
     MODE_CONTAINS,
     MODE_EXACT,
@@ -382,7 +384,20 @@ class ArticleAdm(admin.ModelAdmin):
         return format_html("<span style='color:#999'>—</span>")
 
     def _article_html(self, obj):
-        return format_html(obj.article_html)
+        # Same pipeline + look as translation browser /search/ cards.
+        # Inline color: admin CSS often fails to paint .text-rus here.
+        html = obj.article_html or ""
+        if not html:
+            return ""
+        rendered = highlight_rus(make_break(nice(make_link(html))))
+        rendered = rendered.replace(
+            'class="text-rus"',
+            'class="text-rus" style="color:#0b5"',
+        )
+        return format_html(
+            '<div class="article-html-preview">{}</div>',
+            mark_safe(rendered),
+        )
 
     _article_html.short_description = "Словарная статья"
     linked_article_deprecated.short_description = "См. (устарело)"
