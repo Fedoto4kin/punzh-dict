@@ -9,6 +9,7 @@
 | Файл | О чём |
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
+| [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
 | [../backlog.md](../backlog.md) | Продукт: связи «от», `from_translation`, пометы (очистка переводов — runbook) |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
 

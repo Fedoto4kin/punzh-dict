@@ -257,6 +257,8 @@ docker exec -i -w /app punzh_web python manage.py restore_subsumed_headwords --l
 ## Открыто
 
 - [x] Prod `--from-json`, dedupe ё/е, регрессия поиска (см. `docs/searching_upgrade.md` §0.1)
+- [ ] Аудит индекса после cleanup (ложные разбиения, «и …» и др.) —
+  план: `docs/plans/translation_index_audit.md`
 - [ ] Повторный LLM-cleanup с улучшенным gloss (pahna, phraseme off, listed singles)
 - [ ] Следующий фокус: **AI-поиск** (`docs/ai-search.md`)
 
