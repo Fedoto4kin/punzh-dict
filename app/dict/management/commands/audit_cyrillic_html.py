@@ -1,19 +1,18 @@
-"""Кириллица в карельских фрагментах article_html. Только отчёт."""
+"""Смешанный алфавит в article_html. Только отчёт."""
 
 import csv
 from collections import Counter
 
 from django.core.management.base import BaseCommand
 
-from dict.cyrillic_audit import describe_char, scan_cyrillic_in_html
+from dict.cyrillic_audit import describe_char, latin_leak_chars, scan_cyrillic_in_html
 
 
 class Command(BaseCommand):
     help = (
-        "Найти кириллицу в карельских кусках article_html: "
-        "смешанный алфавит в токене и любая кириллица сразу после ~. "
-        "Показывает слово (lemma) и HTML статьи. БД не меняет. "
-        "Правка: fix_cyrillic_html."
+        "Найти смешанный алфавит в article_html: "
+        "кириллица в карельском (после ~ / mid-word) и латиница в русском. "
+        "Показывает слово и HTML. БД не меняет. Правка: fix_cyrillic_html."
     )
 
     def add_arguments(self, parser):
@@ -30,9 +29,12 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--queue",
-            choices=("all", "homoglyph", "non_homoglyph"),
+            choices=("all", "homoglyph", "krl", "rus", "non_homoglyph"),
             default="all",
-            help="homoglyph — только омоглифы; non_homoglyph — остальное.",
+            help=(
+                "homoglyph|krl — карельский (кир.→лат.); "
+                "rus|non_homoglyph — русский (лат.→кир.)."
+            ),
         )
         parser.add_argument(
             "--limit",
@@ -41,20 +43,25 @@ class Command(BaseCommand):
             help="Показать не больше N хитов.",
         )
 
-    def handle(self, *args, **opts):
-        rows, letters = scan_cyrillic_in_html()
-        kind = opts["kind"]
+    def _filter_rows(self, rows, kind, queue):
         if kind != "all":
             rows = [r for r in rows if r["kind"] == kind]
-        queue = opts["queue"]
-        if queue == "homoglyph":
-            rows = [r for r in rows if r["homoglyph_only"]]
-        elif queue == "non_homoglyph":
-            rows = [r for r in rows if not r["homoglyph_only"]]
-        if kind != "all" or queue != "all":
+        if queue in ("homoglyph", "krl"):
+            rows = [r for r in rows if r["direction"] == "krl"]
+        elif queue in ("rus", "non_homoglyph"):
+            rows = [r for r in rows if r["direction"] == "rus"]
+        return rows
+
+    def handle(self, *args, **opts):
+        rows, letters = scan_cyrillic_in_html()
+        rows = self._filter_rows(rows, opts["kind"], opts["queue"])
+        if opts["kind"] != "all" or opts["queue"] != "all":
             letters = Counter()
             for row in rows:
-                letters.update(row["cyr_letters"])
+                if row["direction"] == "rus":
+                    letters.update(latin_leak_chars(row["value"]))
+                else:
+                    letters.update(row["cyr_letters"])
         if opts["limit"]:
             rows = rows[: opts["limit"]]
 
@@ -65,6 +72,7 @@ class Command(BaseCommand):
                     "article_id",
                     "word",
                     "kind",
+                    "direction",
                     "homoglyph_only",
                     "value",
                     "offset",
@@ -80,6 +88,7 @@ class Command(BaseCommand):
                         "article_id": row["article_id"],
                         "word": row.get("word", ""),
                         "kind": row["kind"],
+                        "direction": row["direction"],
                         "homoglyph_only": row["homoglyph_only"],
                         "value": row["value"],
                         "offset": row["offset"],
@@ -90,29 +99,29 @@ class Command(BaseCommand):
             return
 
         by_kind = Counter(r["kind"] for r in rows)
+        by_dir = Counter(r["direction"] for r in rows)
         arts = {r["article_id"] for r in rows}
-        n_homo = sum(1 for r in rows if r["homoglyph_only"])
         self.stdout.write(
             f"Находок: {len(rows)}, статей: {len(arts)} "
             f"(after_tilde={by_kind['after_tilde']}, mixed={by_kind['mixed']}, "
-            f"homoglyph_only={n_homo})"
+            f"krl={by_dir['krl']}, rus={by_dir['rus']})"
         )
         if letters:
-            self.stdout.write("Буквы:")
+            self.stdout.write("Буквы (в направлении правки):")
             for ch, n in letters.most_common():
                 self.stdout.write(f"  {n:4d}  {describe_char(ch)}")
         self.stdout.write("")
 
         if not rows:
-            self.stdout.write("Кириллицы в карельских фрагментах HTML нет.")
+            self.stdout.write("Смешанного алфавита в HTML нет.")
             return
 
         for row in rows:
-            flag = "homoglyph" if row["homoglyph_only"] else "NON-homoglyph"
+            label = "krl: кир→лат" if row["direction"] == "krl" else "rus: лат→кир"
             self.stdout.write("=" * 72)
             self.stdout.write(
                 f"#{row['article_id']}  {row.get('word')!s}  "
-                f"{row['kind']}  ({flag})"
+                f"{row['kind']}  ({label})"
             )
             self.stdout.write("-" * 72)
             self.stdout.write(row.get("article_html") or "(html пуст)")

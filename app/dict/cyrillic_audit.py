@@ -20,6 +20,7 @@ HOMOGLYPHS = str.maketrans(
         "ӓ": "ä",
         "ӧ": "ö",
         "ү": "y",
+        "к": "k",
         "А": "A",
         "Е": "E",
         "О": "O",
@@ -36,6 +37,26 @@ HOMOGLYPHS = str.maketrans(
         "Т": "T",
         "В": "B",
         "Н": "H",
+    }
+)
+
+# Reverse: Latin lookalikes leaked into Russian glosses (мoлoдoй → молодой).
+LATIN_TO_CYR = str.maketrans(
+    {
+        "a": "а",
+        "A": "А",
+        "e": "е",
+        "E": "Е",
+        "o": "о",
+        "O": "О",
+        "p": "р",
+        "P": "Р",
+        "c": "с",
+        "C": "С",
+        "y": "у",
+        "Y": "У",
+        "x": "х",
+        "X": "Х",
     }
 )
 
@@ -61,6 +82,11 @@ def suggest_latin(text):
     return (text or "").translate(HOMOGLYPHS)
 
 
+def suggest_cyrillic(text):
+    """Map Latin lookalikes to Cyrillic (Russian gloss with OCR Latin leaks)."""
+    return (text or "").translate(LATIN_TO_CYR)
+
+
 def letter_script(ch):
     """'cyr', 'lat', or None for non-letters / other scripts."""
     name = unicodedata.name(ch, "")
@@ -69,6 +95,19 @@ def letter_script(ch):
     if "LATIN" in name:
         return "lat"
     return None
+
+
+def latin_leak_chars(text):
+    """Latin letters that LATIN_TO_CYR would rewrite."""
+    if not text:
+        return []
+    mapped = set()
+    for key in LATIN_TO_CYR:
+        if isinstance(key, int):
+            mapped.add(chr(key))
+        else:
+            mapped.add(key)
+    return [ch for ch in text if ch in mapped]
 
 
 def is_word_char(ch):
@@ -87,18 +126,56 @@ def _token_scripts(token):
     return {letter_script(ch) for ch in token} - {None}
 
 
+def _script_counts(token):
+    lat = cyr = 0
+    for ch in token:
+        s = letter_script(ch)
+        if s == "lat":
+            lat += 1
+        elif s == "cyr":
+            cyr += 1
+    return lat, cyr
+
+
+def pick_suggestion(value, cyr_letters):
+    """
+    Choose fix direction and suggested spelling.
+
+    - krl: Cyrillic lookalikes inside Karelian → suggest_latin
+    - rus: Latin lookalikes inside Russian → suggest_cyrillic
+    """
+    to_lat = suggest_latin(value)
+    to_cyr = suggest_cyrillic(value)
+    if is_homoglyph_only(cyr_letters):
+        return "krl", to_lat
+    # Mapping Latin→Cyrillic clears all Latin letters → Russian gloss.
+    if to_cyr != value and not any(letter_script(ch) == "lat" for ch in to_cyr):
+        return "rus", to_cyr
+    lat_n, cyr_n = _script_counts(value)
+    if cyr_n >= lat_n and to_cyr != value:
+        return "rus", to_cyr
+    return "krl", to_lat
+
+
 def _hit(article_id, kind, token, start, display=None):
     value = display if display is not None else token
     bad = cyrillic_chars(token)
+    direction, suggested = pick_suggestion(value, bad)
+    if direction == "rus":
+        leak = latin_leak_chars(value)
+        chars = "; ".join(describe_char(ch) for ch in leak) or "(нет лат. омоглифов)"
+    else:
+        chars = "; ".join(describe_char(ch) for ch in bad)
     return {
         "article_id": article_id,
         "kind": kind,
         "value": value,
         "offset": start,
-        "chars": "; ".join(describe_char(ch) for ch in bad),
-        "suggested": suggest_latin(value),
+        "chars": chars,
+        "suggested": suggested,
         "cyr_letters": bad,
         "homoglyph_only": is_homoglyph_only(bad),
+        "direction": direction,
     }
 
 

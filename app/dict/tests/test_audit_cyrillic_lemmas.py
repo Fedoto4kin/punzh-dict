@@ -149,7 +149,7 @@ class AuditCyrillicHtmlCommandTestCase(TestCase):
         )
         text = out.getvalue()
         self.assertIn(
-            "article_id,word,kind,homoglyph_only,value,offset,chars,suggested",
+            "article_id,word,kind,direction,homoglyph_only,value,offset,chars,suggested",
             text,
         )
         self.assertIn("after_tilde", text)
@@ -163,7 +163,21 @@ class AuditCyrillicHtmlCommandTestCase(TestCase):
         Article.objects.create(word=LATIN, article_html=f"<b>{LATIN}</b> ольха; ~alla")
         out = StringIO()
         call_command("audit_cyrillic_html", stdout=out)
-        self.assertIn("Кириллицы в карельских фрагментах HTML нет", out.getvalue())
+        self.assertIn("Смешанного алфавита в HTML нет", out.getvalue())
+
+    def test_russian_latin_leak_suggests_cyrillic(self):
+        # мoлoдoй: Cyrillic м/л/д/й + Latin o
+        dirty = "мoлoдoй"
+        art = Article.objects.create(
+            word="nuori",
+            article_html=f"<b>nuori</b> {dirty} дерево",
+        )
+        out = StringIO()
+        call_command("audit_cyrillic_html", "--queue", "rus", stdout=out)
+        text = out.getvalue()
+        self.assertIn(f"#{art.id}", text)
+        self.assertIn("молодой", text)
+        self.assertIn("rus: лат→кир", text)
 
 
 class FixCyrillicHtmlCommandTestCase(TestCase):
@@ -217,7 +231,12 @@ class FixCyrillicHtmlCommandTestCase(TestCase):
         self.assertIn("HTML обновлён — 1", out.getvalue())
 
     def test_apply_token_fix_helper(self):
-        from dict.cyrillic_audit import apply_token_fix, is_homoglyph_only
+        from dict.cyrillic_audit import (
+            apply_token_fix,
+            is_homoglyph_only,
+            pick_suggestion,
+            suggest_cyrillic,
+        )
 
         html = f"monella {MIXED_TILDE} x"
         self.assertEqual(
@@ -226,3 +245,13 @@ class FixCyrillicHtmlCommandTestCase(TestCase):
         )
         self.assertTrue(is_homoglyph_only([CYR_A]))
         self.assertFalse(is_homoglyph_only([CYR_A, "\u043d"]))  # н
+        self.assertEqual(suggest_cyrillic("мoлoдoй"), "молодой")
+        self.assertEqual(suggest_cyrillic("свeжий"), "свежий")
+        self.assertEqual(suggest_cyrillic("pacсада"), "рассада")
+        self.assertEqual(suggest_cyrillic("понравилаcь"), "понравилась")
+        direction, suggested = pick_suggestion("мoлoдoй", list("млдой"))
+        self.assertEqual(direction, "rus")
+        self.assertEqual(suggested, "молодой")
+        direction, suggested = pick_suggestion(MIXED_TILDE, [CYR_A])
+        self.assertEqual(direction, "krl")
+        self.assertEqual(suggested, "~alla")

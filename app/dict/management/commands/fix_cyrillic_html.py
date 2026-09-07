@@ -15,10 +15,10 @@ from dict.models import Article
 
 class Command(BaseCommand):
     help = (
-        "Правка кириллицы-омоглифов в article_html (как fix_see_refs). "
-        "По умолчанию очередь homoglyph: только а/е/о/р/… → латиница. "
-        "На каждый хит: слово, статья, было→станет. "
-        "y — заменить первое вхождение, пусто — пропуск, u — отмена, q — выход. "
+        "Правка смешанного алфавита в article_html (как fix_see_refs). "
+        "Очереди: homoglyph/krl — кириллица→латиница в карельском; "
+        "rus/non_homoglyph — латиница→кириллица в русском. "
+        "y — заменить, пусто — пропуск, u — отмена, q — выход. "
         "Нужен TTY: docker exec -it … python manage.py fix_cyrillic_html"
     )
 
@@ -49,11 +49,11 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--queue",
-            choices=("homoglyph", "non_homoglyph", "all"),
+            choices=("homoglyph", "krl", "rus", "non_homoglyph", "all"),
             default="homoglyph",
             help=(
-                "homoglyph (по умолчанию) — только безопасные омоглифы; "
-                "non_homoglyph — русские склейки и пр.; all — всё."
+                "homoglyph|krl — карельский (кир.→лат.); "
+                "rus|non_homoglyph — русский (лат.→кир.); all — всё."
             ),
         )
         parser.add_argument(
@@ -82,10 +82,10 @@ class Command(BaseCommand):
         if opts["kind"] != "all":
             rows = [r for r in rows if r["kind"] == opts["kind"]]
         queue = opts["queue"]
-        if queue == "homoglyph":
-            rows = [r for r in rows if r["homoglyph_only"]]
-        elif queue == "non_homoglyph":
-            rows = [r for r in rows if not r["homoglyph_only"]]
+        if queue in ("homoglyph", "krl"):
+            rows = [r for r in rows if r["direction"] == "krl"]
+        elif queue in ("rus", "non_homoglyph"):
+            rows = [r for r in rows if r["direction"] == "rus"]
         if opts["order"] == "word":
             rows.sort(key=lambda r: ((r.get("word") or "").lower(), r["article_id"]))
         else:
@@ -95,11 +95,16 @@ class Command(BaseCommand):
         return rows
 
     def _show_item(self, idx, total, article, hit, proposed):
-        flag = "homoglyph" if hit["homoglyph_only"] else "NON-homoglyph"
+        direction = hit.get("direction", "?")
+        label = (
+            "krl: кир→лат"
+            if direction == "krl"
+            else "rus: лат→кир" if direction == "rus" else direction
+        )
         self.stdout.write("\n" + "=" * 72)
         self.stdout.write(
             f"[{idx}/{total}]  id={article.id}  {article.word}  "
-            f"{hit['kind']}  ({flag})"
+            f"{hit['kind']}  ({label})"
         )
         self.stdout.write("-" * 72)
         self.stdout.write(article.article_html or "(html пуст)")
@@ -110,11 +115,10 @@ class Command(BaseCommand):
         n = (article.article_html or "").count(hit["value"])
         if n > 1:
             self.stdout.write(f"(вхождений в HTML: {n} — заменится первое)")
-        if not hit["homoglyph_only"]:
+        if hit["suggested"] == hit["value"]:
             self.stdout.write(
                 self.style.WARNING(
-                    "В токене есть кириллица не из таблицы омоглифов — "
-                    "часто это русский с латиницей; suggested может быть неверным."
+                    "Предложение совпадает с исходным — пропуск/правка вручную."
                 )
             )
         self.stdout.write("Предложение (HTML):")
