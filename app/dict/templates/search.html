@@ -156,4 +156,28 @@
     </div>
 </div>
 
+{% if page_obj.has_other_pages %}
+<nav class="navbar navbar-expand navbar-light row mt-4">
+    <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}{{ t_query }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}{{ t_query }}">{{ trigrams|get_item:i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}{{ t_query }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
 {% endblock %}
