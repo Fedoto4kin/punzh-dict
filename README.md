@@ -2,7 +2,7 @@
 
 It's web version of classic fundamental dictionary of karelian language, tver' dialect(one of minore language of Russia).
 
-Для агентов Cursor: [`AGENTS.md`](AGENTS.md). Очередь задач: [`docs/plans/INDEX.md`](docs/plans/INDEX.md).
+
 
 The dictionary contains huge ethnographic and dialect materials, collected for years of work.
 
@@ -15,3 +15,8 @@ The current version contains all words of the original edition but is extended b
  
 
 ![Original book front](https://raw.githubusercontent.com/Fedoto4kin/punzh_dict/master/app/static/images/book_front.jpg)
+
+---
+
+For Cursor Agents: [`AGENTS.md`](AGENTS.md). 
+Backlog: [`docs/plans/INDEX.md`](docs/plans/INDEX.md).
