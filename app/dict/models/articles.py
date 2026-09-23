@@ -150,6 +150,25 @@ class ArticleIndexWord(models.Model):
             "article",
         )
 
+class ArticleIndexWordNormalization(models.Model):
+    word = models.CharField(max_length=255, default=None, blank=True, null=True)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.word
+
+    def __eq__(self, other):
+        return self.word == other.word
+
+    def __hash__(self):
+        return super().__hash__()
+
+    class Meta:
+        unique_together = (
+            "word",
+            "article",
+        )
+
 
 class ArticleIndexTranslate(models.Model):
     rus_word = models.CharField(
@@ -185,26 +204,6 @@ class ArticleIndexTranslate(models.Model):
         verbose_name = "Перевод"
         verbose_name_plural = "Переводы"
         ordering = ["rus_word"]
-
-
-class ArticleIndexWordNormalization(models.Model):
-    word = models.CharField(max_length=255, default=None, blank=True, null=True)
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.word
-
-    def __eq__(self, other):
-        return self.word == other.word
-
-    def __hash__(self):
-        return super().__hash__()
-
-    class Meta:
-        unique_together = (
-            "word",
-            "article",
-        )
 
 
 class ArticleIndexTag(models.Model):
