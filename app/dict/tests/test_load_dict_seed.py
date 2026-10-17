@@ -59,9 +59,7 @@ class LoadDictSeedTestCase(TransactionTestCase):
             tag="old", name="old tag", type=2, sorting=1, level=0
         )
         self.article = Article.objects.create(word="oldword", article_html="<b>old</b>")
-        ArticleIndexTranslate.objects.create(
-            article=self.article, rus_word="старый"
-        )
+        ArticleIndexTranslate.objects.create(article=self.article, rus_word="старый")
 
     def _write_fixture(self):
         fd, path = tempfile.mkstemp(suffix=".json")
@@ -95,9 +93,7 @@ class LoadDictSeedTestCase(TransactionTestCase):
             self.assertFalse(Tag.objects.filter(tag="old").exists())
             self.assertTrue(Tag.objects.filter(tag="test").exists())
             art = Article.objects.get(word="aiga")
-            self.assertTrue(
-                ArticleIndexWord.objects.filter(article=art).exists()
-            )
+            self.assertTrue(ArticleIndexWord.objects.filter(article=art).exists())
             self.assertTrue(
                 ArticleIndexWordNormalization.objects.filter(article=art).exists()
             )

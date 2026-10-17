@@ -150,6 +150,7 @@ class ArticleIndexWord(models.Model):
             "article",
         )
 
+
 class ArticleIndexWordNormalization(models.Model):
     word = models.CharField(max_length=255, default=None, blank=True, null=True)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
