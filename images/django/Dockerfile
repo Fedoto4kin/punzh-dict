@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.12-bookworm
 
 #todo: use 1000:1000 user
 
@@ -12,8 +12,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN apt-get update
 
-# Install necessary packages
-RUN apt-get install -y gcc libc-dev libpq-dev
+# Install necessary packages (gcc for uWSGI; libpq-dev for psycopg build fallback)
+RUN apt-get install -y --no-install-recommends gcc libc-dev libpq-dev
 
 # Autoclean and remove unnecessary files
 RUN apt-get -y autoclean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -25,4 +25,3 @@ COPY ./.env /.env
 RUN pip install -q -Ur /tmp/requirements.txt
 
 WORKDIR /app
-

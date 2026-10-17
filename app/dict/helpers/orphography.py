@@ -38,7 +38,7 @@ def new_orthography(word):
 
         word = word.replace("ü", "y").replace("Ü", "Y")
         if word.count("w"):
-            for part in re.findall("(?:\w+w[^|]*)", word):
+            for part in re.findall(r"(?:\w+w[^|]*)", word):
                 if not any(el in part for el in ["a", "o", "u"]):
                     word = word.replace(part, part.replace("w", "y"))
                 else:

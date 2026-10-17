@@ -162,7 +162,7 @@ def gen_word_variants(word) -> ():
 
         if w.count("w"):
             w = w.replace("||", "")
-            for part in re.findall("(?:\w+w[^|]*)", w):
+            for part in re.findall(r"(?:\w+w[^|]*)", w):
                 if not any(el in part for el in ["a", "o", "u"]):
                     variants.append(w.replace(part, part.replace("w", "ü")))
                 else:

@@ -13,6 +13,7 @@
 
 **Предпосылки для AI закрыты:** cleanup переводов на prod, массовая пометка
 `from_translation`, лексический `/search/` в рабочем состоянии (см. «Сделано»).
+Стек Python 3.12 + Django 5.2 — в коде (см. «Сделано»); на prod нужен rebuild образа.
 
 ## Дальше (продукт)
 
@@ -34,6 +35,7 @@
 
 ## Сделано (не трогать без регрессии)
 
+- **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28 — `plans/stack-upgrade.md` (prod: пересборка образа).
 - Массовая пометка `from_translation` на prod (`pick_translation_fields` + `load_translation_fields`) — `backlog.md` §4.
 - Очистка переводов LLM + `--write` на prod, канон **е** в индексе (`translation_cleanup.md`).
 - Русский поиск: ILIKE + **токенный OR** (не FTS `russian`), ё→е, `expand_by_links` только **см.+от**.

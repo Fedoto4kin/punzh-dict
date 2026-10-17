@@ -15,9 +15,9 @@
 Снимок разметки (dev и прод совпадали на 2026-08): 28 полей, ~28k привязок (~1.77/статью), ~48k keywords. `no_field` ~7% — норма (служебные слова и отсылки «см.»; доразметка не нужна, находятся через `ArticleLink`).
 
 ## Tech stack
-- Python 3.8, Django 3.1.7, PostgreSQL (`django.contrib.postgres`: FTS, триграммы)
+- Python 3.12, Django 5.2 LTS, PostgreSQL (`django.contrib.postgres`: FTS, триграммы), psycopg3
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
-- Docker: образ `images/django/Dockerfile`; dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
+- Docker: образ `images/django/Dockerfile` (`python:3.12-bookworm`); dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
 - Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client` (шлюз), `prompts` (общий замёрзший промпт классификации — им же пользуется `agents/build_ontology.py`), `classify` (одна статья). AI-поиск в URL пока не подключён. Проверка канала: `test_timeweb`. Доклассификация: `classify_article --id`. См. `dict/ai/README.md` — чем `dict/ai/` отличается от `agents/`.
 - LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 

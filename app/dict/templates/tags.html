@@ -191,7 +191,7 @@
                    small
                    justify-content-center" id="trigram">
             {% for i in page_obj.paginator.page_range %}
-            {% ifequal i page_obj.number %}
+            {% if i == page_obj.number %}
             <li class="active page-item">
                 <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
             </li>
@@ -199,7 +199,7 @@
             <li class="page-item">
                 <a class="page-link" href="/tags/{{ query }}/{{ i }}">{{ trigrams|get_item:i }}</a>
             </li>
-            {% endifequal %}
+            {% endif %}
             {% endfor %}
         </ul>
         {% endif %}
@@ -251,7 +251,7 @@
                    small
                    justify-content-center" id="trigram-bottom">
             {% for i in page_obj.paginator.page_range %}
-            {% ifequal i page_obj.number %}
+            {% if i == page_obj.number %}
             <li class="active page-item">
                 <a class="page-link" >{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a>
             </li>
@@ -259,7 +259,7 @@
             <li class="page-item">
                 <a class="page-link" href="/tags/{{ query }}/{{ i }}">{{ trigrams|get_item:i }}</a>
             </li>
-            {% endifequal %}
+            {% endif %}
             {% endfor %}
         </ul>
         {% endif %}

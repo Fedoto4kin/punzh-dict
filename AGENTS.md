@@ -18,7 +18,9 @@
 
 ## Стек и запуск
 
-Python 3.8, Django 3.1.7, PostgreSQL, шаблоны + Bootstrap 4. Dev: контейнеры `punzh_django` + `punzh_db`. `manage.py` и тесты: **`-w /app`**. Команды: `app/README.md`. Деплой: `./deploy.sh`. Статика: исходники `app/static` / `app/dict/static`, отдача Nginx — только `app/staticfiles`.
+Python 3.12, Django 5.2 LTS, PostgreSQL, шаблоны + Bootstrap 4. Dev: контейнеры `punzh_django` + `punzh_db`. `manage.py` и тесты: **`-w /app`**. Команды: `app/README.md`. Деплой: пересборка образа + `./deploy.sh` (migrate/collectstatic). Статика: исходники `app/static` / `app/dict/static`, отдача Nginx — только `app/staticfiles`.
+
+Апгрейд стека: `docs/plans/stack-upgrade.md`.
 
 ## Инварианты
 
