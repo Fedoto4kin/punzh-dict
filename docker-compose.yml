@@ -18,7 +18,8 @@ services:
 
   db:
     container_name: punzh_db
-    image: postgres:14
+    # Same major as prod (PG 15 + pgvector). Existing ./db from PG 14 will not start — recreate volume or dump/restore.
+    image: pgvector/pgvector:0.8.7-pg15-bookworm
     restart: "always"
     ports:
       - ${POSTGRES_PORT:-5432}:5432

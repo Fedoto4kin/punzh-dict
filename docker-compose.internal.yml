@@ -18,7 +18,8 @@ services:
 
   db:
     container_name: punzh_db
-    image: ankane/pgvector:latest
+    # Pin: stay on PG 15 (hub data). Do not use :latest — major jumps break ./db.
+    image: pgvector/pgvector:0.8.7-pg15-bookworm
     volumes:
       - ./db:/var/lib/postgresql/data
       - ./images/init.sql:/docker-entrypoint-initdb.d/init.sql
