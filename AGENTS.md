@@ -20,7 +20,7 @@
 
 Python 3.12, Django 5.2 LTS, PostgreSQL, шаблоны + Bootstrap 4. Dev: контейнеры `punzh_django` + `punzh_db`. `manage.py` и тесты: **`-w /app`**. Команды: `app/README.md`. Деплой: пересборка образа + `./deploy.sh` (migrate/collectstatic). Статика: исходники `app/static` / `app/dict/static`, отдача Nginx — только `app/staticfiles`.
 
-Апгрейд стека: `docs/plans/stack-upgrade.md`.
+В `app/static/admin/` держать только кастом (`article_*`); не копировать туда `django.contrib.admin` — иначе `collectstatic` перекрывает CSS/JS пакета.
 
 ## Инварианты
 

@@ -9,7 +9,6 @@
 | Файл | О чём |
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
-| [plans/stack-upgrade.md](plans/stack-upgrade.md) | Стек Python 3.12 + Django 5.2 LTS (сделано в коде) |
 | [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
 | [plans/krl-search-tag-filters.md](plans/krl-search-tag-filters.md) | Фильтры помет в карельском `/search/` |
 | [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
