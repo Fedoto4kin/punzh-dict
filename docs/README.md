@@ -10,7 +10,7 @@
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
 | [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
-| [plans/krl-search-tag-filters.md](plans/krl-search-tag-filters.md) | Фильтры помет в карельском `/search/` |
+| [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | Стоп-токены в token-OR (вариант A) |
 | [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
 
@@ -39,3 +39,4 @@
 | Файл | Почему |
 |------|--------|
 | [context.md](context.md) | Черновик обзора, пути и стек расходятся с кодом. Актуальный обзор: `cursor_project_overview.md` |
+| [plans/krl-search-tag-filters.md](plans/krl-search-tag-filters.md) | Фильтры `?t=` / `?ph=` в KRL `/search/` — сделано |

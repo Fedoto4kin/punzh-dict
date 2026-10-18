@@ -22,19 +22,18 @@
 | 5 | бэклог | Поиск неразмеченных помет | `backlog.md` §3 |
 | 6 | план | Аудит индекса переводов после cleanup (read-only) | `plans/translation_index_audit.md` |
 | 6 | бэклог | **Стоп-токены в token-OR** (вариант A: «о корове» без раздува от «о») | `docs/plans/search-query-stopwords.md` |
-| 7 | **в работе** | **KRL `/search/`: фильтры по пометам** (группы как `/tags/`, одна на тип) | `plans/krl-search-tag-filters.md` |
 
 ## Лексический `/search/` — baseline готов
 
 Основная ветка **не блокирует** AI-поиск. Доработки по желанию:
 `docs/backlog-search.md` (**P1-stop** стоп-токены; **P3 леммы** запроса и
-перевода вместо fuzzy; P4 keywords в индекс; **KRL-фильтры помет** —
-`plans/krl-search-tag-filters.md`). Русский trigram (бывший P2) **не делаем**.
-Не возвращаемся к Postgres FTS / `search_vector` ради морфологии.
+перевода вместо fuzzy; P4 keywords в индекс). Русский trigram (бывший P2)
+**не делаем**. Не возвращаемся к Postgres FTS / `search_vector` ради морфологии.
 
 ## Сделано (не трогать без регрессии)
 
 - **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28.
+- KRL `/search/`: фильтры по пометам `?t=` / `?ph=` — `plans/krl-search-tag-filters.md`.
 - Массовая пометка `from_translation` на prod (`pick_translation_fields` + `load_translation_fields`) — `backlog.md` §4.
 - Очистка переводов LLM + `--write` на prod, канон **е** в индексе (`translation_cleanup.md`).
 - Русский поиск: ILIKE + **токенный OR** (не FTS `russian`), ё→е, `expand_by_links` только **см.+от**.
