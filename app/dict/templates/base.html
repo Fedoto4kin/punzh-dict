@@ -102,7 +102,9 @@
                     <li class="nav-item{% if allTags %} active{% endif %}">
                         <a class="nav-link small" href="/tags"  >Предметный указатель</a>
                     </li>
-
+                    <li class="nav-item{% if ontology %} active{% endif %}">
+                        <a class="nav-link small" href="{% url 'ontology' %}">Онтология</a>
+                    </li>
                     <li class="nav-item{% if search %} active{% endif %}">
                         <a class="nav-link small" href="/search" >Поиск</a>
                     </li>

@@ -211,6 +211,7 @@ def ontology_index(request):
     context = {
         "ABC": KRL_ABC,
         "fields": semantic_fields_with_counts(),
+        "ontology": "true",
     }
     return render(request, "ontology.html", context)
 
@@ -237,6 +238,7 @@ def ontology_view(request, field_id, page=1):
         "mode_query": format_krl_filter_query([], False, include_all=include_all),
         "mode_tr_query": format_krl_filter_query(tag_ids, phrase, include_all=False),
         "mode_all_query": format_krl_filter_query(tag_ids, phrase, include_all=True),
+        "ontology": "true",
     }
     return render(request, "ontology_view.html", context)
 
