@@ -27,6 +27,7 @@
 - `app/agents/` — **оффлайн** скрипты (онтология, очистка переводов, LLM). Не обслуживают живые запросы; заливку JSON в БД — `clean_translations --write` или management-команды. Промпт очистки — `translation_cleanup.py`; handoff: **`docs/translation_cleanup.md`**. См. `agents/AGENTS.md`.
 - `app/import.py` — исторический импорт из HTML (не деплой; данные сейчас через fixtures).
 - `backlog.md` — детали продуктовых задач; приоритеты — `docs/plans/INDEX.md`.
+- `research/` — результаты исследовательских проектов на материале словаря (доклады, конспекты, выборки); один каталог на проект. Не смешивать с `docs/`.
 - `docs/` — карта: `docs/README.md`. Спеки (не обязательно реализованный код):
   - `ai-search.md` — UX отдельной страницы AI-поиска;
   - `searching_upgrade.md` — реализованные подсказки русского поиска + заметки;
@@ -38,7 +39,9 @@
 Статика: исходники в `app/static` (`STATICFILES_DIRS`) и `app/dict/static`;
 сборка `collectstatic` → `app/staticfiles` (`STATIC_ROOT`, gitignore). Nginx
 отдаёт только `staticfiles` (`images/nginx/punzh.host.conf`, `punzh.ssl.conf`).
-Деплой: `./deploy.sh`.
+Деплой (prod `karielan-hub`, `~/punzh-dict`, контейнер `punzh_web`): `./deploy.sh`
+(pull + migrate + collectstatic + **restart** контейнера — uwsgi без hot-reload).
+Подробнее: `AGENTS.md`.
 
 ## Key models (`app/dict/models/`)
 - `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; шаги 1–4 закрыты, хвост — подсветка на сайте, см. `backlog.md` §1).

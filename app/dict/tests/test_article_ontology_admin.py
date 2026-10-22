@@ -79,7 +79,13 @@ class OntologyQueueAdminTestCase(TestCase):
         self.with_kw = Article.objects.create(word="leipa")
         self.empty = Article.objects.create(word="seestub", article_html="<i>см.</i> x")
         self.field = SemanticField.objects.create(name="еда", sorting=1)
-        ArticleSemanticField.objects.create(article=self.with_field, field=self.field)
+        self.field2 = SemanticField.objects.create(name="животные", sorting=2)
+        ArticleSemanticField.objects.create(
+            article=self.with_field, field=self.field, from_translation=True
+        )
+        ArticleSemanticField.objects.create(
+            article=self.with_field, field=self.field2, from_translation=False
+        )
         ArticleKeyword.objects.create(article=self.with_kw, word="хлеб")
         self.queue_url = reverse("admin:dict_ontologyqueuearticle_changelist")
 
@@ -87,6 +93,23 @@ class OntologyQueueAdminTestCase(TestCase):
         response = self.client.get(self.queue_url)
         self.assertEqual(response.status_code, 302)
         self.assertIn("ontology=pending", response["Location"])
+
+    def test_queue_filter_all_shows_every_bucket(self):
+        response = self.client.get(self.queue_url, {"ontology": "all"})
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.pending.pk}/change/", html
+        )
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_field.pk}/change/", html
+        )
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_kw.pk}/change/", html
+        )
+        self.assertIn(f"/admin/dict/ontologyqueuearticle/{self.empty.pk}/change/", html)
+        # Explicit «все», not Django's empty-param All (that re-defaults to pending).
+        self.assertIn("ontology=all", html)
 
     def test_queue_filter_pending(self):
         response = self.client.get(self.queue_url, {"ontology": BUCKET_PENDING})
@@ -116,6 +139,7 @@ class OntologyQueueAdminTestCase(TestCase):
         self.assertIn(
             f"/admin/dict/ontologyqueuearticle/{self.with_field.pk}/change/", html
         )
+        self.assertIn("1/2", html)
         self.assertNotIn(
             f"/admin/dict/ontologyqueuearticle/{self.pending.pk}/change/", html
         )

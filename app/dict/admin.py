@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.forms import Textarea
 from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -256,15 +256,20 @@ class ArticleSemanticFieldInline(admin.TabularInline):
 
 class OntologyMarkupFilter(admin.SimpleListFilter):
     """
-    Three buckets: marked / pending (actionable queue) / skip (no markup needed).
-    See dict.ai.ontology_status.
+    Buckets: all / marked / pending / skip. See dict.ai.ontology_status.
+
+    Explicit «все» (?ontology=all) — Django's default All clears the param,
+    and OntologyQueueAdm would redirect bare URLs back to pending.
     """
 
     title = "Онтология"
     parameter_name = "ontology"
+    # Sentinel so «все» keeps a query param (avoids pending redirect).
+    ALL = "all"
 
     def lookups(self, request, model_admin):
         return (
+            (self.ALL, "все"),
             (BUCKET_MARKED, "размечены"),
             (BUCKET_PENDING, "ждут разметки"),
             (BUCKET_SKIP, "разметка не нужна"),
@@ -275,6 +280,17 @@ class OntologyMarkupFilter(admin.SimpleListFilter):
         if value in (BUCKET_MARKED, BUCKET_PENDING, BUCKET_SKIP):
             return filter_ontology_bucket(queryset, value)
         return queryset
+
+    def choices(self, changelist):
+        # Drop Django's built-in All (empty param); we use ontology=all instead.
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == str(lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}
+                ),
+                "display": title,
+            }
 
 
 @admin.register(Source)
@@ -620,6 +636,11 @@ class OntologyQueueAdm(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.annotate(
             _ontology_field_count=Count("semantic_assignments", distinct=True),
+            _ontology_from_translation_count=Count(
+                "semantic_assignments",
+                filter=Q(semantic_assignments__from_translation=True),
+                distinct=True,
+            ),
             _ontology_kw_count=Count("articlekeyword", distinct=True),
         )
 
@@ -637,10 +658,16 @@ class OntologyQueueAdm(admin.ModelAdmin):
         )
 
     def ontology_fields(self, obj):
-        n = getattr(obj, "_ontology_field_count", None)
-        if n is None:
-            n = obj.semantic_assignments.count()
-        return n if n else "—"
+        """from_translation / total (e.g. 1/2)."""
+        total = getattr(obj, "_ontology_field_count", None)
+        if total is None:
+            total = obj.semantic_assignments.count()
+        if not total:
+            return "—"
+        from_tr = getattr(obj, "_ontology_from_translation_count", None)
+        if from_tr is None:
+            from_tr = obj.semantic_assignments.filter(from_translation=True).count()
+        return f"{from_tr}/{total}"
 
     ontology_fields.short_description = "Поля"
     ontology_fields.admin_order_field = "_ontology_field_count"

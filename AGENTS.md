@@ -16,9 +16,18 @@
 
 Подробнее: `app/agents/AGENTS.md`, `app/dict/ai/README.md`.
 
+`research/` — результаты исследовательских проектов на материале словаря (один каталог на проект). Не спеки и не очередь разработки: это `docs/`.
+
 ## Стек и запуск
 
-Python 3.12, Django 5.2 LTS, PostgreSQL 15 + pgvector (`pgvector/pgvector:0.8.7-pg15-bookworm` в compose), шаблоны + Bootstrap 4. Dev: контейнеры `punzh_django` + `punzh_db`. `manage.py` и тесты: **`-w /app`**. Команды: `app/README.md`. Деплой: пересборка образа + `./deploy.sh` (migrate/collectstatic). Статика: исходники `app/static` / `app/dict/static`, отдача Nginx — только `app/staticfiles`.
+Python 3.12, Django 5.2 LTS, PostgreSQL 15 + pgvector (`pgvector/pgvector:0.8.7-pg15-bookworm` в compose), шаблоны + Bootstrap 4. Dev: контейнеры `punzh_django` + `punzh_db`. `manage.py` и тесты: **`-w /app`**. Команды: `app/README.md`.
+
+**Деплой (prod karielan-hub, user `krl`, каталог `~/punzh-dict`):** контейнер
+`punzh_web` (uwsgi). Код с volume/git — `git pull` + `./deploy.sh` (или вручную
+migrate/collectstatic) и **обязательно `docker restart punzh_web`**: без
+рестарта админка/Python не подхватывают изменения. `deploy.sh` сам делает
+restart целевого контейнера. Статика: исходники `app/static` / `app/dict/static`,
+отдача Nginx — только `app/staticfiles`.
 
 В `app/static/admin/` держать только кастом (`article_*`); не копировать туда `django.contrib.admin` — иначе `collectstatic` перекрывает CSS/JS пакета.
 
