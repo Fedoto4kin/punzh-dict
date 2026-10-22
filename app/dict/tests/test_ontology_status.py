@@ -6,6 +6,7 @@ from dict.ai.ontology_status import (
     BUCKET_SKIP,
     filter_ontology_bucket,
     has_classify_material,
+    is_negation_article,
     ontology_admin_bucket,
 )
 from dict.models import (
@@ -88,6 +89,58 @@ class OntologyStatusHelpersTestCase(TestCase):
         ArticleAddition.objects.create(article=art, article_html="рыба в озере")
         self.assertTrue(has_classify_material(art))
 
+    def test_pron_with_mom_flavor_is_skip(self):
+        # Real case (id 17925): pronoun + misplaced mom must not enter pending.
+        art = Article.objects.create(
+            word="se",
+            article_html="<b>se</b> <i>pron</i> <i>mom</i> та, то",
+        )
+        ArticleIndexTag.objects.create(article=art, tag=_pos("pron", "местоимение"))
+        ArticleIndexTag.objects.create(article=art, tag=_pos("mom", "моментатив"))
+        ArticleIndexTranslate.objects.create(article=art, rus_word="та")
+        self.assertEqual(ontology_admin_bucket(art), BUCKET_SKIP)
+
+    def test_verb_with_mom_and_v_stays_pending(self):
+        art = Article.objects.create(
+            word="hypata",
+            article_html="<b>hypätä</b> <i>v</i> <i>mom</i> прыгнуть",
+        )
+        ArticleIndexTag.objects.create(article=art, tag=_pos("v", "глагол"))
+        ArticleIndexTag.objects.create(article=art, tag=_pos("mom", "моментатив"))
+        ArticleIndexTranslate.objects.create(article=art, rus_word="прыгнуть")
+        self.assertEqual(ontology_admin_bucket(art), BUCKET_PENDING)
+
+    def test_negation_verb_label_is_skip(self):
+        # Real case (id 1637): ei I — auxiliary with <i>negat</i>.
+        art = Article.objects.create(
+            word="ei I",
+            article_html=(
+                "<b>ei I</b> <i>v</i> <i>negat</i> "
+                "3 лицо для образования отрицательных форм"
+            ),
+        )
+        ArticleIndexTag.objects.create(article=art, tag=_pos("v", "глагол"))
+        self.assertTrue(is_negation_article(art))
+        self.assertEqual(ontology_admin_bucket(art), BUCKET_SKIP)
+
+    def test_see_to_negation_with_illustration_is_skip(self):
+        # Real case (id 1776): ew → ewle (negat), illustration about «нет…».
+        target = Article.objects.create(
+            word="ewle",
+            article_html="<b>ewle</b> <i>v</i> <i>negat</i> (&lt; ei ole) не, нет",
+        )
+        ArticleIndexTag.objects.create(article=target, tag=_pos("v", "глагол"))
+        art = Article.objects.create(
+            word="ew",
+            article_html=("<b>ew</b> <i>v</i> <i>см.</i> ewle; нет хорошей погоды"),
+        )
+        ArticleIndexTag.objects.create(article=art, tag=_pos("v", "глагол"))
+        ArticleLink.objects.create(
+            from_article=art, to_article=target, kind=ArticleLink.KIND_SEE
+        )
+        self.assertTrue(is_negation_article(art))
+        self.assertEqual(ontology_admin_bucket(art), BUCKET_SKIP)
+
     def test_buckets_partition(self):
         field = SemanticField.objects.create(name="животные", sorting=1)
         marked = Article.objects.create(word="marked")
@@ -166,6 +219,41 @@ class OntologyStatusFilterTestCase(TestCase):
         )
         ArticleIndexTranslate.objects.create(article=self.pending_noun, rus_word="дом")
 
+        self.skip_pron_mom = Article.objects.create(
+            word="se",
+            article_html="<b>se</b> <i>pron</i> <i>mom</i> та",
+        )
+        ArticleIndexTag.objects.create(
+            article=self.skip_pron_mom, tag=_pos("pron", "местоимение")
+        )
+        ArticleIndexTag.objects.create(
+            article=self.skip_pron_mom, tag=_pos("mom", "моментатив")
+        )
+        ArticleIndexTranslate.objects.create(article=self.skip_pron_mom, rus_word="та")
+
+        self.skip_negat = Article.objects.create(
+            word="ei I",
+            article_html="<b>ei I</b> <i>v</i> <i>negat</i> отрицательных форм",
+        )
+        ArticleIndexTag.objects.create(article=self.skip_negat, tag=_pos("v", "глагол"))
+
+        self.negat_target = Article.objects.create(
+            word="ewle",
+            article_html="<b>ewle</b> <i>v</i> <i>negat</i> не, нет",
+        )
+        self.skip_see_negat = Article.objects.create(
+            word="ew",
+            article_html="<b>ew</b> <i>v</i> <i>см.</i> ewle; нет хорошей погоды",
+        )
+        ArticleIndexTag.objects.create(
+            article=self.skip_see_negat, tag=_pos("v", "глагол")
+        )
+        ArticleLink.objects.create(
+            from_article=self.skip_see_negat,
+            to_article=self.negat_target,
+            kind=ArticleLink.KIND_SEE,
+        )
+
     def _ids(self, bucket):
         return set(
             filter_ontology_bucket(Article.objects.all(), bucket).values_list(
@@ -190,6 +278,10 @@ class OntologyStatusFilterTestCase(TestCase):
                 self.skip_empty.pk,
                 self.skip_service.pk,
                 self.skip_adv.pk,
+                self.skip_pron_mom.pk,
+                self.skip_negat.pk,
+                self.skip_see_negat.pk,
+                self.negat_target.pk,
             },
         )
 
