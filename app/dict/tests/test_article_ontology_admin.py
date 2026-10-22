@@ -183,12 +183,16 @@ class OntologyQueueAdminTestCase(TestCase):
         for call in schedule.call_args_list:
             self.assertEqual(call.kwargs.get("user_id"), self.user.pk)
 
-    def test_admin_index_shows_pending_count_on_queue(self):
+    def test_admin_index_shows_ontology_group_and_pending_count(self):
         response = self.client.get(reverse("admin:index"))
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        # One pending article in setUp (self.pending); others are marked/skip.
-        self.assertRegex(html, r"Очередь онтологии\s*\(1\)")
+        self.assertIn("Онтология", html)
+        self.assertIn("Смысловые поля", html)
+        # Badge = pending count; one pending in setUp.
+        self.assertRegex(html, r"Разметка\s*\(1\)")
+        self.assertNotIn("Очередь онтологии", html)
+        self.assertNotIn("Ждут разметки", html)
 
 
 class ArticleOntologyAdminTestCase(TestCase):
@@ -206,7 +210,8 @@ class ArticleOntologyAdminTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertNotIn("?ontology=", html)
-        self.assertNotIn(">Онтология<", html)
+        self.assertNotIn('id="changelist-filter"', html)
+        self.assertNotIn("column-ontology", html)
         self.assertIn(f"/admin/dict/article/{self.pending.pk}/change/", html)
         self.assertIn(f"/admin/dict/article/{self.with_field.pk}/change/", html)
 

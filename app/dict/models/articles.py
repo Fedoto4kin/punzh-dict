@@ -129,8 +129,8 @@ class OntologyQueueArticle(Article):
 
     class Meta:
         proxy = True
-        verbose_name = "Очередь онтологии"
-        verbose_name_plural = "Очередь онтологии"
+        verbose_name = "Разметка"
+        verbose_name_plural = "Разметка"
 
 
 class ArticleAddition(ArticleBase):

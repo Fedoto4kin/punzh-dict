@@ -681,12 +681,17 @@ class OntologyQueueAdm(admin.ModelAdmin):
         css = {"all": ("admin/css/article_html_preview.css",)}
 
 
-# Sidebar: Слова, Переводы, Смысловые поля, Очередь онтологии, then the rest.
+# Sidebar under Dict: Слова, Переводы, then the rest (alpha).
+# Semantic fields + pending queue are pulled into a nested «Онтология» block.
 _DICT_MODEL_ORDER = {
     "article": 0,
     "articleindextranslate": 1,
-    "semanticfield": 2,
-    "ontologyqueuearticle": 3,
+}
+
+_ONTOLOGY_SIDEBAR_MODELS = frozenset({"semanticfield", "ontologyqueuearticle"})
+_ONTOLOGY_SIDEBAR_ORDER = {
+    "semanticfield": 0,
+    "ontologyqueuearticle": 1,
 }
 
 
@@ -701,23 +706,52 @@ def ontology_pending_count() -> int:
 
 def _dict_app_list(request):
     app_list = admin.AdminSite.get_app_list(admin.site, request)
-    pending_n = None
+    pending_n = ontology_pending_count()
+    result = []
     for app in app_list:
         if app.get("app_label") != "dict":
+            result.append(app)
             continue
-        app["models"].sort(
+        ontology_models = []
+        dict_models = []
+        for model in app["models"]:
+            key = model["object_name"].lower()
+            if key in _ONTOLOGY_SIDEBAR_MODELS:
+                if key == "ontologyqueuearticle":
+                    # Badge = pending only; the changelist also has marked/skip.
+                    model = {**model, "name": f"Разметка ({pending_n})"}
+                ontology_models.append(model)
+            else:
+                dict_models.append(model)
+        dict_models.sort(
             key=lambda m: (
                 _DICT_MODEL_ORDER.get(m["object_name"].lower(), 50),
                 m["name"].lower(),
             )
         )
-        for model in app["models"]:
-            if model["object_name"].lower() != "ontologyqueuearticle":
-                continue
-            if pending_n is None:
-                pending_n = ontology_pending_count()
-            model["name"] = f"{model['name']} ({pending_n})"
-    return app_list
+        ontology_models.sort(
+            key=lambda m: (
+                _ONTOLOGY_SIDEBAR_ORDER.get(m["object_name"].lower(), 50),
+                m["name"].lower(),
+            )
+        )
+        app = {**app, "models": dict_models}
+        result.append(app)
+        if ontology_models:
+            first_url = next(
+                (m.get("admin_url") for m in ontology_models if m.get("admin_url")),
+                app.get("app_url"),
+            )
+            result.append(
+                {
+                    "name": "Онтология",
+                    "app_label": "dict_ontology",
+                    "app_url": first_url,
+                    "has_module_perms": True,
+                    "models": ontology_models,
+                }
+            )
+    return result
 
 
 admin.site.get_app_list = _dict_app_list
