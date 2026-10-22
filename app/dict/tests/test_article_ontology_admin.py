@@ -69,7 +69,7 @@ class ScheduleClassifyArticleTestCase(TestCase):
             self.assertTrue(schedule_classify_article(42))
 
 
-class ArticleOntologyAdminTestCase(TestCase):
+class OntologyQueueAdminTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_superuser("admin", "a@example.com", "x")
         self.client.force_login(self.user)
@@ -81,50 +81,99 @@ class ArticleOntologyAdminTestCase(TestCase):
         self.field = SemanticField.objects.create(name="еда", sorting=1)
         ArticleSemanticField.objects.create(article=self.with_field, field=self.field)
         ArticleKeyword.objects.create(article=self.with_kw, word="хлеб")
+        self.queue_url = reverse("admin:dict_ontologyqueuearticle_changelist")
 
-    def test_changelist_filter_pending(self):
-        response = self.client.get(
-            reverse("admin:dict_article_changelist"),
-            {"ontology": BUCKET_PENDING},
-        )
+    def test_queue_defaults_to_pending(self):
+        response = self.client.get(self.queue_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("ontology=pending", response["Location"])
+
+    def test_queue_filter_pending(self):
+        response = self.client.get(self.queue_url, {"ontology": BUCKET_PENDING})
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn(f"/admin/dict/article/{self.pending.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.with_field.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.with_kw.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.empty.pk}/change/", html)
-
-    def test_changelist_filter_marked(self):
-        response = self.client.get(
-            reverse("admin:dict_article_changelist"),
-            {"ontology": BUCKET_MARKED},
+        self.assertIn("Поля", html)
+        self.assertIn("Материал", html)
+        self.assertIn("POS", html)
+        self.assertIn("перевод", html)
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.pending.pk}/change/", html
         )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_field.pk}/change/", html
+        )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_kw.pk}/change/", html
+        )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.empty.pk}/change/", html
+        )
+
+    def test_queue_filter_marked(self):
+        response = self.client.get(self.queue_url, {"ontology": BUCKET_MARKED})
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn(f"/admin/dict/article/{self.with_field.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.pending.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.with_kw.pk}/change/", html)
-
-    def test_changelist_filter_skip(self):
-        response = self.client.get(
-            reverse("admin:dict_article_changelist"),
-            {"ontology": BUCKET_SKIP},
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_field.pk}/change/", html
         )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.pending.pk}/change/", html
+        )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_kw.pk}/change/", html
+        )
+
+    def test_queue_filter_skip(self):
+        response = self.client.get(self.queue_url, {"ontology": BUCKET_SKIP})
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn(f"/admin/dict/article/{self.with_kw.pk}/change/", html)
-        self.assertIn(f"/admin/dict/article/{self.empty.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.with_field.pk}/change/", html)
-        self.assertNotIn(f"/admin/dict/article/{self.pending.pk}/change/", html)
+        self.assertIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_kw.pk}/change/", html
+        )
+        self.assertIn(f"/admin/dict/ontologyqueuearticle/{self.empty.pk}/change/", html)
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.with_field.pk}/change/", html
+        )
+        self.assertNotIn(
+            f"/admin/dict/ontologyqueuearticle/{self.pending.pk}/change/", html
+        )
 
-    def test_changelist_column_values(self):
+    def test_queue_change_redirects_to_article(self):
+        response = self.client.get(
+            reverse("admin:dict_ontologyqueuearticle_change", args=[self.pending.pk])
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            reverse("admin:dict_article_change", args=[self.pending.pk]),
+        )
+
+    def test_semanticfield_changelist_links_queue(self):
+        response = self.client.get(reverse("admin:dict_semanticfield_changelist"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("Очередь разметки", html)
+        self.assertIn(self.queue_url, html)
+
+
+class ArticleOntologyAdminTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser("admin", "a@example.com", "x")
+        self.client.force_login(self.user)
+        self.pending = Article.objects.create(word="pending")
+        ArticleIndexTranslate.objects.create(article=self.pending, rus_word="хлеб")
+        self.with_field = Article.objects.create(word="kissa")
+        self.field = SemanticField.objects.create(name="еда", sorting=1)
+        ArticleSemanticField.objects.create(article=self.with_field, field=self.field)
+
+    def test_article_changelist_has_no_ontology_filter_or_column(self):
         response = self.client.get(reverse("admin:dict_article_changelist"))
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn("Онтология", html)
-        self.assertIn(">1<", html)
-        self.assertIn("не нужна", html)
-        self.assertIn("нет", html)
+        self.assertNotIn("?ontology=", html)
+        self.assertNotIn(">Онтология<", html)
+        self.assertIn(f"/admin/dict/article/{self.pending.pk}/change/", html)
+        self.assertIn(f"/admin/dict/article/{self.with_field.pk}/change/", html)
 
     def test_change_form_button_razmetit(self):
         response = self.client.get(

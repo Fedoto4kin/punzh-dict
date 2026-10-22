@@ -122,6 +122,17 @@ class Article(ArticleBase):
         ordering = ["word"]
 
 
+class OntologyQueueArticle(Article):
+    """
+    Proxy for the admin ontology markup queue (not the editorial word list).
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = "Очередь онтологии"
+        verbose_name_plural = "Очередь онтологии"
+
+
 class ArticleAddition(ArticleBase):
 
     article = models.ForeignKey(

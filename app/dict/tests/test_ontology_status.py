@@ -8,6 +8,8 @@ from dict.ai.ontology_status import (
     has_classify_material,
     is_negation_article,
     ontology_admin_bucket,
+    ontology_content_pos_label,
+    ontology_material_label,
 )
 from dict.models import (
     Article,
@@ -99,6 +101,39 @@ class OntologyStatusHelpersTestCase(TestCase):
         ArticleIndexTag.objects.create(article=art, tag=_pos("mom", "моментатив"))
         ArticleIndexTranslate.objects.create(article=art, rus_word="та")
         self.assertEqual(ontology_admin_bucket(art), BUCKET_SKIP)
+
+    def test_interj_with_adjective_tag_is_skip(self):
+        # Real case (id 14322): interjection ha? co-tagged with a.
+        art = Article.objects.create(
+            word="ha",
+            article_html=(
+                "<b>ha</b> <i>interj</i> <i>a</i> <i>(употребляется для вопроса)</i>; "
+                "ombelet miwla šuappuat, ha? сошьешь мне сапоги, а?"
+            ),
+        )
+        ArticleIndexTag.objects.create(article=art, tag=_pos("interj", "междометие"))
+        ArticleIndexTag.objects.create(article=art, tag=_pos("a", "прилагательное"))
+        self.assertEqual(ontology_admin_bucket(art), BUCKET_SKIP)
+
+    def test_material_and_pos_labels(self):
+        tr = Article.objects.create(word="kissa")
+        ArticleIndexTranslate.objects.create(article=tr, rus_word="кошка")
+        ArticleIndexTag.objects.create(article=tr, tag=_pos("s", "существительное"))
+        self.assertEqual(ontology_material_label(tr), "перевод")
+        self.assertEqual(ontology_content_pos_label(tr), "s")
+
+        both = Article.objects.create(
+            word="hypata",
+            article_html="<b>hypätä</b> <i>v</i> прыгнуть; он прыгнул в воду",
+        )
+        ArticleIndexTag.objects.create(article=both, tag=_pos("v", "глагол"))
+        ArticleIndexTranslate.objects.create(article=both, rus_word="прыгнуть")
+        self.assertEqual(ontology_material_label(both), "перевод+иллюстр.")
+        self.assertEqual(ontology_content_pos_label(both), "v")
+
+        empty = Article.objects.create(word="tyhja")
+        self.assertEqual(ontology_material_label(empty), "—")
+        self.assertEqual(ontology_content_pos_label(empty), "—")
 
     def test_verb_with_mom_and_v_stays_pending(self):
         art = Article.objects.create(

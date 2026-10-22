@@ -18,6 +18,8 @@ from .ai.ontology_status import (
     BUCKET_PENDING,
     BUCKET_SKIP,
     filter_ontology_bucket,
+    ontology_content_pos_label,
+    ontology_material_label,
 )
 from .helpers import normalization
 from .models import (
@@ -25,9 +27,9 @@ from .models import (
     ArticleAddition,
     ArticleIndexTag,
     ArticleIndexTranslate,
-    ArticleKeyword,
     ArticleLink,
     ArticleSemanticField,
+    OntologyQueueArticle,
     SemanticField,
     Source,
     Tag,
@@ -317,10 +319,8 @@ class ArticleAdm(admin.ModelAdmin):
     list_display = (
         "id",
         "_word",
-        "ontology_markup",
         "_article_html",
     )
-    list_filter = (OntologyMarkupFilter,)
     readonly_fields = [
         "_word",
         "_article_html",
@@ -377,13 +377,6 @@ class ArticleAdm(admin.ModelAdmin):
             ),
         ]
         return custom + urls
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(
-            _ontology_field_count=Count("semantic_assignments", distinct=True),
-            _ontology_kw_count=Count("articlekeyword", distinct=True),
-        )
 
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = extra_context or {}
@@ -464,23 +457,6 @@ class ArticleAdm(admin.ModelAdmin):
         }
         return render(request, "admin/dict/article/search_debug.html", context)
 
-    def ontology_markup(self, obj):
-        n_fields = getattr(obj, "_ontology_field_count", None)
-        if n_fields is None:
-            n_fields = obj.semantic_assignments.count()
-        if n_fields:
-            return str(n_fields)
-        n_kw = getattr(obj, "_ontology_kw_count", None)
-        if n_kw is None:
-            has_kw = ArticleKeyword.objects.filter(article_id=obj.pk).exists()
-        else:
-            has_kw = n_kw > 0
-        # Keywords-only ≈ no_field; empty otherwise (pending vs skip — via filter).
-        return "не нужна" if has_kw else "нет"
-
-    ontology_markup.short_description = "Онтология"
-    ontology_markup.admin_order_field = "_ontology_field_count"
-
     def get_search_results(self, request, queryset, search_term):
         term = (search_term or "").strip()
         if not term:
@@ -548,12 +524,20 @@ class SemanticFieldAdm(admin.ModelAdmin):
     search_fields = ("name", "definition")
     ordering = ("sorting", "name")
     readonly_fields = ("name", "definition", "parent", "sorting")
+    change_list_template = "admin/dict/semanticfield/change_list.html"
 
     def has_add_permission(self, request):
         return False
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["ontology_queue_url"] = reverse(
+            "admin:dict_ontologyqueuearticle_changelist"
+        )
+        return super().changelist_view(request, extra_context)
 
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = extra_context or {}
@@ -578,10 +562,101 @@ class SemanticFieldAdm(admin.ModelAdmin):
     site_link.short_description = "Сайт"
 
 
-# Sidebar order under Dict: Слова, then Переводы, then the rest (alpha).
+@admin.register(OntologyQueueArticle)
+class OntologyQueueAdm(admin.ModelAdmin):
+    """
+    Markup queue: same three ontology buckets, opens the editorial Article form.
+    """
+
+    list_display = (
+        "id",
+        "_word",
+        "ontology_fields",
+        "ontology_material",
+        "ontology_pos",
+        "_article_html",
+    )
+    list_filter = (OntologyMarkupFilter,)
+    search_fields = ("word",)
+    ordering = ("-id",)
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            _ontology_field_count=Count("semantic_assignments", distinct=True),
+            _ontology_kw_count=Count("articlekeyword", distinct=True),
+        )
+
+    def changelist_view(self, request, extra_context=None):
+        if "ontology" not in request.GET:
+            params = request.GET.copy()
+            params["ontology"] = BUCKET_PENDING
+            return HttpResponseRedirect(f"{request.path}?{params.urlencode()}")
+        return super().changelist_view(request, extra_context)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        return HttpResponseRedirect(
+            reverse("admin:dict_article_change", args=[object_id])
+        )
+
+    def ontology_fields(self, obj):
+        n = getattr(obj, "_ontology_field_count", None)
+        if n is None:
+            n = obj.semantic_assignments.count()
+        return n if n else "—"
+
+    ontology_fields.short_description = "Поля"
+    ontology_fields.admin_order_field = "_ontology_field_count"
+
+    def ontology_material(self, obj):
+        return ontology_material_label(obj)
+
+    ontology_material.short_description = "Материал"
+
+    def ontology_pos(self, obj):
+        return ontology_content_pos_label(obj)
+
+    ontology_pos.short_description = "POS"
+
+    def _word(self, obj):
+        if obj.word_normalized:
+            return format_html(
+                "<s>{word}</s> <b>{word_norm}</b>",
+                word=normalization(obj.word),
+                word_norm=obj.word_normalized,
+            )
+        return format_html("<b>{word}</b>", word=normalization(obj.word))
+
+    _word.short_description = "Заголовок"
+
+    def _article_html(self, obj):
+        html = obj.article_html or ""
+        if not html:
+            return ""
+        return format_html(
+            '<div class="article-html-preview">{}</div>',
+            mark_safe(format_article_html(html)),
+        )
+
+    _article_html.short_description = "Словарная статья"
+
+    class Media:
+        css = {"all": ("admin/css/article_html_preview.css",)}
+
+
+# Sidebar: Слова, Переводы, Смысловые поля, Очередь онтологии, then the rest.
 _DICT_MODEL_ORDER = {
     "article": 0,
     "articleindextranslate": 1,
+    "semanticfield": 2,
+    "ontologyqueuearticle": 3,
 }
 
 

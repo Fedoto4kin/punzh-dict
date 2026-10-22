@@ -14,7 +14,7 @@
 | `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии (включая аддендумы). Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py`. Промпт «по переводу» (`SYSTEM_PROMPT_TRANSLATION_FIELDS`) — общий с `pick_translation_fields.py`; вход — только `ArticleIndexTranslate`. |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |
 | `classify_bg.py` | Фон (daemon-thread) для админки: `schedule_classify_article` после add / кнопки; notice → message на следующем `/admin/` (F5). |
-| `ontology_status.py` | Корзины фильтра админки: размечены / ждут разметки / разметка не нужна. |
+| `ontology_status.py` | Корзины очереди онтологии (админка рядом со смысловыми полями). |
 
 ## Исключение: общий промпт в `prompts.py`
 

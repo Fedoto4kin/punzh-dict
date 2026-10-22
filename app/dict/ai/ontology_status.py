@@ -2,7 +2,8 @@
 Admin ontology queue buckets: marked / pending / skip.
 
 Ontology fields are for content lemmas (noun / verb / adjective). Other POS
-(adverb, numeral, pronoun, conjunction, …) go to «разметка не нужна».
+(adverb, numeral, pronoun, conjunction, interjection, …) go to
+«разметка не нужна» and win over a co-tagged content head.
 Verb aspect/voice flavors alone (mom, caus, …) do not count as content.
 Negation verbs (HTML «negat» or see→negat) are skip.
 Pure «см.» stubs (even with a leftover translation index row) are skip.
@@ -28,6 +29,20 @@ from dict.models import (
 # Secondary flavors (mom, caus, freq, …) alone do not qualify.
 CONTENT_POS_TAGS = frozenset({"s", "v", "a"})
 
+# Function-word POS: wins over a co-tagged content head (e.g. interj+a, adv+s).
+SERVICE_POS_TAGS = frozenset(
+    {
+        "pron",
+        "adv",
+        "num",
+        "conj",
+        "particl",
+        "prep",
+        "postp",
+        "interj",
+    }
+)
+
 # Cyrillic spans shorter than this are ignored as illustration material.
 _MIN_ILLUSTRATION_LEN = 4
 # PostgreSQL approx. for changelist (labels like «всг» are 3 letters).
@@ -45,9 +60,11 @@ _POS_TYPE = 2
 
 def is_ontology_unsupported_pos(article) -> bool:
     """
-    True if the article has POS tags (type=2) but none are content (s/v/a).
+    True if POS markup says the lemma is not ontology content.
 
-    No POS tags → False (allow pending for newly added words).
+    - Any service POS (pron/adv/interj/…) → True, even with co-tagged s/v/a.
+    - Otherwise True when there are POS tags but none are content heads (s/v/a).
+    - No POS tags → False (allow pending for newly added words).
     """
     codes = set(
         article.articleindextag_set.filter(tag__type=_POS_TYPE).values_list(
@@ -56,6 +73,8 @@ def is_ontology_unsupported_pos(article) -> bool:
     )
     if not codes:
         return False
+    if codes & SERVICE_POS_TAGS:
+        return True
     return codes.isdisjoint(CONTENT_POS_TAGS)
 
 
@@ -110,12 +129,45 @@ def has_classify_material(article) -> bool:
     article is not a pure «см.» stub. Dictionary labels in <i> are not
     illustrations (see prompts.strip_dict_label_italics).
     """
+    has_tr, has_ill = classify_material_flags(article)
+    return has_tr or has_ill
+
+
+def classify_material_flags(article) -> tuple[bool, bool]:
+    """
+    (has_translation_for_classify, has_illustration) for queue columns.
+
+    Translations on a pure «см.» stub do not count.
+    """
     payload = build_article_input(article)
-    if any(len(span) >= _MIN_ILLUSTRATION_LEN for span in payload["illustrations_ru"]):
-        return True
-    if not payload["translations"]:
-        return False
-    return not is_pure_see_stub(article)
+    has_ill = any(
+        len(span) >= _MIN_ILLUSTRATION_LEN for span in payload["illustrations_ru"]
+    )
+    has_tr = bool(payload["translations"]) and not is_pure_see_stub(article)
+    return has_tr, has_ill
+
+
+def ontology_material_label(article) -> str:
+    """Short Russian label: перевод / иллюстр. / both / em dash."""
+    has_tr, has_ill = classify_material_flags(article)
+    if has_tr and has_ill:
+        return "перевод+иллюстр."
+    if has_tr:
+        return "перевод"
+    if has_ill:
+        return "иллюстр."
+    return "—"
+
+
+def ontology_content_pos_label(article) -> str:
+    """Content heads present (s, v, a), comma-separated, or em dash."""
+    codes = set(
+        article.articleindextag_set.filter(tag__type=_POS_TYPE).values_list(
+            "tag__tag", flat=True
+        )
+    )
+    ordered = [c for c in ("s", "v", "a") if c in codes]
+    return ", ".join(ordered) if ordered else "—"
 
 
 def ontology_admin_bucket(article) -> str:
@@ -158,9 +210,21 @@ def _has_any_pos_exists():
     )
 
 
+def _has_service_pos_exists():
+    return Exists(
+        ArticleIndexTag.objects.filter(
+            article_id=OuterRef("pk"),
+            tag__type=_POS_TYPE,
+            tag__tag__in=SERVICE_POS_TAGS,
+        )
+    )
+
+
 def _unsupported_pos_q():
-    """Has POS markup, but no content POS (adv/num/pron/conj/…)."""
-    return _has_any_pos_exists() & ~_has_content_pos_exists()
+    """Service POS, or POS present without a content head (s/v/a)."""
+    return _has_service_pos_exists() | (
+        _has_any_pos_exists() & ~_has_content_pos_exists()
+    )
 
 
 def _negation_q():
