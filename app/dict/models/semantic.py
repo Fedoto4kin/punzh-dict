@@ -77,6 +77,13 @@ class ArticleSemanticField(models.Model):
 
     class Meta:
         unique_together = ("article", "field")
+        indexes = [
+            # Ontology listings: filter by field ± from_translation.
+            models.Index(
+                fields=["field", "from_translation"],
+                name="dict_asf_field_from_tr_idx",
+            ),
+        ]
         verbose_name = "Смысловое поле статьи"
         verbose_name_plural = "Смысловые поля статей"
 

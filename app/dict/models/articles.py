@@ -256,6 +256,13 @@ class ArticleLink(models.Model):
 
     class Meta:
         unique_together = ("from_article", "to_article")
+        indexes = [
+            # Ontology / search expand: incoming links by target + kind.
+            models.Index(
+                fields=["to_article", "kind"],
+                name="dict_alink_to_kind_idx",
+            ),
+        ]
         verbose_name = "Связь между статьями"
         verbose_name_plural = "Связи между статьями"
 

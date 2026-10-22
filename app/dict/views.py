@@ -1,7 +1,8 @@
 import re
+from pathlib import Path
 from urllib.parse import quote
 
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
 
@@ -205,6 +206,12 @@ def tags_compatible(request, tags=""):
     except ValueError:
         return JsonResponse({"disable": []})
     return JsonResponse({"disable": compatible_disable(selected)})
+
+
+def robots_txt(request):
+    """Serve /robots.txt without APPEND_SLASH → <letter>/ catch-all."""
+    body = Path(__file__).with_name("robots.txt").read_text(encoding="utf-8")
+    return HttpResponse(body, content_type="text/plain; charset=utf-8")
 
 
 def ontology_index(request):

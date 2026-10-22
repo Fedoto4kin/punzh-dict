@@ -1,0 +1,15 @@
+# Crawl politely: this host is a small VPS.
+# Crawl-delay is seconds between requests (Yandex and some AI bots honour it).
+
+User-agent: PerplexityBot
+Crawl-delay: 10
+
+User-agent: GPTBot
+Crawl-delay: 10
+
+User-agent: ClaudeBot
+Crawl-delay: 10
+
+User-agent: *
+Crawl-delay: 2
+Allow: /

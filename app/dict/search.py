@@ -1,9 +1,10 @@
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Prefetch, Q
 from django.db.models.functions import Length
 
 from .helpers import (
@@ -47,23 +48,44 @@ class Content:
 # ------------------------------------------------------------
 
 
+def _hydrate_article_page(page_obj):
+    """
+    Replace light Article rows on the current page with full cards
+    (html, source, additions) for templates.
+    """
+    page_ids = [a.pk for a in page_obj.object_list]
+    if not page_ids:
+        return page_obj
+    additions_qs = ArticleAddition.objects.select_related("source")
+    full_by_id = {
+        a.pk: a
+        for a in Article.objects.filter(pk__in=page_ids)
+        .select_related("source")
+        .prefetch_related(Prefetch("additions", queryset=additions_qs))
+    }
+    page_obj.object_list = [full_by_id[i] for i in page_ids if i in full_by_id]
+    return page_obj
+
+
 def sort_and_paginate(articles, page):
     """
     Karelian-collated in-memory sort + pagination, shared by every listing
-    view. `articles` is a filtered Article queryset (or any iterable); the
-    caller passes it already filtered and prefetched as needed.
+    view. `articles` is a filtered Article queryset (or any iterable).
 
     Sorting must run in Python: sorted_by_krl relies on normalization(),
-    which is regex-based and cannot be expressed in SQL. The input keeps its
-    default DB ordering ("word"), so ties in the collation key resolve exactly
-    as before via Python's stable sort.
+    which is regex-based and cannot be expressed in SQL. Only id/word are
+    loaded for the sort; the current page is re-fetched with source and
+    additions for card templates.
 
     Returns (page_obj, sorted_articles); the sorted list is reused by callers
-    for build_pagination_hints.
+    for build_pagination_hints (word only).
     """
+    if hasattr(articles, "only"):
+        articles = articles.only("id", "word")
     sorted_articles = sorted(articles, key=lambda el: sorted_by_krl(el, "word"))
     paginator = Paginator(sorted_articles, num_by_page)
-    return paginator.get_page(page), sorted_articles
+    page_obj = _hydrate_article_page(paginator.get_page(page))
+    return page_obj, sorted_articles
 
 
 # ------------------------------------------------------------
@@ -119,7 +141,7 @@ def search_by_pointer(letter: str, page: int) -> Content:
 
 
 def get_sorted_articles(ids: [], page: int) -> Paginator:
-    articles = Article.objects.prefetch_related("additions").filter(pk__in=ids)
+    articles = Article.objects.filter(pk__in=ids)
     page_obj, _ = sort_and_paginate(articles, page)
 
     return page_obj, page_obj.paginator.count
@@ -1067,17 +1089,57 @@ def semantic_fields_with_counts():
     translation_count — articles with from_translation=True (x);
     article_count — full listing size incl. illustrations + unmarked
     referrers (y). Templates show x/y.
+
+    Computed in a few queries for all fields (not N×article_ids_for_semantic_field).
     """
     fields = list(SemanticField.objects.all())
+    if not fields:
+        return fields
+
     translation_counts = {
         row["field_id"]: row["n"]
         for row in ArticleSemanticField.objects.filter(from_translation=True)
         .values("field_id")
         .annotate(n=Count("article_id", distinct=True))
     }
+
+    classified_by_field = defaultdict(set)
+    for field_id, article_id in ArticleSemanticField.objects.values_list(
+        "field_id", "article_id"
+    ):
+        classified_by_field[field_id].add(article_id)
+
+    all_classified = set()
+    for ids in classified_by_field.values():
+        all_classified |= ids
+
+    referrers_by_target = defaultdict(set)
+    if all_classified:
+        for from_id, to_id in ArticleLink.objects.filter(
+            to_article_id__in=all_classified,
+            kind__in=ArticleLink.KINDS_LISTING,
+        ).values_list("from_article_id", "to_article_id"):
+            referrers_by_target[to_id].add(from_id)
+
+    all_referrer_ids = set()
+    for ids in referrers_by_target.values():
+        all_referrer_ids |= ids
+
+    marked = set()
+    if all_referrer_ids:
+        marked = set(
+            ArticleSemanticField.objects.filter(
+                article_id__in=all_referrer_ids
+            ).values_list("article_id", flat=True)
+        )
+
     for field in fields:
         field.translation_count = translation_counts.get(field.pk, 0)
-        field.article_count = len(article_ids_for_semantic_field(field.pk))
+        classified = classified_by_field.get(field.pk, set())
+        referrers = set()
+        for aid in classified:
+            referrers |= referrers_by_target.get(aid, set())
+        field.article_count = len(classified | (referrers - marked))
     return fields
 
 
@@ -1096,7 +1158,7 @@ def search_by_semantic_field(
         phrase,
         include_all=include_all,
     )
-    articles = Article.objects.filter(pk__in=filtered_ids).prefetch_related("additions")
+    articles = Article.objects.filter(pk__in=filtered_ids)
     page_obj, sorted_articles = sort_and_paginate(articles, page)
     trigrams_dict = build_pagination_hints(sorted_articles, num_by_page)
     return Content(

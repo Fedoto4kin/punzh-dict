@@ -5,6 +5,8 @@ from django.views.static import serve
 from . import views
 
 urlpatterns = [
+    # Before <letter>/ — otherwise /robots.txt redirects to /robots.txt/ (letter page).
+    path("robots.txt", views.robots_txt, name="robots_txt"),
     path(
         "about/",
         views.StaticView.as_view(template_name="staticPages/about.html"),

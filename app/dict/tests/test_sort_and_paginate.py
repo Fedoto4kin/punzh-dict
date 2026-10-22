@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ..models import Article, ArticleLink
+from ..models import Article, ArticleAddition, ArticleLink, Source
 from ..search import expand_by_links, sort_and_paginate
 
 
@@ -38,6 +38,22 @@ class SortAndPaginateTestCase(TestCase):
         self.assertEqual([], list(page_obj))
         self.assertEqual([], sorted_articles)
         self.assertEqual(0, page_obj.paginator.count)
+
+    def test_page_rows_are_hydrated_for_cards(self):
+        # Sort uses only(id, word); the page must reload html/source/additions.
+        src = Source.objects.create(title="test", css="src-test")
+        art = Article.objects.create(
+            word="aiga", article_html="<p>lemma</p>", source=src
+        )
+        ArticleAddition.objects.create(
+            article=art, article_html="<p>add</p>", source=src
+        )
+
+        page_obj, _ = sort_and_paginate(Article.objects.all(), 1)
+        card = page_obj[0]
+        self.assertEqual("<p>lemma</p>", card.article_html)
+        self.assertEqual(src.id, card.source_id)
+        self.assertEqual(1, len(card.additions.all()))
 
 
 class ExpandByLinksTestCase(TestCase):
