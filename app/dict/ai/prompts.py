@@ -13,6 +13,35 @@ from dict.models import ArticleIndexTranslate, SemanticField
 
 TAG_RE = re.compile(r"<[^>]+>")
 CYR_RE = re.compile(r"[а-яёА-ЯЁ][а-яёА-ЯЁ \-,;]*[а-яёА-ЯЁ]")
+# Short <i>…</i> runs are dictionary labels (пометы), not illustrations.
+_ITALIC_CHUNK_RE = re.compile(r"<i[^>]*>(.*?)</i>", re.I | re.DOTALL)
+_CROSSREF_LABELS = frozenset({"см", "ср"})
+
+
+def _looks_like_dict_label(inner: str) -> bool:
+    """True for POS/dialect/style labels inside <i> (всг., s, флк., см., …)."""
+    t = TAG_RE.sub(" ", inner or "")
+    t = re.sub(r"\s+", " ", t).strip().lower().rstrip(".")
+    if not t:
+        return True
+    if t in _CROSSREF_LABELS:
+        return True
+    # Compact abbrev / POS code; real glosses are longer or multi-word.
+    if " " not in t and len(t) <= 5:
+        return True
+    return False
+
+
+def strip_dict_label_italics(html: str) -> str:
+    """Drop <i>помета</i>; keep longer italic Russian notes as possible gloss."""
+
+    def repl(match):
+        if _looks_like_dict_label(match.group(1)):
+            return " "
+        return match.group(0)
+
+    return _ITALIC_CHUNK_RE.sub(repl, html or "")
+
 
 SYSTEM_PROMPT_FROZEN = (
     "Ты классифицируешь словарную статью по ФИКСИРОВАННОМУ списку смысловых "
@@ -43,10 +72,15 @@ SYSTEM_PROMPT_TRANSLATION_FIELDS = (
 
 
 def cyrillic_from_html(html):
-    """Russian spans from HTML (glosses mixed with illustration tails)."""
+    """
+    Russian spans from HTML (illustration tails / free glosses).
+
+    Dictionary labels in <i>…</i> (пометы: всг., флк., см., s/v/…) are
+    stripped first so they are not treated as illustrations.
+    """
     if not html:
         return []
-    text = TAG_RE.sub(" ", html)
+    text = TAG_RE.sub(" ", strip_dict_label_italics(html))
     out = []
     for c in CYR_RE.findall(text):
         c = re.sub(r"\s+", " ", c).strip()

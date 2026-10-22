@@ -1,18 +1,31 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import Count
 from django.forms import Textarea
-from django.shortcuts import render
-from django.urls import path
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
+from .ai.classify_bg import (
+    article_has_ontology_markup,
+    schedule_classify_article,
+)
+from .ai.ontology_status import (
+    BUCKET_MARKED,
+    BUCKET_PENDING,
+    BUCKET_SKIP,
+    filter_ontology_bucket,
+)
 from .helpers import normalization
 from .models import (
     Article,
     ArticleAddition,
     ArticleIndexTag,
     ArticleIndexTranslate,
+    ArticleKeyword,
     ArticleLink,
     ArticleSemanticField,
     SemanticField,
@@ -239,6 +252,29 @@ class ArticleSemanticFieldInline(admin.TabularInline):
     field_definition.short_description = "Определение"
 
 
+class OntologyMarkupFilter(admin.SimpleListFilter):
+    """
+    Three buckets: marked / pending (actionable queue) / skip (no markup needed).
+    See dict.ai.ontology_status.
+    """
+
+    title = "Онтология"
+    parameter_name = "ontology"
+
+    def lookups(self, request, model_admin):
+        return (
+            (BUCKET_MARKED, "размечены"),
+            (BUCKET_PENDING, "ждут разметки"),
+            (BUCKET_SKIP, "разметка не нужна"),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value in (BUCKET_MARKED, BUCKET_PENDING, BUCKET_SKIP):
+            return filter_ontology_bucket(queryset, value)
+        return queryset
+
+
 @admin.register(Source)
 class SourceAdm(admin.ModelAdmin):
     exclude = ("css",)
@@ -281,8 +317,10 @@ class ArticleAdm(admin.ModelAdmin):
     list_display = (
         "id",
         "_word",
+        "ontology_markup",
         "_article_html",
     )
+    list_filter = (OntologyMarkupFilter,)
     readonly_fields = [
         "_word",
         "_article_html",
@@ -332,8 +370,79 @@ class ArticleAdm(admin.ModelAdmin):
                 self.admin_site.admin_view(self.search_debug_view),
                 name="dict_article_search_debug",
             ),
+            path(
+                "<path:object_id>/classify/",
+                self.admin_site.admin_view(self.classify_view),
+                name="dict_article_classify",
+            ),
         ]
         return custom + urls
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(
+            _ontology_field_count=Count("semantic_assignments", distinct=True),
+            _ontology_kw_count=Count("articlekeyword", distinct=True),
+        )
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        if object_id is not None:
+            extra_context["show_ontology_classify"] = True
+            article = (
+                Article.objects.filter(pk=object_id)
+                .annotate(
+                    _ontology_field_count=Count("semantic_assignments", distinct=True),
+                    _ontology_kw_count=Count("articlekeyword", distinct=True),
+                )
+                .first()
+            )
+            if article is not None:
+                extra_context["ontology_classified"] = (
+                    article._ontology_field_count > 0 or article._ontology_kw_count > 0
+                )
+            else:
+                extra_context["show_ontology_classify"] = False
+        return super().changeform_view(request, object_id, form_url, extra_context)
+
+    def response_add(self, request, obj, post_url_continue=None):
+        if schedule_classify_article(obj.pk, user_id=request.user.pk):
+            self.message_user(
+                request,
+                "Онтология: разметка поставлена в очередь.",
+                level=messages.INFO,
+            )
+        else:
+            self.message_user(
+                request,
+                "Онтология: разметка уже выполняется.",
+                level=messages.WARNING,
+            )
+        return super().response_add(request, obj, post_url_continue)
+
+    def classify_view(self, request, object_id):
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        article = get_object_or_404(Article, pk=object_id)
+        if not self.has_change_permission(request, article):
+            raise PermissionDenied
+        classified = article_has_ontology_markup(article)
+        if schedule_classify_article(article.pk, user_id=request.user.pk):
+            msg = (
+                "Онтология: переразметка поставлена в очередь."
+                if classified
+                else "Онтология: разметка поставлена в очередь."
+            )
+            self.message_user(request, msg, level=messages.INFO)
+        else:
+            self.message_user(
+                request,
+                "Онтология: разметка уже выполняется.",
+                level=messages.WARNING,
+            )
+        return HttpResponseRedirect(
+            reverse("admin:dict_article_change", args=[article.pk])
+        )
 
     def search_debug_view(self, request):
         raw_query = (request.GET.get("q") or "").strip()
@@ -354,6 +463,23 @@ class ArticleAdm(admin.ModelAdmin):
             "has_query": bool(raw_query),
         }
         return render(request, "admin/dict/article/search_debug.html", context)
+
+    def ontology_markup(self, obj):
+        n_fields = getattr(obj, "_ontology_field_count", None)
+        if n_fields is None:
+            n_fields = obj.semantic_assignments.count()
+        if n_fields:
+            return str(n_fields)
+        n_kw = getattr(obj, "_ontology_kw_count", None)
+        if n_kw is None:
+            has_kw = ArticleKeyword.objects.filter(article_id=obj.pk).exists()
+        else:
+            has_kw = n_kw > 0
+        # Keywords-only ≈ no_field; empty otherwise (pending vs skip — via filter).
+        return "не нужна" if has_kw else "нет"
+
+    ontology_markup.short_description = "Онтология"
+    ontology_markup.admin_order_field = "_ontology_field_count"
 
     def get_search_results(self, request, queryset, search_term):
         term = (search_term or "").strip()

@@ -18,5 +18,57 @@
   #articleindextranslate_set-group .tabular tr.has_original td {
     padding-top: 8px !important;
   }
+  /* Hidden POST form; link keeps object-tools size, primary color = action. */
+  .object-tools form.ontology-classify-form {
+    display: none;
+  }
+  .object-tools a.ontology-classify-link:link,
+  .object-tools a.ontology-classify-link:visited {
+    background: var(--default-button-bg);
+    color: var(--button-fg, #fff);
+  }
+  .object-tools a.ontology-classify-link:focus,
+  .object-tools a.ontology-classify-link:hover {
+    background: var(--default-button-hover-bg);
+  }
 </style>
+{% endblock %}
+
+{% block object-tools-items %}
+{% if show_ontology_classify and original %}
+<li>
+  <form method="post"
+        action="{% url 'admin:dict_article_classify' original.pk %}"
+        class="ontology-classify-form"
+        id="ontology-classify-form">
+    {% csrf_token %}
+  </form>
+  <a href="#"
+     class="ontology-classify-link"
+     id="ontology-classify-link"
+     {% if ontology_classified %}data-confirm="Перезаписать смысловые поля этой статьи?"{% endif %}>
+    {% if ontology_classified %}Переразметить по онтологии{% else %}Разметить по онтологии{% endif %}
+  </a>
+</li>
+{% endif %}
+{{ block.super }}
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+{% if show_ontology_classify and original %}
+<script>
+(function () {
+  var link = document.getElementById("ontology-classify-link");
+  var form = document.getElementById("ontology-classify-form");
+  if (!link || !form) return;
+  link.addEventListener("click", function (e) {
+    e.preventDefault();
+    var msg = link.getAttribute("data-confirm");
+    if (msg && !window.confirm(msg)) return;
+    form.submit();
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

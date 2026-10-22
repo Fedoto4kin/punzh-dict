@@ -38,6 +38,14 @@ class PromptsTestCase(TestCase):
         found = cyrillic_from_html(html)
         self.assertTrue(any("лиса" in c.lower() for c in found))
 
+    def test_cyrillic_from_html_drops_dict_labels_keeps_gloss(self):
+        html = "<b>w</b> <i>v</i> <i>всг.</i> <i>см.</i> x; лиса бежит"
+        found = cyrillic_from_html(html)
+        joined = " ".join(found).lower()
+        self.assertNotIn("всг", joined)
+        self.assertNotIn("см", joined)
+        self.assertTrue(any("лиса" in c.lower() for c in found))
+
     def test_article_input_subtracts_translations(self):
         art = Article.objects.create(
             word="reboi", article_html="лиса рыжая; в лесу живёт"

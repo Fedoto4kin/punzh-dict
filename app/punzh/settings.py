@@ -75,6 +75,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "dict.middleware.OntologyClassifyNoticeMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
