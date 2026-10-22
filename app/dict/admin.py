@@ -580,12 +580,41 @@ class OntologyQueueAdm(admin.ModelAdmin):
     search_fields = ("word",)
     ordering = ("-id",)
     list_per_page = 50
+    actions = ("reclassify_selected",)
 
     def has_add_permission(self, request):
         return False
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    @admin.action(description="Переклассифицировать")
+    def reclassify_selected(self, request, queryset):
+        scheduled = 0
+        already = 0
+        for article_id in queryset.values_list("pk", flat=True):
+            if schedule_classify_article(article_id, user_id=request.user.pk):
+                scheduled += 1
+            else:
+                already += 1
+        if scheduled:
+            self.message_user(
+                request,
+                f"Онтология: в очередь поставлено {scheduled}.",
+                level=messages.INFO,
+            )
+        if already:
+            self.message_user(
+                request,
+                f"Онтология: уже выполняется для {already}.",
+                level=messages.WARNING,
+            )
+        if not scheduled and not already:
+            self.message_user(
+                request,
+                "Онтология: ничего не выбрано.",
+                level=messages.WARNING,
+            )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -595,7 +624,8 @@ class OntologyQueueAdm(admin.ModelAdmin):
         )
 
     def changelist_view(self, request, extra_context=None):
-        if "ontology" not in request.GET:
+        # Only redirect bare GETs; POST actions must keep the selected rows.
+        if request.method == "GET" and "ontology" not in request.GET:
             params = request.GET.copy()
             params["ontology"] = BUCKET_PENDING
             return HttpResponseRedirect(f"{request.path}?{params.urlencode()}")
@@ -660,8 +690,18 @@ _DICT_MODEL_ORDER = {
 }
 
 
+def ontology_pending_count() -> int:
+    """Articles in the «ждут разметки» bucket (sidebar badge)."""
+    qs = OntologyQueueArticle.objects.annotate(
+        _ontology_field_count=Count("semantic_assignments", distinct=True),
+        _ontology_kw_count=Count("articlekeyword", distinct=True),
+    )
+    return filter_ontology_bucket(qs, BUCKET_PENDING).count()
+
+
 def _dict_app_list(request):
     app_list = admin.AdminSite.get_app_list(admin.site, request)
+    pending_n = None
     for app in app_list:
         if app.get("app_label") != "dict":
             continue
@@ -671,6 +711,12 @@ def _dict_app_list(request):
                 m["name"].lower(),
             )
         )
+        for model in app["models"]:
+            if model["object_name"].lower() != "ontologyqueuearticle":
+                continue
+            if pending_n is None:
+                pending_n = ontology_pending_count()
+            model["name"] = f"{model['name']} ({pending_n})"
     return app_list
 
 

@@ -155,6 +155,41 @@ class OntologyQueueAdminTestCase(TestCase):
         self.assertIn("Очередь разметки", html)
         self.assertIn(self.queue_url, html)
 
+    def test_queue_action_is_reclassify_not_delete(self):
+        response = self.client.get(self.queue_url, {"ontology": BUCKET_PENDING})
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("Переклассифицировать", html)
+        self.assertNotIn("delete_selected", html)
+
+    def test_queue_reclassify_action_schedules(self):
+        other = Article.objects.create(word="pending2")
+        ArticleIndexTranslate.objects.create(article=other, rus_word="молоко")
+        with patch(
+            "dict.admin.schedule_classify_article", return_value=True
+        ) as schedule:
+            response = self.client.post(
+                self.queue_url + f"?ontology={BUCKET_PENDING}",
+                {
+                    "action": "reclassify_selected",
+                    "select_across": "0",
+                    "index": "0",
+                    "_selected_action": [str(self.pending.pk), str(other.pk)],
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        called_ids = sorted(c.args[0] for c in schedule.call_args_list)
+        self.assertEqual(called_ids, sorted([self.pending.pk, other.pk]))
+        for call in schedule.call_args_list:
+            self.assertEqual(call.kwargs.get("user_id"), self.user.pk)
+
+    def test_admin_index_shows_pending_count_on_queue(self):
+        response = self.client.get(reverse("admin:index"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        # One pending article in setUp (self.pending); others are marked/skip.
+        self.assertRegex(html, r"Очередь онтологии\s*\(1\)")
+
 
 class ArticleOntologyAdminTestCase(TestCase):
     def setUp(self):
