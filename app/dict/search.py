@@ -93,20 +93,33 @@ def sort_and_paginate(articles, page):
 # ------------------------------------------------------------
 
 
-def expand_by_links(article_ids):
+def expand_by_links(article_ids, *, sides="both"):
     """
-    Кластер по направленным ArticleLink (см. и от, обе стороны; без ср.).
+    One-hop cluster by ArticleLink (см. and от; never ср.).
+
+    sides:
+      "both" — classical /search/: follow outgoing and incoming
+      "incoming" — AI search: only articles that say см./от *to* a hit
+                  (not targets of см./от *from* a hit)
     """
+    seed = set(article_ids)
+    if not seed:
+        return set()
     kinds = ArticleLink.KINDS_LISTING
-    outgoing = ArticleLink.objects.filter(
-        from_article_id__in=article_ids, kind__in=kinds
-    ).values_list("to_article_id", flat=True)
-
-    incoming = ArticleLink.objects.filter(
-        to_article_id__in=article_ids, kind__in=kinds
-    ).values_list("from_article_id", flat=True)
-
-    return set(article_ids) | set(outgoing) | set(incoming)
+    extra = set()
+    if sides in ("both", "outgoing"):
+        extra |= set(
+            ArticleLink.objects.filter(
+                from_article_id__in=seed, kind__in=kinds
+            ).values_list("to_article_id", flat=True)
+        )
+    if sides in ("both", "incoming"):
+        extra |= set(
+            ArticleLink.objects.filter(
+                to_article_id__in=seed, kind__in=kinds
+            ).values_list("from_article_id", flat=True)
+        )
+    return seed | extra
 
 
 # ------------------------------------------------------------

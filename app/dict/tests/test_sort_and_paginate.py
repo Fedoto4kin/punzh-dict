@@ -76,6 +76,14 @@ class ExpandByLinksTestCase(TestCase):
         # This is exactly what the old one-directional lookup missed.
         self.assertEqual({self.a.id, self.b.id}, expand_by_links([self.b.id]))
 
+    def test_incoming_only_skips_outgoing(self):
+        # A -> B: seed A must not pull B; seed B still pulls A.
+        self.assertEqual({self.a.id}, expand_by_links([self.a.id], sides="incoming"))
+        self.assertEqual(
+            {self.a.id, self.b.id},
+            expand_by_links([self.b.id], sides="incoming"),
+        )
+
     def test_unlinked_article_not_pulled(self):
         # C has no links: it maps only to itself, and no cluster leaks in.
         self.assertEqual({self.c.id}, expand_by_links([self.c.id]))

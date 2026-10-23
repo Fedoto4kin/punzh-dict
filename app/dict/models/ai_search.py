@@ -9,12 +9,14 @@ from django.utils import timezone
 class AiSearchJob(models.Model):
     STATUS_QUEUED = "queued"
     STATUS_RUNNING = "running"
+    STATUS_RANKING = "ranking"
     STATUS_DONE = "done"
     STATUS_ERROR = "error"
     STATUS_EXPIRED = "expired"
     STATUS_CHOICES = (
         (STATUS_QUEUED, "queued"),
         (STATUS_RUNNING, "running"),
+        (STATUS_RANKING, "ranking"),
         (STATUS_DONE, "done"),
         (STATUS_ERROR, "error"),
         (STATUS_EXPIRED, "expired"),

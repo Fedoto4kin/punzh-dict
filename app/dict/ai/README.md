@@ -15,6 +15,7 @@
 | `query_prompts.py` / `query_parse.py` | Разбор → оси; пометы/POS → `tags` (не related); `display` из имён `Tag`. |
 | `rank.py` | Релевантность (focus exact ≫ lexical ≫ field-tr ≫ слабые KW). |
 | `search.py` | Retrieval: tags AND, field∩translations, `search_by_parsed`. |
+| `rerank_prompts.py` / `rerank.py` | Мягкий LLM re-rank топа (все переводы кандидата); `AI_SEARCH_LLM_RERANK`. |
 | `jobs.py` | Async job: thread-воркер + Postgres `AiSearchJob` (poll API). |
 | `telemetry.py` | JSONL/событие разбора (REPL и будущие логи). |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |
@@ -22,7 +23,7 @@
 | `ontology_status.py` | Корзины очереди онтологии (админка рядом со смысловыми полями). |
 
 Страница: `/ai-search/` (закрытая альфа на prod, async job+poll). REPL:
-`manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`, промпт 1.13).
+`manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`, промпт 1.14).
 
 ## Исключение: общий промпт в `prompts.py`
 

@@ -262,10 +262,11 @@
           );
           return;
         }
-        setStatus(
-          data.status === "running" ? "Разбираем запрос…" : "В очереди…",
-          true
-        );
+        var statusMsg = "В очереди…";
+        if (data.status === "running") statusMsg = "Разбираем запрос…";
+        else if (data.status === "ranking")
+          statusMsg = "Подбираем статьи по вашему запросу…";
+        setStatus(statusMsg, true);
         setTimeout(function () { pollJob(jobId, query, sort, started); }, pollMs);
       })
       .catch(function () {

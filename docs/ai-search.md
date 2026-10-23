@@ -1,13 +1,14 @@
 # UX — ветка AI-поиска (что видит пользователь)
 
-**Статус (2026-10-23):** **закрытая альфа на prod.** MVP: разбор (промпт 1.13),
+**Статус (2026-10-23):** **закрытая альфа на prod.** MVP: разбор (промпт 1.14),
 retrieval, async UI (job+PG+poll), REPL `manage.py ai_query`. Вход только по
 прямой ссылке `/ai-search/` (в шапке/главной нет). Спека async:
 [`plans/ai-search-async.md`](plans/ai-search-async.md). Контракт разбора:
 [`SPEC_ai_query_parse.md`](SPEC_ai_query_parse.md). Очередь: `docs/plans/INDEX.md`.
 
-**Дальше по фидбеку альфы:** доводка ранга/промпта; опц. beta-логи 👍/👎;
-пункт в навигации; SSE/worker — не блокер.
+**Дальше по фидбеку альфы:** LLM soft re-rank топа
+([`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md));
+опц. beta-логи 👍/👎; пункт в навигации; SSE/worker — не блокер.
 
 Пользовательский опыт AI-поиска, ОТДЕЛЬНОЙ страницы (не смешивается с обычным
 поиском). Архитектура данных — `cursor_project_overview.md` и

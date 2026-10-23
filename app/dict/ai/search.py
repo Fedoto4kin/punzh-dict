@@ -13,6 +13,7 @@ from dict.models import (
     Article,
     ArticleAddition,
     ArticleIndexTag,
+    ArticleIndexTranslate,
     ArticleKeyword,
     ArticleSemanticField,
     SemanticField,
@@ -28,6 +29,8 @@ from dict.ai.rank import (
     relevance_score,
 )
 from dict.search import (
+    _query_tokens,
+    _token_boundary_regex,
     article_ids_for_semantic_field,
     expand_by_links,
     krl_article_ids,
@@ -44,18 +47,51 @@ def _normalize_yo(text):
     return (text or "").translate(str.maketrans({"ё": "е"}))
 
 
+def _multiword_lemma_ids(lemma):
+    """
+    Multi-word lemma → same rus_word must contain every token (AND).
+
+    Avoids token-OR false friends: «родственные связи» must not rank
+    «половую связь» as a focus/lexical hit via the lone token «связи».
+    """
+    toks = _query_tokens(_normalize_yo(lemma))
+    if len(toks) < 2:
+        return set()
+    q = Q()
+    for tok in toks:
+        q &= Q(rus_word__iregex=_token_boundary_regex(tok))
+    return set(
+        ArticleIndexTranslate.objects.filter(q).values_list("article_id", flat=True)
+    )
+
+
 def _lemma_hit_ids(lemmas, *, expand_links=False):
     """
-    Articles matching any lemma via translation index (ILIKE/token OR).
+    Articles matching any lemma via the translation index.
+
+    Single-token lemmas: same soft match as rus_search_core (token + fuzzy).
+    Multi-word lemmas: AND of all tokens inside one rus_word (not OR across
+    the phrase). Lemmas are OR-ed with each other.
 
     Default expand_links=False so AI search can demote см./от pull-ins
     separately; classical /search/ still expands inside rus_search_core.
     """
     if not lemmas:
         return set()
-    query = _normalize_yo(" ".join(lemmas))
-    core = rus_search_core(query, expand_links=expand_links)
-    return set(core.result_ids or ())
+    ids = set()
+    for raw in lemmas:
+        lem = _normalize_yo((raw or "").strip())
+        if not lem:
+            continue
+        toks = _query_tokens(lem)
+        if len(toks) >= 2:
+            ids |= _multiword_lemma_ids(lem)
+        else:
+            core = rus_search_core(lem, expand_links=False)
+            ids |= set(core.result_ids or ())
+    if expand_links and ids:
+        ids = set(expand_by_links(ids))
+    return ids
 
 
 def _keyword_hit_ids(lemmas):
@@ -301,6 +337,7 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     focus = list(parsed.get("focus") or [])
     related = list(parsed.get("related") or [])
     tags = list(parsed.get("tags") or [])
+    tags_soft = list(parsed.get("tags_soft") or [])
     llm_fields = list(parsed.get("fields") or [])
     # Theme for marks∩field: lexical/focus only (ignore related invented from «примета»).
     theme_fields = _enrich_fields(llm_fields, focus, [], lexical)
@@ -321,7 +358,9 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         _keyword_hit_ids(related) | _keyword_hit_ids(lexical) | _keyword_hit_ids(focus)
     )
     theme_ids = theme_tr | theme_kw
-    tag_ids = _tag_ids(tags)
+    # Hard tags (named in query) → AND filter. Soft (LLM inference) → rank only.
+    hard_tag_ids = _tag_ids(tags)
+    soft_tag_ids = _tag_ids(tags_soft)
     # Classified field assignments only — см./от referrers added after, then demoted.
     field_pool = _field_ids(fields, include_referrers=False)
     # Strongest theme field (usually from lexical «животные» → Животный мир).
@@ -331,7 +370,8 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     dialect_ids = _tag_type_filter_ids(dialect, 4)
 
     lex_ids = _apply_and_filters(lex_ids, place_ids, dialect_ids)
-    tag_ids = _apply_and_filters(tag_ids, place_ids, dialect_ids)
+    hard_tag_ids = _apply_and_filters(hard_tag_ids, place_ids, dialect_ids)
+    soft_tag_ids = _apply_and_filters(soft_tag_ids, place_ids, dialect_ids)
     field_pool = _apply_and_filters(field_pool, place_ids, dialect_ids)
     focus_exact = _apply_and_filters(focus_exact, place_ids, dialect_ids)
     focus_soft = _apply_and_filters(focus_soft, place_ids, dialect_ids)
@@ -355,21 +395,28 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     if focus_exact or focus_soft:
         content_ids |= focus_exact | focus_soft
 
-    # Tags / dialect / place as primary sets when there is no lexical content.
-    # «глаголы в приметах» → tags AND; «весьегонский говор» → all всг. articles.
-    # Marks + theme («…про животных»): field ∩ tags is the answer set —
-    # lexical «животные» often misses omen verbs (доить/выть) that live in
-    # the field but not under that translation.
-    if tags and tag_ids:
-        field_tag = (primary_field_pool & tag_ids) if primary_field_pool else set()
+    # Hard tags AND. Soft tags never filter. Relax: if hard ∩ content is empty,
+    # drop the hard filter and keep content (avoid empty → fallback).
+    tags_hard_active = list(tags)
+    tag_ids = set(hard_tag_ids)  # score: hard hits
+    tag_ids |= soft_tag_ids  # score: soft boost among results
+
+    if tags_hard_active and hard_tag_ids:
+        field_tag = (primary_field_pool & hard_tag_ids) if primary_field_pool else set()
         if field_tag:
             main_ids = set(field_tag)
         elif content_ids:
-            main_ids = content_ids & tag_ids
+            main_ids = content_ids & hard_tag_ids
             if field_ids:
-                main_ids |= field_ids & tag_ids
+                main_ids |= field_ids & hard_tag_ids
+            if not main_ids:
+                # Relax-on-empty: invented/mismatched hard mark must not wipe lexical.
+                main_ids = set(content_ids)
+                if field_ids:
+                    main_ids |= field_ids
+                tags_hard_active = []
         else:
-            main_ids = set(tag_ids)
+            main_ids = set(hard_tag_ids)
     else:
         main_ids = set(content_ids)
         if field_ids:
@@ -380,9 +427,13 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             elif place_ids:
                 main_ids = set(place_ids)
 
-    # Pull см./от cluster; demote those ids on relevance sort (not on alpha).
+    # One hop of incoming см./от only (stubs → hit), not outgoing hit → target.
     direct_ids = set(main_ids)
-    main_ids = _apply_and_filters(expand_by_links(direct_ids), place_ids, dialect_ids)
+    main_ids = _apply_and_filters(
+        expand_by_links(direct_ids, sides="incoming"),
+        place_ids,
+        dialect_ids,
+    )
     demote_ids = main_ids - direct_ids
 
     def score(aid):
@@ -413,17 +464,20 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             "total": total,
             "more": 0,
             "articles": articles,
+            "demote_ids": list(demote_ids if sort_mode != SORT_ALPHA else ()),
         }
 
     groups = []
     if main_ids:
         g = _group("lexical", TITLE_MAIN, main_ids)
-        if tags and primary_theme:
+        if tags_hard_active and primary_theme:
             g["fields"] = _field_meta(primary_theme)
         elif fields:
             g["fields"] = _field_meta(fields)
-        if tags:
-            g["tags"] = list(tags)
+        if tags_hard_active:
+            g["tags"] = list(tags_hard_active)
+        if tags_soft:
+            g["tags_soft"] = list(tags_soft)
         if dialect:
             g["dialect"] = dialect
         if place:

@@ -122,6 +122,30 @@ class SearchByParsedTestCase(TestCase):
         words_alpha = [a["word"] for a in by_alpha[0]["articles"]]
         self.assertEqual(words_alpha[0], "aaa-see")  # alphabetically first
 
+    def test_outgoing_see_target_not_pulled(self):
+        """Hit that says см. X must not pull X; only referrers to the hit."""
+        head = Article.objects.create(word="vägöväšti", article_html="<b>v</b>")
+        ArticleIndexTranslate.objects.create(article=head, rus_word="пиво")
+        ArticleIndexTranslate.objects.create(article=head, rus_word="сильно")
+        target = Article.objects.create(word="vägöväh", article_html="<b>см.</b>")
+        ArticleLink.objects.create(
+            from_article=head, to_article=target, kind=ArticleLink.KIND_SEE
+        )
+        stub = Article.objects.create(word="aaa-stub", article_html="<b>см.</b>")
+        ArticleLink.objects.create(
+            from_article=stub, to_article=head, kind=ArticleLink.KIND_SEE
+        )
+
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="пиво", lexical=["пиво"], focus=[], related=[], fields=[]
+            )
+        )
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertIn("vägöväšti", words)
+        self.assertIn("aaa-stub", words)
+        self.assertNotIn("vägöväh", words)
+
     def test_main_group_title_is_neutral(self):
         groups, _ = search_by_parsed(self._parsed(lexical=["коза"], query="коза"))
         self.assertEqual(groups[0]["title"], TITLE_MAIN)
@@ -151,6 +175,42 @@ class SearchByParsedTestCase(TestCase):
         words = [a["word"] for a in groups[0]["articles"]]
         self.assertIn("uroš", words)  # second-pass illustration still found
         self.assertLess(words.index("tyttö"), words.index("uroš"))
+
+    def test_multiword_focus_does_not_or_partial_token(self):
+        """«родственные связи» must not boost «половую связь» above kinship names."""
+        kin = SemanticField.objects.create(
+            name="Социум и родство", definition="родство", sorting=4
+        )
+        sex = Article.objects.create(word="pilluttua", article_html="<b>p</b>")
+        ArticleIndexTranslate.objects.create(
+            article=sex, rus_word="вступать в половую связь"
+        )
+        ArticleSemanticField.objects.create(article=sex, field=kin)
+        grandma = Article.objects.create(word="baba", article_html="<b>baba</b>")
+        ArticleIndexTranslate.objects.create(article=grandma, rus_word="бабушка")
+        ArticleSemanticField.objects.create(article=grandma, field=kin)
+        kin_lex = Article.objects.create(word="rodnuš", article_html="<b>r</b>")
+        ArticleIndexTranslate.objects.create(article=kin_lex, rus_word="родство")
+        ArticleSemanticField.objects.create(article=kin_lex, field=kin)
+
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="названия родственных связей",
+                lexical=["родство", "родственные связи"],
+                focus=["родственные связи"],
+                related=["бабушка", "дедушка"],
+                fields=["Социум и родство"],
+            ),
+            sort=SORT_RELEVANCE,
+        )
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertIn("baba", words)
+        self.assertIn("rodnuš", words)
+        # False friend via token «связи» must not lead the list.
+        if "pilluttua" in words:
+            self.assertGreater(words.index("pilluttua"), words.index("baba"))
+            self.assertGreater(words.index("pilluttua"), words.index("rodnuš"))
+        self.assertLess(words.index("rodnuš"), words.index("baba"))
 
     def test_enrich_fields_adds_theme_fields(self):
         """Related/focus hits pull extra ontology fields beyond LLM's one."""

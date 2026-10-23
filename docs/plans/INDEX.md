@@ -8,9 +8,9 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| **1** | **альфа на prod** | **AI-поиск MVP:** async job+poll, разбор 1.13, retrieval (пометы/тема/говор), `/ai-search/` без пункта в меню | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md` |
+| **1** | **альфа на prod** | **AI-поиск MVP:** async job+poll, разбор 1.14, retrieval (пометы/тема/говор), `/ai-search/` без пункта в меню | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md` |
 | 2 | параллельно | Связи «от» / `ArticleLink.kind` (подсветка на сайте) | `backlog.md` §1 — **отдельный контур**, не смешивать с AI |
-| 3 | следующий по AI | Обратная связь альфы → доводка ранга/промпта; опц. beta-логи 👍/👎 | `docs/ai-search.md`, `SPEC_ai_query_parse.md` §6 |
+| 3 | следующий по AI | **LLM soft re-rank** топа после SQL; обратная связь альфы / beta-логи 👍/👎 | `plans/ai-search-llm-rerank.md`, `SPEC_ai_query_parse.md` §6 |
 
 **AI MVP (2026-10-23) на prod:** sync слой + async UI, migrate `0032`, скрытый URL
 `/ai-search/`. Предпосылки по данным закрыты. Контракт — `SPEC_ai_query_parse.md`.
@@ -37,8 +37,10 @@
 
 - **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28.
 - **AI-поиск MVP (prod 2026-10-23):** `/ai-search/` async (AiSearchJob + poll), REPL
-  `ai_query`, пометы≠related, field∩tags, demote см./от, промпт 1.13 —
+  `ai_query`, пометы≠related, field∩tags, demote см./от, промпт 1.14 —
   `docs/ai-search.md`, `plans/ai-search-async.md`.
+- **LLM soft re-rank** топа после SQL (`ranking`, все переводы кандидата) —
+  `plans/ai-search-llm-rerank.md`.
 - KRL `/search/`: фильтры по пометам `?t=` / `?ph=` — `plans/krl-search-tag-filters.md`.
 - Массовая пометка `from_translation` на prod (`pick_translation_fields` + `load_translation_fields`) — `backlog.md` §4.
 - Очистка переводов LLM + `--write` на prod, канон **е** в индексе (`translation_cleanup.md`).

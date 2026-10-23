@@ -21,6 +21,7 @@
 | [ai-search.md](ai-search.md) | UX AI-поиска — **закрытая альфа на prod** |
 | [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL; фазы A–C на prod |
 | [plans/ai-search-async.md](plans/ai-search-async.md) | Async job+poll (сделано); SSE/worker — позже |
+| [plans/ai-search-llm-rerank.md](plans/ai-search-llm-rerank.md) | Мягкий LLM re-rank топа (все переводы кандидата) |
 | [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке (ещё не в коде) |
 
 ## Runbook

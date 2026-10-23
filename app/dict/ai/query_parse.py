@@ -136,6 +136,7 @@ def _empty_result(query, error, latency_ms=0):
         "related": [],
         "fields": [],
         "tags": [],
+        "tags_soft": [],
         "place": None,
         "dialect": None,
         "dropped": [],
@@ -161,6 +162,7 @@ def _krl_headword_result(query, found, latency_ms=0):
             "related": [],
             "fields": [],
             "tags": [],
+            "tags_soft": [],
             "place": None,
             "dialect": None,
             "dropped": [],
@@ -180,6 +182,7 @@ def _krl_headword_result(query, found, latency_ms=0):
         "related": [],
         "fields": [],
         "tags": [],
+        "tags_soft": [],
         "place": None,
         "dialect": None,
         "dropped": [],
@@ -262,9 +265,11 @@ def _build_display(
     tag_names=None,
     place_names=None,
     dialect_names=None,
+    tags_soft=None,
 ):
     # focus is used for ranking only — not shown in display.
     # Tags/place/dialect: prefer dictionary names («verbum, глагол») over codes.
+    # Hard tags (named in query) = filter; soft = ranking hint only.
     parts = []
     if lexical:
         parts.append(" · ".join(lexical))
@@ -274,6 +279,9 @@ def _build_display(
     if tags:
         labels = [_display_label(t, tag_names) for t in tags]
         parts.append("пометы: " + ", ".join(labels))
+    if tags_soft:
+        labels = [_display_label(t, tag_names) for t in tags_soft]
+        parts.append("учли пометы: " + ", ".join(labels))
     if place:
         parts.append("место: " + _display_label(place, place_names))
     if dialect:
@@ -332,7 +340,7 @@ def _promote_tag_lemmas(items, tags, alias_map, allowed_tag_set=None):
 def _narrow_grammar_tags(tags, query):
     """
     If the LLM piled several type-2 POS tags, keep only those named in the query
-    (глагол→v). Stylistic tags (type 3) are untouched.
+    (глагол→v). Stylistic tags (type 3) are untouched here.
 
     Grammar parents come from KNOWN_GRAMMAR_TAGS; DB type=2 covers the same
     and any extra grammar tags not in the POS alias map.
@@ -356,6 +364,63 @@ def _narrow_grammar_tags(tags, query):
         # Fall back: drop piled grammar tags (stylistic-only / mark-only query).
         return [t for t in tags if t not in type2]
     return [t for t in tags if t not in type2 or t in justified]
+
+
+def _query_mentions_mark(needle, query):
+    """True if mark label/code appears in the query (allow light inflection)."""
+    needle = (needle or "").strip().lower().replace("ё", "е")
+    q = (query or "").strip().lower().replace("ё", "е")
+    if not needle or not q:
+        return False
+    if needle in q:
+        return True
+    stem = needle[:-1] if len(needle) > 4 else needle
+    if len(stem) >= 4 and stem in q:
+        return True
+    compact_n = re.sub(r"[\s.]+", "", needle)
+    compact_q = re.sub(r"[\s.]+", "", q)
+    if len(compact_n) >= 3 and compact_n in compact_q:
+        return True
+    return False
+
+
+def _partition_stylistic_tags(tags, query, tag_alias_map=None, tag_names=None):
+    """
+    Split type-3 tags into hard (named in query → AND filter) and soft
+    (LLM inference → ranking boost only).
+
+    Avoids AND-empty on invented marks («с.-х.» for «как варили пиво») while
+    still letting inferred marks («бранн.» for «как ругаться») nudge order.
+    Non-type-3 tags stay hard. No query → all hard (nothing to evidence).
+    """
+    if not tags:
+        return [], []
+    if not query:
+        return list(tags), []
+    from dict.models import Tag as TagModel
+
+    type3 = set(
+        TagModel.objects.filter(tag__in=tags, type=3).values_list("tag", flat=True)
+    )
+    if not type3:
+        return list(tags), []
+
+    alias_map = tag_alias_map or {}
+    names = tag_names or {}
+    aliases_for = {}
+    for alias, canon in alias_map.items():
+        aliases_for.setdefault(canon, []).append(alias)
+
+    hard_type3 = set()
+    for tag in type3:
+        needles = [tag, names.get(tag) or ""]
+        needles.extend(aliases_for.get(tag) or [])
+        if any(_query_mentions_mark(n, query) for n in needles):
+            hard_type3.add(tag)
+
+    hard = [t for t in tags if t not in type3 or t in hard_type3]
+    soft = [t for t in tags if t in type3 and t not in hard_type3]
+    return hard, soft
 
 
 def _normalize_parsed(
@@ -419,8 +484,11 @@ def _normalize_parsed(
     related_raw = _promote_tag_lemmas(related_raw, tags, alias_map, allowed_tag_set)
 
     tags = _narrow_grammar_tags(tags, query)
+    tags, tags_soft = _partition_stylistic_tags(
+        tags, query, tag_alias_map=alias_map, tag_names=names_by_tag
+    )
 
-    # Mark / POS query: search is tags (AND), not semantic related/fields.
+    # Mark / POS query: hard tags (AND), not semantic related/fields.
     # Drop speculative fields when grammar∩stylistic marks are both present.
     from dict.models import Tag as TagModel
 
@@ -446,8 +514,7 @@ def _normalize_parsed(
         for r in related_raw
         if r.lower() not in lex_lower and r.lower() not in focus_lower
     ]
-    # Tags-primary (no content lemmas): discard LLM «рядом по теме» invented
-    # from marks — search becomes pure tag filter on our side.
+    # Tags-primary (hard tags, no content lemmas): discard LLM «рядом по теме».
     if tags and not lexical and not focus:
         related = []
         fields = []
@@ -493,16 +560,19 @@ def _normalize_parsed(
         tag_names=names_by_tag,
         place_names=allowed_places or {},
         dialect_names=allowed_dialects or {},
+        tags_soft=tags_soft,
     )
 
-    parse_ok = bool(lexical or focus or fields or tags or place or dialect)
+    parse_ok = bool(lexical or focus or fields or tags or tags_soft or place or dialect)
     return {
         "lexical": lexical,
         "focus": focus,
         "related": related,
         "fields": fields,
         "tags": tags,
+        "tags_soft": tags_soft,
         "tags_display": [_display_label(t, names_by_tag) for t in tags],
+        "tags_soft_display": [_display_label(t, names_by_tag) for t in tags_soft],
         "place": place,
         "place_display": _display_label(place, allowed_places or {}),
         "dialect": dialect,

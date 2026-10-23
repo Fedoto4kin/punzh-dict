@@ -88,6 +88,8 @@ class NormalizeParsedTestCase(TestCase):
 
     def test_promote_pos_and_priemeta_into_tags(self):
         """«глаголы в приметах» free axes → tags примета + v."""
+        Tag.objects.create(tag="примета", name="примета", type=3, sorting=20)
+        Tag.objects.create(tag="v", name="verbum, глагол", type=2, level=0, sorting=1)
         payload = qp._normalize_parsed(
             {
                 "lexical": ["глагол"],
@@ -196,6 +198,7 @@ class NormalizeParsedTestCase(TestCase):
 
     def test_mark_query_drops_semantic_related(self):
         """Пометы → только tags; смысловой related от пометы отбрасываем."""
+        Tag.objects.create(tag="примета", name="примета", type=3, sorting=20)
         payload = qp._normalize_parsed(
             {
                 "lexical": [],
@@ -211,12 +214,82 @@ class NormalizeParsedTestCase(TestCase):
             self.allowed_tags,
             self.allowed_dialects,
             tag_alias_map=self.tag_aliases,
+            tag_names=self.tag_names,
             query="слова в приметах",
         )
         self.assertEqual(payload["tags"], ["примета"])
         self.assertEqual(payload["related"], [])
         self.assertEqual(payload["fields"], [])
         self.assertEqual(payload["lexical"], [])
+
+    def test_invented_stylistic_tag_becomes_soft(self):
+        """«как варили пиво» → с.-х. soft (rank only), not hard AND."""
+        Tag.objects.create(tag="с.-х.", name="сельское хозяйство", type=3, sorting=30)
+        self.field_defs = {
+            **self.field_defs,
+            "Пища и напитки": "еда",
+            "Сельское хозяйство": "сх",
+        }
+        self.allowed_tags = list(self.allowed_tags) + ["с.-х."]
+        aliases = {
+            **self.tag_aliases,
+            "с.-х.": "с.-х.",
+            "сельское хозяйство": "с.-х.",
+            "сельхоз": "с.-х.",
+        }
+        names = {**self.tag_names, "с.-х.": "сельское хозяйство"}
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["варить", "пиво"],
+                "focus": [],
+                "related": ["утварь"],
+                "fields": ["Пища и напитки", "Сельское хозяйство"],
+                "tags": ["с.-х."],
+                "dialect": None,
+                "dropped": ["как"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_alias_map=aliases,
+            tag_names=names,
+            query="как варили пиво",
+        )
+        self.assertEqual(payload["tags"], [])
+        self.assertEqual(payload["tags_soft"], ["с.-х."])
+        self.assertEqual(payload["lexical"], ["варить", "пиво"])
+        self.assertIn("Пища и напитки", payload["fields"])
+        self.assertIn("учли пометы", payload["display"])
+
+    def test_keeps_stylistic_tag_named_in_query(self):
+        Tag.objects.create(tag="с.-х.", name="сельское хозяйство", type=3, sorting=30)
+        self.allowed_tags = list(self.allowed_tags) + ["с.-х."]
+        aliases = {
+            **self.tag_aliases,
+            "с.-х.": "с.-х.",
+            "сельское хозяйство": "с.-х.",
+        }
+        names = {**self.tag_names, "с.-х.": "сельское хозяйство"}
+        payload = qp._normalize_parsed(
+            {
+                "lexical": [],
+                "focus": [],
+                "related": [],
+                "fields": [],
+                "tags": ["с.-х."],
+                "dialect": None,
+                "dropped": ["слова"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_alias_map=aliases,
+            tag_names=names,
+            query="сельскохозяйственные термины с.-х.",
+        )
+        self.assertEqual(payload["tags"], ["с.-х."])
 
     def test_drops_unknown_field_and_tag(self):
         payload = qp._normalize_parsed(

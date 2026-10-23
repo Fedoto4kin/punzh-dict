@@ -53,6 +53,12 @@ TIMEWEB_AI_MODEL_QUERY = env("TIMEWEB_AI_MODEL_QUERY", default="yandex/yandexgpt
 TIMEWEB_AI_MODEL_CLASSIFY = env(
     "TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-v4-flash"
 )
+# Soft re-rank of AI search tops (same gateway; default = query model).
+TIMEWEB_AI_MODEL_RERANK = env(
+    "TIMEWEB_AI_MODEL_RERANK", default=TIMEWEB_AI_MODEL_QUERY
+)
+# Second LLM pass after SQL. On in DEBUG; set AI_SEARCH_LLM_RERANK=0 to disable.
+AI_SEARCH_LLM_RERANK = env.bool("AI_SEARCH_LLM_RERANK", default=DEBUG)
 
 # Application definition
 INSTALLED_APPS = [

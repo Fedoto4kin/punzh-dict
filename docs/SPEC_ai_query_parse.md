@@ -25,12 +25,17 @@ AI-поиск — **отдельный контур** (`/ai-search/`), не ра
 Пайплайн (UI — **async**, см. `docs/plans/ai-search-async.md`):
 
 ```
-Запрос → POST /ai-search/jobs/ → thread: LLM-разбор → SQL → AiSearchJob
+Запрос → POST /ai-search/jobs/ → thread: LLM-разбор → SQL → (опц.) LLM re-rank
               ↓ poll partial/JSON
          страница /ai-search/?job=…
               ↓ fail / пусто
          fallback → /search/…
 ```
+
+Мягкая перестановка топа после retrieval — `docs/plans/ai-search-llm-rerank.md`
+(не меняет оси parse; все переводы кандидата в промпт; order может быть
+короче входа с min-keep). Пометы: hard (`tags`, AND) vs soft (`tags_soft`,
+только ранг); relax-on-empty если hard ∩ lexical пуст.
 
 REPL `ai_query` по-прежнему синхронный. Обратная задача к `classify_article`:
 не статья→поля, а **запрос→оси** (lexical, fields, tags, dialect).
@@ -40,7 +45,7 @@ REPL `ai_query` по-прежнему синхронный. Обратная з�
 ## 2. Контракт JSON разбора
 
 Модель: `TIMEWEB_AI_MODEL_QUERY` (YandexGPT через шлюз).  
-Промпт (`PROMPT_VERSION`, сейчас **1.13**) знает замороженный список
+Промпт (`PROMPT_VERSION`, сейчас **1.14**) знает замороженный список
 `SemanticField` и справочник `Tag` (тип 1 areal / 2 грамматика / 3 стилистика /
 4 говоры).
 
