@@ -141,6 +141,7 @@ def _empty_result(query, error, latency_ms=0):
         "dialect": None,
         "dropped": [],
         "display": "",
+        "axes_display": "",
         "parse_ok": False,
         "krl_headword": False,
         "warnings": [],
@@ -167,6 +168,7 @@ def _krl_headword_result(query, found, latency_ms=0):
             "dialect": None,
             "dropped": [],
             "display": display,
+            "axes_display": display,
             "parse_ok": True,
             "krl_headword": True,
             "warnings": [],
@@ -187,6 +189,7 @@ def _krl_headword_result(query, found, latency_ms=0):
         "dialect": None,
         "dropped": [],
         "display": f"карельское «{query}» в индексе не найдено",
+        "axes_display": f"карельское «{query}» в индексе не найдено",
         "parse_ok": False,
         "krl_headword": False,
         "warnings": ["krl_headword_miss"],
@@ -286,11 +289,12 @@ def _build_display(
         parts.append("место: " + _display_label(place, place_names))
     if dialect:
         parts.append("говор: " + _display_label(dialect, dialect_names))
-    display = "искали: " + "; ".join(parts) if parts else ""
+    # Body only — UI label is «Что искали» (no leading «искали:»).
+    body = "; ".join(parts) if parts else ""
     if dropped:
         dropped_s = "«" + "», «".join(dropped) + "»"
-        display = (display + "; " if display else "") + f"{dropped_s} пропущено"
-    return _clip_str(display, MAX_DISPLAY_LEN)
+        body = (body + "; " if body else "") + f"{dropped_s} пропущено"
+    return _clip_str(body, MAX_DISPLAY_LEN)
 
 
 def _tag_alias_map(tag_rows):
@@ -550,8 +554,9 @@ def _normalize_parsed(
     if len(raw_display) > MAX_DISPLAY_LEN:
         warnings.append("display too long")
         raw_display = _clip_str(raw_display, MAX_DISPLAY_LEN)
-    # Prefer LLM prose for «Как поняли»; fall back to axes if model left it empty.
-    display = raw_display or _build_display(
+    # Two UI lines: LLM prose («Как поняли») + validated axes («Что искали»).
+    display = raw_display
+    axes_display = _build_display(
         lexical,
         focus,
         fields,
@@ -581,6 +586,7 @@ def _normalize_parsed(
         "dialect_display": _display_label(dialect, allowed_dialects or {}),
         "dropped": dropped,
         "display": display,
+        "axes_display": axes_display,
         "parse_ok": parse_ok,
         "krl_headword": False,
         "warnings": warnings,

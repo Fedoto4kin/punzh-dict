@@ -82,9 +82,9 @@ class NormalizeParsedTestCase(TestCase):
         self.assertTrue(payload["parse_ok"])
         self.assertEqual(payload["focus"], ["нож"])
         self.assertEqual(payload["related"], ["лезвие"])
-        # focus is ranking-only — not echoed in display
-        self.assertNotIn("ответ:", payload["display"].lower())
-        self.assertNotIn("нож", payload["display"])
+        # focus is ranking-only — not echoed in axes_display
+        self.assertNotIn("ответ:", (payload.get("axes_display") or "").lower())
+        self.assertNotIn("нож", payload.get("axes_display") or "")
 
     def test_promote_pos_and_priemeta_into_tags(self):
         """«глаголы в приметах» free axes → tags примета + v."""
@@ -112,9 +112,9 @@ class NormalizeParsedTestCase(TestCase):
         self.assertEqual(payload["lexical"], [])
         self.assertEqual(payload["focus"], [])
         self.assertEqual(payload["related"], [])
-        self.assertIn("пометы:", payload["display"])
-        self.assertIn("verbum, глагол", payload["display"])
-        self.assertIn("примета", payload["display"])
+        self.assertIn("пометы:", payload["axes_display"])
+        self.assertIn("verbum, глагол", payload["axes_display"])
+        self.assertIn("примета", payload["axes_display"])
 
     def test_dropped_does_not_repeat_lexical(self):
         """LLM may put «три» in lexical and dropped — keep axis, clear dropped."""
@@ -136,7 +136,7 @@ class NormalizeParsedTestCase(TestCase):
         )
         self.assertEqual(payload["lexical"], ["один", "два", "три"])
         self.assertEqual(payload["dropped"], [])
-        self.assertNotIn("пропущено", payload["display"])
+        self.assertNotIn("пропущено", payload["axes_display"])
 
     def test_dialect_meta_lemmas_stripped_from_lexical(self):
         """«весьегонский говор» → dialect only; не lexical «весьегонский»."""
@@ -158,7 +158,7 @@ class NormalizeParsedTestCase(TestCase):
         )
         self.assertEqual(payload["dialect"], "всг.")
         self.assertEqual(payload["lexical"], [])
-        self.assertIn("говор:", payload["display"])
+        self.assertIn("говор:", payload["axes_display"])
 
     def test_related_pos_words_stripped_not_theme(self):
         """Союз/предлог/… must not stay in related («рядом по теме»)."""
@@ -194,7 +194,8 @@ class NormalizeParsedTestCase(TestCase):
         )
         self.assertEqual(payload["related"], [])
         self.assertEqual(sorted(payload["tags"]), ["v", "примета"])
-        self.assertNotIn("союз", payload["display"])
+        self.assertNotIn("союз", payload["axes_display"])
+        self.assertEqual(payload["display"], "глаголы в приметах")
 
     def test_mark_query_drops_semantic_related(self):
         """Пометы → только tags; смысловой related от пометы отбрасываем."""
@@ -260,7 +261,7 @@ class NormalizeParsedTestCase(TestCase):
         self.assertEqual(payload["tags_soft"], ["с.-х."])
         self.assertEqual(payload["lexical"], ["варить", "пиво"])
         self.assertIn("Пища и напитки", payload["fields"])
-        self.assertIn("учли пометы", payload["display"])
+        self.assertIn("учли пометы", payload["axes_display"])
 
     def test_keeps_stylistic_tag_named_in_query(self):
         Tag.objects.create(tag="с.-х.", name="сельское хозяйство", type=3, sorting=30)
@@ -346,7 +347,7 @@ class NormalizeParsedTestCase(TestCase):
         self.assertTrue(payload["display"].startswith("x"))
         self.assertTrue(any("display too long" in w for w in payload["warnings"]))
 
-    def test_keeps_llm_display_prose(self):
+    def test_keeps_llm_display_and_axes(self):
         payload = qp._normalize_parsed(
             {
                 "lexical": ["варить", "пиво"],
@@ -363,8 +364,11 @@ class NormalizeParsedTestCase(TestCase):
             query="глаголы про то как варить пиво",
         )
         self.assertEqual(payload["display"], "Ищем глаголы про варку пива")
+        self.assertIn("варить", payload["axes_display"])
+        self.assertIn("пометы:", payload["axes_display"])
+        self.assertIn("пропущено", payload["axes_display"])
 
-    def test_empty_llm_display_falls_back_to_axes(self):
+    def test_empty_llm_display_still_has_axes(self):
         payload = qp._normalize_parsed(
             {
                 "lexical": ["коза"],
@@ -378,8 +382,9 @@ class NormalizeParsedTestCase(TestCase):
             self.allowed_tags,
             self.allowed_dialects,
         )
-        self.assertIn("искали:", payload["display"])
-        self.assertIn("коза", payload["display"])
+        self.assertEqual(payload["display"], "")
+        self.assertIn("коза", payload["axes_display"])
+        self.assertIn("пропущено", payload["axes_display"])
 
     def test_caps_list_length(self):
         many = [f"лемма{i}" for i in range(qp.MAX_LIST_ITEMS + 5)]

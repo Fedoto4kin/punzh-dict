@@ -2,10 +2,13 @@
 {% if parsed %}
 <div class="row mb-3" id="ai-parsed-block">
     <div class="col-12">
-        {% if parsed.display or parsed.focus or parsed.related or related_linked %}
+        {% if parsed.display or parsed.axes_display or parsed.focus or parsed.related or related_linked %}
         <div class="alert alert-light border mb-2 py-2" role="status">
             {% if parsed.display %}
             <strong>Как поняли:</strong> {{ parsed.display }}
+            {% endif %}
+            {% if parsed.axes_display %}
+            {% if parsed.display %}<br>{% endif %}<span class="text-muted">Что искали:</span> {{ parsed.axes_display }}
             {% endif %}
             {% if parsed.focus %}
             <br><span class="small text-muted">В фокусе:

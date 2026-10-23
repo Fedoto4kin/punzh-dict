@@ -78,6 +78,7 @@ def serialize_parsed_for_job(parsed):
         "dialect_display",
         "dropped",
         "display",
+        "axes_display",
         "krl_headword",
         "warnings",
         "error",
