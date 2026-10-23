@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% load dict_extras %}
+
+{% block title %}
+Умный поиск - Словарь карельского языка
+{% endblock %}
+
+{% block content %}
+<style>
+    .ai-card-grid > [class*="col-"] > .card { margin-left: 0; margin-right: 0; }
+</style>
+<div class="row mt-5 mb-3">
+    <div class="col-12">
+        <h2 class="mb-1">Умный поиск
+            <span class="badge badge-secondary align-middle" title="Закрытая бета" aria-label="Бета">β</span>
+        </h2>
+        <p class="text-muted small mb-3">
+            Исследовательский поиск по смыслу (закрытая бета).
+        </p>
+        <form action="{% url 'ai_search' %}" method="get">
+            <div class="input-group">
+                <input class="form-control"
+                       name="query"
+                       id="ai-search-input"
+                       type="text"
+                       value="{{ query }}"
+                       placeholder="Например: найди слова про разведение коз"
+                       aria-label="Умный поиск"
+                       autofocus>
+                <input type="hidden" name="sort" value="{{ sort }}">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            {% if query %}
+            <p class="small text-muted pl-1 mb-0 mt-1">
+                <a href="/search/{{ query|urlencode }}">Искать «{{ query }}» буквально</a>
+                {% if ontology_fields %}
+                {% for f in ontology_fields %}
+                · <a href="{% url 'ontology_field' f.id %}">Открыть поле «{{ f.name }}»</a>
+                {% endfor %}
+                {% endif %}
+                · порядок:
+                {% if sort == sort_alpha %}
+                <a href="?query={{ query|urlencode }}&sort={{ sort_relevance }}">по смыслу</a>
+                · <strong>по алфавиту</strong>
+                {% else %}
+                <strong>по смыслу</strong>
+                · <a href="?query={{ query|urlencode }}&sort={{ sort_alpha }}">по алфавиту</a>
+                {% endif %}
+            </p>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% include "ai_search_results.html" %}
+
+{% if not query %}
+<div class="row mt-2">
+    <div class="col-12">
+        <p class="text-muted small">
+            Примеры: «разведение коз», «загорать по карельски», «лаз в подполье для кошки».
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

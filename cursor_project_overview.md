@@ -18,7 +18,7 @@
 - Python 3.12, Django 5.2 LTS, PostgreSQL 15 + pgvector (compose pin `pgvector/pgvector:0.8.7-pg15-bookworm`; `django.contrib.postgres`: FTS, триграммы), psycopg3
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
 - Docker: образ `images/django/Dockerfile` (`python:3.12-bookworm`); dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
-- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client` (шлюз), `prompts` (общий замёрзший промпт классификации — им же пользуется `agents/build_ontology.py`), `classify` (одна статья). AI-поиск в URL пока не подключён. Проверка канала: `test_timeweb`. Доклассификация: `classify_article --id`. См. `dict/ai/README.md` — чем `dict/ai/` отличается от `agents/`.
+- Рантайм-AI: шлюз Timeweb, модуль `app/dict/ai/` (`openai==2.2.0`): `client`, `prompts`/`classify`, разбор запроса (`query_parse`) + retrieval (`ai/search`) + страница `/ai-search/`. REPL: `manage.py ai_query`. Проверка канала: `test_timeweb`. См. `dict/ai/README.md`, `docs/ai-search.md`.
 - LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 
 ## Structure

@@ -1,0 +1,185 @@
+[
+  {
+    "query": "как ругаться по-карельски",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "ругаться"
+    ],
+    "dropped_contains": [
+      "по-карельски"
+    ]
+  },
+  {
+    "query": "Найди все слова связанные с разведением коз",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "коза",
+      "разведение"
+    ],
+    "dropped_contains": [
+      "найди"
+    ]
+  },
+  {
+    "query": "чем режут хлеб",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "focus_contains": [
+      "нож"
+    ],
+    "lexical_contains": [
+      "хлеб",
+      "резать"
+    ]
+  },
+  {
+    "query": "чем режут хлеб в Весьегонске",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "focus_contains": [
+      "нож"
+    ]
+  },
+  {
+    "query": "дует ветер",
+    "require_ok": true,
+    "require_parse_ok": true
+  },
+  {
+    "query": "нож",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "нож"
+    ],
+    "focus_contains": [
+      "нож"
+    ]
+  },
+  {
+    "query": "корова",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "корова"
+    ]
+  },
+  {
+    "query": "быстро",
+    "require_ok": true,
+    "require_parse_ok": true
+  },
+  {
+    "query": "da",
+    "require_ok": true
+  },
+  {
+    "query": "загорать по карельски",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "загорать"
+    ],
+    "dropped_contains": [
+      "по карельски"
+    ]
+  },
+  {
+    "query": "маты на карельском",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "мат"
+    ]
+  },
+  {
+    "query": "ругательства на карельском",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "comment": "ожидаем parse_ok; lexical/tags (бран.) желательны"
+  },
+  {
+    "query": "как будет по карельски дай мне",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "dropped_contains": [
+      "по карельски"
+    ]
+  },
+  {
+    "query": "как по карельски будет любимая девочка",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "dropped_contains": [
+      "карельски"
+    ]
+  },
+  {
+    "query": "звезда на карельском языке как звучит",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "звезда"
+    ],
+    "focus_contains": [
+      "звезда"
+    ]
+  },
+  {
+    "query": "лаз в подполье для кошки",
+    "source": "metrika:entry_/search/",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "кошка"
+    ],
+    "focus_contains": []
+  },
+  {
+    "query": "желчный пузырь",
+    "source": "metrika:entry_/search/",
+    "require_ok": true,
+    "require_parse_ok": true
+  },
+  {
+    "query": "волк по карельски",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "волк"
+    ],
+    "dropped_contains": [
+      "по карельски"
+    ],
+    "focus_contains": [
+      "волк"
+    ]
+  },
+  {
+    "query": "кондега еревод с карельского язывка",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "comment": "опечатки: перевод/языка; KRL token в русской орфографии"
+  },
+  {
+    "query": "бабочка по карельски",
+    "source": "metrika:organic",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_contains": [
+      "бабочка"
+    ],
+    "focus_contains": [
+      "бабочка"
+    ]
+  }
+]

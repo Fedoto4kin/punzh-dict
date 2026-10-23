@@ -19,6 +19,7 @@
 | Файл | О чём |
 |------|--------|
 | [ai-search.md](ai-search.md) | UX AI-поиска — **следующий фокус разработки** |
+| [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL, фазы A–C |
 | [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке |
 
 ## Runbook

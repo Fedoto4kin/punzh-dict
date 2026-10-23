@@ -1,0 +1,87 @@
+{% load dict_extras %}
+{% if parsed %}
+<div class="row mb-3" id="ai-parsed-block">
+    <div class="col-12">
+        {% if parsed.display %}
+        <div class="alert alert-light border mb-2 py-2" role="status">
+            <strong>Как поняли:</strong> {{ parsed.display }}
+            {% if parsed.focus %}
+            <br><span class="small text-muted">Ответ (focus):
+                {{ parsed.focus|join:", " }}</span>
+            {% endif %}
+            {% if parsed.related %}
+            <br><span class="small text-muted">Рядом по теме:
+                {{ parsed.related|join:", " }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if not parsed.ok %}
+        <p class="text-muted small mb-0">
+            Разбор по смыслу недоступен — ниже совпадения по словам.
+        </p>
+        {% elif not parsed.parse_ok %}
+        <p class="text-muted small mb-0">
+            По смыслу зацепок нет — показываем буквальный поиск.
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if groups %}
+{% for g in groups %}
+<div class="row mt-4 ai-result-group">
+    <div class="col-12">
+        <h5 class="mb-3">{{ g.title }}
+            <span class="badge badge-secondary">{{ g.total }}</span>
+        </h5>
+        <div class="row ai-card-grid">
+            {% for a in g.article_objs %}
+            <div class="col-md-6 col-lg-4">
+                {% include "wordCard.html" with article=a %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if fallback_count != None %}
+<div class="row mt-4">
+    <div class="col-12">
+        {% if not groups %}
+        <div class="alert alert-secondary" role="alert">
+            <h5 class="alert-heading">По смыслу не нашли</h5>
+            {% if fallback_found %}
+            <p class="mb-0">Есть совпадения по словам ({{ fallback_found|pluralize_words|safe }}):</p>
+            {% else %}
+            <p class="mb-0">И по словам ничего нет.
+                <a href="/search/{{ query|urlencode }}">Открыть обычный поиск</a>
+            </p>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if fallback_page %}
+        <div class="row ai-card-grid mt-2">
+            {% for a in fallback_page %}
+            <div class="col-md-6 col-lg-4">
+                {% include "wordCard.html" with article=a %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if fallback_found > fallback_page.object_list|length %}
+        <p class="text-center mt-3">
+            <a href="/search/{{ query|urlencode }}">Все результаты обычного поиска</a>
+        </p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if query and not groups and fallback_count == None and parsed %}
+<div class="alert alert-secondary mt-4" role="alert">
+    Ничего не найдено.
+</div>
+{% endif %}

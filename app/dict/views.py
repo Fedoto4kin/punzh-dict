@@ -214,6 +214,53 @@ def robots_txt(request):
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
 
 
+def ai_search(request):
+    """
+    Smart search page: LLM parse → grouped retrieval. Separate from /search/.
+    """
+    from dict.ai.query_parse import parse_query
+    from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, normalize_sort
+    from dict.ai.search import _field_meta, hydrate_group_articles, search_by_parsed
+
+    raw = request.GET.get("query", "")
+    query = raw.strip()
+    sort = normalize_sort(request.GET.get("sort"))
+    context = {
+        "ABC": KRL_ABC,
+        "ai_search": "true",
+        "query": query,
+        "sort": sort,
+        "sort_relevance": SORT_RELEVANCE,
+        "sort_alpha": SORT_ALPHA,
+        "parsed": None,
+        "groups": [],
+        "ontology_fields": [],
+        "fallback_count": None,
+        "fallback_page": None,
+        "fallback_found": 0,
+    }
+    if not query:
+        return render(request, "ai_search.html", context)
+
+    parsed = parse_query(query)
+    groups, fallback_count = search_by_parsed(parsed, sort=sort)
+    groups = hydrate_group_articles(groups)
+    context["parsed"] = parsed
+    context["groups"] = groups
+    context["fallback_count"] = fallback_count
+    context["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
+
+    if fallback_count is not None and fallback_count > 0:
+        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
+        page_obj, found_count, *_rest = search_by_translate_linked(
+            query.translate(translation_table), 1
+        )
+        context["fallback_page"] = page_obj
+        context["fallback_found"] = found_count
+
+    return render(request, "ai_search.html", context)
+
+
 def ontology_index(request):
     context = {
         "ABC": KRL_ABC,
