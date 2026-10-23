@@ -12,9 +12,10 @@
 |--------|------------|
 | `client.py` | HTTP-клиент к шлюзу Timeweb (`chat_json`, настройки из env). |
 | `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии (включая аддендумы). Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py`. Промпт «по переводу» (`SYSTEM_PROMPT_TRANSLATION_FIELDS`) — общий с `pick_translation_fields.py`; вход — только `ArticleIndexTranslate`. |
-| `query_prompts.py` / `query_parse.py` | Разбор AI-запроса → оси (`lexical`/`focus`/`fields`/`tags`/`dialect`); валидация closed lists. |
-| `rank.py` | Детерминированная релевантность (focus exact ≫ lexical); sort alpha\|relevance. |
-| `search.py` | Retrieval по осям → группы выдачи (`search_by_parsed`). |
+| `query_prompts.py` / `query_parse.py` | Разбор → оси; пометы/POS → `tags` (не related); `display` из имён `Tag`. |
+| `rank.py` | Релевантность (focus exact ≫ lexical ≫ field-tr ≫ слабые KW). |
+| `search.py` | Retrieval: tags AND, field∩translations, `search_by_parsed`. |
+| `jobs.py` | Async job: thread-воркер + Postgres `AiSearchJob` (poll API). |
 | `telemetry.py` | JSONL/событие разбора (REPL и будущие логи). |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |
 | `classify_bg.py` | Фон (daemon-thread) для админки: `schedule_classify_article` после add / кнопки; notice → message на следующем `/admin/` (F5). |

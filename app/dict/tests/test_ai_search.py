@@ -2,6 +2,8 @@ from django.test import TestCase
 
 from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE
 from dict.ai.search import (
+    TITLE_MAIN,
+    _enrich_fields,
     check_benchmark_case,
     hydrate_group_articles,
     search_by_parsed,
@@ -75,6 +77,54 @@ class SearchByParsedTestCase(TestCase):
         self.assertIn("kaza", words)
         self.assertGreaterEqual(groups[0]["total"], 1)
 
+    def test_main_group_title_is_neutral(self):
+        groups, _ = search_by_parsed(self._parsed(lexical=["коза"], query="коза"))
+        self.assertEqual(groups[0]["title"], TITLE_MAIN)
+
+    def test_illustration_keyword_does_not_outrank_translation(self):
+        """Keyword «девочка» in a boy-article illustration must lose to real girl."""
+        girl = Article.objects.create(word="tyttö", article_html="<b>tyttö</b>")
+        ArticleIndexTranslate.objects.create(article=girl, rus_word="девочка")
+        boy = Article.objects.create(word="uroš", article_html="<b>uroš</b> мальчик")
+        ArticleIndexTranslate.objects.create(article=boy, rus_word="мальчик")
+        ArticleKeyword.objects.create(article=boy, word="девочка")
+        kin = SemanticField.objects.create(
+            name="Социум и родство", definition="родство", sorting=4
+        )
+        ArticleSemanticField.objects.create(article=girl, field=kin)
+        ArticleSemanticField.objects.create(article=boy, field=kin)
+
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="любимая девочка",
+                lexical=["девочка"],
+                focus=["девочка"],
+                related=[],
+                fields=["Социум и родство"],
+            )
+        )
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertIn("uroš", words)  # second-pass illustration still found
+        self.assertLess(words.index("tyttö"), words.index("uroš"))
+
+    def test_enrich_fields_adds_theme_fields(self):
+        """Related/focus hits pull extra ontology fields beyond LLM's one."""
+        body = SemanticField.objects.create(
+            name="Человек и тело", definition="тело", sorting=3
+        )
+        sick = Article.objects.create(word="läzikkö", article_html="<b>läzikkö</b>")
+        ArticleIndexTranslate.objects.create(article=sick, rus_word="болезнь")
+        ArticleSemanticField.objects.create(article=sick, field=body)
+        # LLM returned only animals; enrichment should add body via «болезнь»
+        enriched = _enrich_fields(
+            ["Животный мир"],
+            focus=["кошка"],
+            related=["болезнь", "лечение"],
+            lexical=["кошка"],
+        )
+        self.assertIn("Животный мир", enriched)
+        self.assertIn("Человек и тело", enriched)
+
     def test_focus_exact_ranks_first(self):
         """«чем режут хлеб» → focus нож ahead of хлеб/резать hits."""
         knife = Article.objects.create(word="veičči", article_html="<b>veičči</b>")
@@ -141,7 +191,8 @@ class SearchByParsedTestCase(TestCase):
         self.assertIn(cat.word, words)
         self.assertNotIn(hand.word, words)
 
-    def test_tag_and_merged_main_groups(self):
+    def test_tag_filters_main_with_and(self):
+        """Tags AND onto main: бран. keeps kirota, drops field-only lehmä."""
         groups, fallback = search_by_parsed(
             self._parsed(
                 query="ругаться",
@@ -152,13 +203,39 @@ class SearchByParsedTestCase(TestCase):
             )
         )
         self.assertIsNone(fallback)
-        kinds = [g["kind"] for g in groups]
-        self.assertEqual(kinds, ["lexical", "tag"])
-        main_words = {a["word"] for a in groups[0]["articles"]}
-        # lexical + theme-in-field merged
-        self.assertIn("kirota", {a["word"] for a in groups[1]["articles"]})
-        self.assertIn("lehmä", main_words)
-        self.assertTrue(groups[0].get("fields"))
+        self.assertEqual(len(groups), 1)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("kirota", words)
+        self.assertNotIn("lehmä", words)
+
+    def test_priemeta_and_verb_tags(self):
+        """«глаголы в приметах» → примета ∩ v."""
+        tag_prim = Tag.objects.create(tag="примета", name="примета", type=3, sorting=20)
+        tag_v = Tag.objects.create(
+            tag="v", name="verbum, глагол", type=2, level=0, sorting=1
+        )
+        tag_s = Tag.objects.create(
+            tag="s", name="substantivum", type=2, level=0, sorting=2
+        )
+        omen_v = Article.objects.create(word="ennustaa", article_html="<b>ennustaa</b>")
+        ArticleIndexTag.objects.create(article=omen_v, tag=tag_prim)
+        ArticleIndexTag.objects.create(article=omen_v, tag=tag_v)
+        noun = Article.objects.create(word="merkki", article_html="<b>merkki</b>")
+        ArticleIndexTag.objects.create(article=noun, tag=tag_prim)
+        ArticleIndexTag.objects.create(article=noun, tag=tag_s)
+
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="глаголы в приметах",
+                lexical=[],
+                focus=[],
+                related=[],
+                tags=["примета", "v"],
+                fields=[],
+            )
+        )
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertEqual(words, {"ennustaa"})
 
     def test_lexical_and_field_merged(self):
         """Lexical + theme-in-field → one list (both on-query relevant)."""

@@ -14,16 +14,20 @@ SORT_RELEVANCE = "relevance"
 SORT_ALPHA = "alpha"
 SORT_MODES = (SORT_RELEVANCE, SORT_ALPHA)
 
-# Score weights (higher = better). Focus = answer; lexical = context only.
-# Keep lexical ≪ focus so scenario words (хлеб, резать) never outrank focus (нож).
+# Score weights (higher = better).
+# Translations (focus/lexical) first; ArticleKeyword illustrations are a weak
+# second pass — they often hit example sentences (мальчик article mentions
+# «девочка» in an illustration → must not outrank real «девочка» translations).
 W_FOCUS_EXACT = 2000
 W_FOCUS_SOFT = 900
-W_KW_FOCUS = 700
 W_LEX_EXACT = 80
-W_KW_LEX = 50
 W_LEX_HIT = 40
+W_KW_FOCUS = 12
+W_KW_LEX = 8
 W_THEME_HIT = 15
 W_TAG_HIT = 10
+# Field contour: translation match inside field ≫ keyword/broader in field.
+W_FIELD_TR = 55
 W_FIELD_HIT = 5
 
 
@@ -87,6 +91,7 @@ def relevance_score(
     theme_ids,
     tag_ids,
     field_pool,
+    field_tr_ids=None,
 ):
     s = 0
     if aid in focus_exact:
@@ -105,7 +110,10 @@ def relevance_score(
         s += W_THEME_HIT
     if aid in tag_ids:
         s += W_TAG_HIT
-    if aid in field_pool:
+    field_tr_ids = field_tr_ids or set()
+    if aid in field_tr_ids:
+        s += W_FIELD_TR
+    elif aid in field_pool:
         s += W_FIELD_HIT
     return s
 

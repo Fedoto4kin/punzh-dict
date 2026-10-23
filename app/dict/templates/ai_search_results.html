@@ -5,10 +5,6 @@
         {% if parsed.display %}
         <div class="alert alert-light border mb-2 py-2" role="status">
             <strong>Как поняли:</strong> {{ parsed.display }}
-            {% if parsed.focus %}
-            <br><span class="small text-muted">Ответ (focus):
-                {{ parsed.focus|join:", " }}</span>
-            {% endif %}
             {% if parsed.related %}
             <br><span class="small text-muted">Рядом по теме:
                 {{ parsed.related|join:", " }}</span>

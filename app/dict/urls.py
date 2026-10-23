@@ -38,6 +38,17 @@ urlpatterns = [
     path("search/<str:query>/<int:page>", views.search, name="search"),
     path("ai-search", views.ai_search, name="ai_search"),
     path("ai-search/", views.ai_search, name="ai_search"),
+    path("ai-search/jobs/", views.ai_search_job_create, name="ai_search_job_create"),
+    path(
+        "ai-search/jobs/<uuid:job_id>/",
+        views.ai_search_job_status,
+        name="ai_search_job_status",
+    ),
+    path(
+        "ai-search/jobs/<uuid:job_id>/partial/",
+        views.ai_search_job_partial,
+        name="ai_search_job_partial",
+    ),
     path("tags/", views.tag_search, name="tags"),
     path("tags/compatible/<str:tags>", views.tags_compatible, name="tags_compatible"),
     path("tags/<str:tags>", views.tag_search, name="tags"),

@@ -12,8 +12,30 @@ class NormalizeParsedTestCase(TestCase):
             "Животный мир": "животные",
             "Речь и звуки": "речь",
         }
-        self.allowed_tags = ["бран.", "неодобр.", "всг."]
+        self.allowed_tags = ["бран.", "неодобр.", "всг.", "примета", "v", "s"]
         self.allowed_dialects = {"всг.": "весьегонский", "толм.": "толмачевский"}
+        self.tag_aliases = {
+            "бран.": "бран.",
+            "примета": "примета",
+            "глагол": "v",
+            "глаголы": "v",
+            "v": "v",
+            "verbum, глагол": "v",
+            "союз": "conj",
+            "предлог": "prep",
+            "прилагательное": "a",
+            "существительное": "s",
+            "conj": "conj",
+            "prep": "prep",
+            "a": "a",
+            "s": "s",
+        }
+        self.tag_names = {
+            "v": "verbum, глагол",
+            "s": "substantivum, имя существительное",
+            "примета": "примета",
+            "бран.": "бранное",
+        }
 
     def test_keeps_known_axes(self):
         payload = qp._normalize_parsed(
@@ -60,7 +82,97 @@ class NormalizeParsedTestCase(TestCase):
         self.assertTrue(payload["parse_ok"])
         self.assertEqual(payload["focus"], ["нож"])
         self.assertEqual(payload["related"], ["лезвие"])
-        self.assertIn("ответ:", payload["display"])
+        # focus is ranking-only — not echoed in display
+        self.assertNotIn("ответ:", payload["display"].lower())
+        self.assertNotIn("нож", payload["display"])
+
+    def test_promote_pos_and_priemeta_into_tags(self):
+        """«глаголы в приметах» free axes → tags примета + v."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["глагол"],
+                "focus": ["глагол"],
+                "related": ["примета"],
+                "fields": ["Речь и звуки"],
+                "tags": [],
+                "dialect": None,
+                "dropped": ["найди"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_alias_map=self.tag_aliases,
+            tag_names=self.tag_names,
+            query="найди глаголы в приметах",
+        )
+        self.assertEqual(sorted(payload["tags"]), ["v", "примета"])
+        self.assertEqual(payload["lexical"], [])
+        self.assertEqual(payload["focus"], [])
+        self.assertEqual(payload["related"], [])
+        self.assertIn("пометы:", payload["display"])
+        self.assertIn("verbum, глагол", payload["display"])
+        self.assertIn("примета", payload["display"])
+
+    def test_related_pos_words_stripped_not_theme(self):
+        """Союз/предлог/… must not stay in related («рядом по теме»)."""
+        self.allowed_tags = list(self.allowed_tags) + [
+            "conj",
+            "prep",
+            "a",
+            "s",
+            "v",
+            "примета",
+        ]
+        payload = qp._normalize_parsed(
+            {
+                "lexical": [],
+                "focus": [],
+                "related": [
+                    "союз",
+                    "предлог",
+                    "прилагательное",
+                    "существительное",
+                ],
+                "fields": [],
+                "tags": ["примета", "v"],
+                "dialect": None,
+                "dropped": [],
+                "display": "глаголы в приметах",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_alias_map=self.tag_aliases,
+            query="глаголы в приметах",
+        )
+        self.assertEqual(payload["related"], [])
+        self.assertEqual(sorted(payload["tags"]), ["v", "примета"])
+        self.assertNotIn("союз", payload["display"])
+
+    def test_mark_query_drops_semantic_related(self):
+        """Пометы → только tags; смысловой related от пометы отбрасываем."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": [],
+                "focus": [],
+                "related": ["суеверие", "знак", "погода", "примета"],
+                "fields": ["Речь и звуки"],
+                "tags": ["примета"],
+                "dialect": None,
+                "dropped": ["найди"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_alias_map=self.tag_aliases,
+            query="слова в приметах",
+        )
+        self.assertEqual(payload["tags"], ["примета"])
+        self.assertEqual(payload["related"], [])
+        self.assertEqual(payload["fields"], [])
+        self.assertEqual(payload["lexical"], [])
 
     def test_drops_unknown_field_and_tag(self):
         payload = qp._normalize_parsed(

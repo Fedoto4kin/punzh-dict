@@ -8,8 +8,8 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| **1** | **сделано (код)** | **AI-поиск слой 1:** разбор + `/ai-search/` + REPL | `docs/ai-search.md`, `SPEC_ai_query_parse.md` |
-| **2** | **план** | **AI-поиск async:** job+PG+poll/SSE (без SaaS; WS только позже) | `docs/plans/ai-search-async.md` — **отдельный коммит** |
+| **1** | **сделано (код)** | **AI-поиск слой 1:** разбор (пометы≠related, display=`Tag.name`) + retrieval + REPL | `docs/ai-search.md`, `SPEC_ai_query_parse.md` |
+| **2** | **сделано (код)** | **AI-поиск async:** job+PG+poll (без SaaS; SSE/WS позже) | `docs/plans/ai-search-async.md` |
 | 3 | параллельно | Связи «от» / `ArticleLink.kind` (подсветка на сайте) | `backlog.md` §1 — **отдельный контур**, не смешивать с AI |
 
 **Предпосылки для AI закрыты:** cleanup переводов на prod, массовая классификация

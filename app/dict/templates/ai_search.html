@@ -9,6 +9,7 @@
 {% block content %}
 <style>
     .ai-card-grid > [class*="col-"] > .card { margin-left: 0; margin-right: 0; }
+    #ai-status.loading { color: #6c757d; }
 </style>
 <div class="row mt-5 mb-3">
     <div class="col-12">
@@ -18,7 +19,8 @@
         <p class="text-muted small mb-3">
             Исследовательский поиск по смыслу (закрытая бета).
         </p>
-        <form action="{% url 'ai_search' %}" method="get">
+        <form action="{% url 'ai_search' %}" method="get" id="ai-search-form">
+            {% csrf_token %}
             <div class="input-group">
                 <input class="form-control"
                        name="query"
@@ -28,38 +30,46 @@
                        placeholder="Например: найди слова про разведение коз"
                        aria-label="Умный поиск"
                        autofocus>
-                <input type="hidden" name="sort" value="{{ sort }}">
+                <input type="hidden" name="sort" id="ai-sort-input" value="{{ sort }}">
                 <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="submit">
+                    <button class="btn btn-outline-secondary" type="submit" id="ai-search-submit">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
-            {% if query %}
-            <p class="small text-muted pl-1 mb-0 mt-1">
-                <a href="/search/{{ query|urlencode }}">Искать «{{ query }}» буквально</a>
-                {% if ontology_fields %}
-                {% for f in ontology_fields %}
-                · <a href="{% url 'ontology_field' f.id %}">Открыть поле «{{ f.name }}»</a>
-                {% endfor %}
-                {% endif %}
+            <p class="small text-muted pl-1 mb-0 mt-1" id="ai-meta-links">
+                {% if query %}
+                <a href="/search/{{ query|urlencode }}" id="ai-literal-link">Искать «{{ query }}» буквально</a><span id="ai-ontology-links">{% for f in ontology_fields %} · <a href="{% url 'ontology_field' f.id %}">Открыть поле «{{ f.name }}»</a>{% endfor %}</span>
                 · порядок:
                 {% if sort == sort_alpha %}
-                <a href="?query={{ query|urlencode }}&sort={{ sort_relevance }}">по смыслу</a>
+                <a href="#" data-ai-sort="{{ sort_relevance }}" class="ai-sort-link">по смыслу</a>
                 · <strong>по алфавиту</strong>
                 {% else %}
                 <strong>по смыслу</strong>
-                · <a href="?query={{ query|urlencode }}&sort={{ sort_alpha }}">по алфавиту</a>
+                · <a href="#" data-ai-sort="{{ sort_alpha }}" class="ai-sort-link">по алфавиту</a>
+                {% endif %}
+                {% else %}
+                <a href="/search/" id="ai-literal-link" class="d-none"></a><span id="ai-ontology-links"></span>
+                <span class="text-muted" id="ai-meta-placeholder">После запроса появятся ссылки и порядок сортировки.</span>
                 {% endif %}
             </p>
-            {% endif %}
+            <noscript>
+                <p class="small text-warning mt-2 mb-0">
+                    Умный поиск нужен JavaScript.
+                    Воспользуйтесь <a href="/search/{% if query %}{{ query|urlencode }}{% endif %}">обычным поиском</a>.
+                </p>
+            </noscript>
         </form>
+        <p class="small pl-1 mt-2 mb-0 loading d-none" id="ai-status" role="status" aria-live="polite"></p>
     </div>
 </div>
 
+<div id="ai-results">
+{% if job_missing %}
+<div class="alert alert-secondary mt-4" role="alert">Задание не найдено или устарело.</div>
+{% elif groups or parsed or fallback_count != None %}
 {% include "ai_search_results.html" %}
-
-{% if not query %}
+{% elif not query %}
 <div class="row mt-2">
     <div class="col-12">
         <p class="text-muted small">
@@ -68,5 +78,238 @@
     </div>
 </div>
 {% endif %}
+</div>
 
+{{ pending_query|default_if_none:""|json_script:"ai-pending-query" }}
+{{ job_id|default_if_none:""|json_script:"ai-job-id" }}
+{{ job_status|default_if_none:""|json_script:"ai-job-status" }}
+<script>
+(function () {
+  var form = document.getElementById("ai-search-form");
+  if (!form) return;
+
+  var input = document.getElementById("ai-search-input");
+  var sortInput = document.getElementById("ai-sort-input");
+  var statusEl = document.getElementById("ai-status");
+  var resultsEl = document.getElementById("ai-results");
+  var csrfInput = form.querySelector("[name=csrfmiddlewaretoken]");
+  var createUrl = "{% url 'ai_search_job_create' %}";
+  var pollMs = 500;
+  var maxWaitMs = 30000;
+  // Live job id — SSR json_script goes stale after a new async search.
+  var currentJobId = "";
+
+  function readJsonScript(id) {
+    var el = document.getElementById(id);
+    if (!el) return "";
+    try { return JSON.parse(el.textContent); } catch (e) { return ""; }
+  }
+
+  function jobIdFromUrl() {
+    try {
+      return new URLSearchParams(window.location.search).get("job") || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function activeJobId() {
+    // URL / in-memory first — never prefer stale SSR ai-job-id after a new query.
+    return jobIdFromUrl() || currentJobId || "";
+  }
+
+  function setCurrentJobId(id) {
+    currentJobId = id || "";
+  }
+
+  function setStatus(text, isLoading) {
+    if (!statusEl) return;
+    statusEl.textContent = text || "";
+    statusEl.classList.toggle("d-none", !text);
+    statusEl.classList.toggle("loading", !!isLoading);
+  }
+
+  function csrfToken() {
+    return csrfInput ? csrfInput.value : "";
+  }
+
+  function statusUrl(id) { return "/ai-search/jobs/" + id + "/"; }
+  function partialUrl(id) { return "/ai-search/jobs/" + id + "/partial/"; }
+
+  function updateHistory(query, jobId, sort) {
+    var params = new URLSearchParams();
+    if (query) params.set("query", query);
+    if (sort) params.set("sort", sort);
+    if (jobId) params.set("job", jobId);
+    history.replaceState(null, "", "{% url 'ai_search' %}?" + params.toString());
+    var lit = document.getElementById("ai-literal-link");
+    var placeholder = document.getElementById("ai-meta-placeholder");
+    if (lit && query) {
+      lit.href = "/search/" + encodeURIComponent(query);
+      lit.textContent = "Искать «" + query + "» буквально";
+      lit.classList.remove("d-none");
+    }
+    if (placeholder) placeholder.classList.add("d-none");
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function updateOntologyLinks(fields) {
+    var slot = document.getElementById("ai-ontology-links");
+    if (!slot) return;
+    if (!fields || !fields.length) {
+      slot.innerHTML = "";
+      return;
+    }
+    slot.innerHTML = fields
+      .map(function (f) {
+        var id = f && f.id;
+        var name = (f && f.name) || "";
+        if (!id || !name) return "";
+        return (
+          ' · <a href="/ontology/' +
+          encodeURIComponent(id) +
+          '/">Открыть поле «' +
+          escapeHtml(name) +
+          "»</a>"
+        );
+      })
+      .filter(Boolean)
+      .join("");
+  }
+
+  function showError(msg, query) {
+    setStatus("");
+    resultsEl.innerHTML =
+      '<div class="alert alert-secondary mt-4" role="alert">' +
+      '<p class="mb-2">' + escapeHtml(msg || "Не удалось выполнить умный поиск.") + "</p>" +
+      (query
+        ? '<p class="mb-0"><a href="/search/' + encodeURIComponent(query) +
+          '">Искать «' + escapeHtml(query) + "» буквально</a></p>"
+        : "") +
+      "</div>";
+  }
+
+  function loadPartial(jobId) {
+    return fetch(partialUrl(jobId), { credentials: "same-origin" }).then(function (r) {
+      if (!r.ok) throw new Error("partial " + r.status);
+      return r.text();
+    }).then(function (html) {
+      resultsEl.innerHTML = html;
+      setStatus("");
+    });
+  }
+
+  function pollJob(jobId, query, sort, started) {
+    if (Date.now() - started > maxWaitMs) {
+      showError("Не дождались ответа модели. Попробуйте ещё раз или ищите буквально.", query);
+      return;
+    }
+    fetch(statusUrl(jobId), { credentials: "same-origin" })
+      .then(function (r) {
+        if (r.status === 404) throw new Error("not_found");
+        return r.json();
+      })
+      .then(function (data) {
+        if (data.status === "done") {
+          setCurrentJobId(jobId);
+          updateHistory(query, jobId, sort);
+          updateOntologyLinks(data.ontology_fields || []);
+          return loadPartial(jobId);
+        }
+        if (data.status === "error") {
+          setCurrentJobId("");
+          updateOntologyLinks([]);
+          showError(
+            "Разбор не удался" + (data.error ? " (" + data.error + ")" : "") + ".",
+            query
+          );
+          return;
+        }
+        setStatus(
+          data.status === "running" ? "Разбираем запрос…" : "В очереди…",
+          true
+        );
+        setTimeout(function () { pollJob(jobId, query, sort, started); }, pollMs);
+      })
+      .catch(function () {
+        showError("Ошибка связи при ожидании результата.", query);
+      });
+  }
+
+  function startJob(query, sort) {
+    setStatus("Разбираем запрос…", true);
+    resultsEl.innerHTML = "";
+    setCurrentJobId("");
+    updateOntologyLinks([]);
+    updateHistory(query, "", sort);
+    fetch(createUrl, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken(),
+      },
+      body: JSON.stringify({ query: query, sort: sort }),
+    })
+      .then(function (r) {
+        if (r.status === 429) throw new Error("rate_limited");
+        if (!r.ok) throw new Error("create " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        setCurrentJobId(data.id);
+        updateHistory(query, data.id, sort);
+        pollJob(data.id, query, sort, Date.now());
+      })
+      .catch(function (err) {
+        var msg =
+          err && err.message === "rate_limited"
+            ? "Слишком много запросов — подождите минуту."
+            : "Не удалось запустить умный поиск.";
+        showError(msg, query);
+      });
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var q = (input.value || "").trim();
+    if (!q) return;
+    startJob(q, sortInput.value || "relevance");
+  });
+
+  document.querySelectorAll(".ai-sort-link").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      var s = a.getAttribute("data-ai-sort") || "relevance";
+      sortInput.value = s;
+      var q = (input.value || "").trim();
+      // Same *current* job, new order — never re-parse LLM.
+      var jid = activeJobId();
+      if (jid) {
+        var params = new URLSearchParams();
+        if (q) params.set("query", q);
+        params.set("sort", s);
+        params.set("job", jid);
+        window.location = "{% url 'ai_search' %}?" + params.toString();
+        return;
+      }
+      if (q) startJob(q, s);
+    });
+  });
+
+  var jq = readJsonScript("ai-pending-query");
+  var jid = jobIdFromUrl() || readJsonScript("ai-job-id");
+  var st = readJsonScript("ai-job-status");
+  setCurrentJobId(jid);
+  if (jq && !jid) {
+    startJob(jq, sortInput.value || "relevance");
+  } else if (jid && (st === "queued" || st === "running")) {
+    setStatus("Разбираем запрос…", true);
+    pollJob(jid, (input.value || "").trim(), sortInput.value || "relevance", Date.now());
+  }
+})();
+</script>
 {% endblock %}

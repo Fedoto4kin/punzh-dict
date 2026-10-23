@@ -7,13 +7,14 @@ article_ids_for_semantic_field, ArticleIndexTag).
 
 from __future__ import annotations
 
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 
 from dict.models import (
     Article,
     ArticleAddition,
     ArticleIndexTag,
     ArticleKeyword,
+    ArticleSemanticField,
     SemanticField,
     Tag,
 )
@@ -66,16 +67,24 @@ def _theme_ids(lemmas):
 
 
 def _tag_ids(tag_strings):
+    """
+    Articles matching tags. Several tags → intersection (AND):
+    «примета» ∩ «v» = verbs marked as omens.
+    """
     if not tag_strings:
         return set()
-    tag_pks = list(Tag.objects.filter(tag__in=tag_strings).values_list("id", flat=True))
-    if not tag_pks:
-        return set()
-    return set(
-        ArticleIndexTag.objects.filter(tag_id__in=tag_pks).values_list(
-            "article_id", flat=True
+    ids = None
+    for tag in tag_strings:
+        tag = (tag or "").strip()
+        if not tag:
+            continue
+        hit = set(
+            ArticleIndexTag.objects.filter(tag__tag=tag).values_list(
+                "article_id", flat=True
+            )
         )
-    )
+        ids = hit if ids is None else (ids & hit)
+    return ids or set()
 
 
 def _field_ids(field_names):
@@ -158,18 +167,48 @@ def hydrate_group_articles(groups):
     return groups
 
 
-def _title_lexical(lemmas, focus=None):
-    """Group title: focus (answer) wins; lexical is context, not the headline."""
-    focus = list(focus or [])
-    if focus:
-        if len(focus) == 1:
-            return f"Ответ: «{focus[0]}»"
-        return "Ответ: «" + " · ".join(focus) + "»"
-    if not lemmas:
-        return "Прямые соответствия"
-    if len(lemmas) == 1:
-        return f"Слова со значением «{lemmas[0]}»"
-    return "Слова со значением «" + " · ".join(lemmas) + "»"
+TITLE_MAIN = "Нашлось по запросу"
+
+
+def _field_names_frequent_among(article_ids, limit=4):
+    """Top SemanticField.name by assignment count on these articles."""
+    if not article_ids or limit <= 0:
+        return []
+    rows = (
+        ArticleSemanticField.objects.filter(article_id__in=article_ids)
+        .values("field__name")
+        .annotate(c=Count("id"))
+        .order_by("-c", "field__name")[:limit]
+    )
+    return [r["field__name"] for r in rows if r.get("field__name")]
+
+
+def _enrich_fields(fields, focus, related, lexical):
+    """
+    Union LLM fields with fields frequent among theme seeds.
+    First pass: translation-index hits only; second: keywords too.
+    """
+    out = []
+    seen = set()
+    for name in list(fields or []):
+        if name and name not in seen:
+            seen.add(name)
+            out.append(name)
+    seed = list(focus or []) + list(related or [])
+    if not seed:
+        seed = list(lexical or [])
+    # 1) translations → fields
+    for name in _field_names_frequent_among(_lemma_hit_ids(seed), limit=4):
+        if name and name not in seen:
+            seen.add(name)
+            out.append(name)
+    # 2) broader (keywords) if still thin
+    if len(out) < 2:
+        for name in _field_names_frequent_among(_keyword_hit_ids(seed), limit=4):
+            if name and name not in seen:
+                seen.add(name)
+                out.append(name)
+    return out
 
 
 def _title_tags(tag_strings):
@@ -249,7 +288,7 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     focus = list(parsed.get("focus") or [])
     related = list(parsed.get("related") or [])
     tags = list(parsed.get("tags") or [])
-    fields = list(parsed.get("fields") or [])
+    fields = _enrich_fields(list(parsed.get("fields") or []), focus, related, lexical)
     place = parsed.get("place")
     dialect = parsed.get("dialect")
 
@@ -260,7 +299,12 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     kw_lex = exact_keyword_ids(lexical)
 
     lex_ids = _lemma_hit_ids(lexical)
-    theme_ids = _theme_ids(related) | _theme_ids(lexical) | _theme_ids(focus)
+    # Theme seeds: translations first, keywords second (field contour).
+    theme_tr = _lemma_hit_ids(related) | _lemma_hit_ids(lexical) | _lemma_hit_ids(focus)
+    theme_kw = (
+        _keyword_hit_ids(related) | _keyword_hit_ids(lexical) | _keyword_hit_ids(focus)
+    )
+    theme_ids = theme_tr | theme_kw
     tag_ids = _tag_ids(tags)
     field_pool = _field_ids(fields)
     place_ids = _tag_type_filter_ids(place, 1)
@@ -271,24 +315,39 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     field_pool = _apply_and_filters(field_pool, place_ids, dialect_ids)
     focus_exact = _apply_and_filters(focus_exact, place_ids, dialect_ids)
     focus_soft = _apply_and_filters(focus_soft, place_ids, dialect_ids)
+    theme_tr = _apply_and_filters(theme_tr, place_ids, dialect_ids)
+    theme_kw = _apply_and_filters(theme_kw, place_ids, dialect_ids)
 
-    field_narrowed = False
+    # Field contour: (1) field ∩ translations, (2) field ∩ keywords.
+    field_tr_ids = set()
+    field_ids = set()
     if fields and field_pool:
         if related or lexical or focus:
-            field_ids = field_pool & theme_ids
-            field_narrowed = True
+            field_tr_ids = field_pool & theme_tr
+            field_ids = field_tr_ids | (field_pool & theme_kw)
         else:
             field_ids = field_pool
-    else:
-        field_ids = set()
+            field_tr_ids = set()
 
-    main_ids = set()
+    content_ids = set()
     if lexical and lex_ids:
-        main_ids |= lex_ids
+        content_ids |= lex_ids
     if focus_exact or focus_soft:
-        main_ids |= focus_exact | focus_soft
-    if field_ids:
-        main_ids |= field_ids
+        content_ids |= focus_exact | focus_soft
+
+    # Tags are AND filter. For «глаголы в приметах» tags alone define the set —
+    # speculative fields must not shrink a pure tag query.
+    if tags and tag_ids:
+        if content_ids:
+            main_ids = content_ids & tag_ids
+            if field_ids:
+                main_ids |= field_ids & tag_ids
+        else:
+            main_ids = set(tag_ids)
+    else:
+        main_ids = set(content_ids)
+        if field_ids:
+            main_ids |= field_ids
 
     def score(aid):
         return relevance_score(
@@ -302,6 +361,7 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             theme_ids=theme_ids,
             tag_ids=tag_ids,
             field_pool=field_pool,
+            field_tr_ids=field_tr_ids,
         )
 
     def _group(kind, title, ids):
@@ -316,18 +376,12 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
 
     groups = []
     if main_ids:
-        if focus or (lexical and lex_ids):
-            title = _title_lexical(lexical, focus=focus)
-        elif fields:
-            title = _title_fields(fields, narrowed=field_narrowed)
-        else:
-            title = "Результаты"
-        g = _group("lexical", title, main_ids)
+        g = _group("lexical", TITLE_MAIN, main_ids)
         if fields:
             g["fields"] = _field_meta(fields)
+        if tags:
+            g["tags"] = list(tags)
         groups.append(g)
-    if tags and tag_ids:
-        groups.append(_group("tag", _title_tags(tags), tag_ids))
 
     groups.sort(key=lambda g: KIND_ORDER.index(g["kind"]))
 

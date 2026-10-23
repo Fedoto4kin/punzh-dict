@@ -39,6 +39,36 @@ _CYRILLIC_RE = re.compile(r"[а-яёА-ЯЁ]")
 # Latin + Karelian orthography letters / apostrophes.
 _KRL_SCRIPT_RE = re.compile(r"[a-zA-ZäöüÄÖÜčšžČŠŽ’'ʼ]")
 
+# Russian POS words → grammar Tag.tag (type 2 parents).
+POS_LEMMA_TO_TAG = {
+    "глагол": "v",
+    "глаголы": "v",
+    "существительное": "s",
+    "существительные": "s",
+    "имя существительное": "s",
+    "прилагательное": "a",
+    "прилагательные": "a",
+    "имя прилагательное": "a",
+    "наречие": "adv",
+    "наречия": "adv",
+    "союз": "conj",
+    "союзы": "conj",
+    "предлог": "prep",
+    "предлоги": "prep",
+    "послелог": "postp",
+    "послелоги": "postp",
+    "частица": "particl",
+    "частицы": "particl",
+    "местоимение": "pron",
+    "местоимения": "pron",
+    "междометие": "interj",
+    "междометия": "interj",
+    "числительное": "num",
+    "числительные": "num",
+    "имя числительное": "num",
+}
+KNOWN_GRAMMAR_TAGS = frozenset(POS_LEMMA_TO_TAG.values())
+
 
 def looks_like_krl_query(query):
     """
@@ -189,20 +219,40 @@ def _resolve_closed(raw, by_key, kind, warnings):
     return None
 
 
-def _build_display(lexical, focus, fields, tags, place, dialect, dropped):
+def _display_label(key, names):
+    """Human label from closed-list name map; fall back to raw key."""
+    if not key:
+        return key
+    label = (names or {}).get(key) or ""
+    return label.strip() or key
+
+
+def _build_display(
+    lexical,
+    focus,
+    fields,
+    tags,
+    place,
+    dialect,
+    dropped,
+    tag_names=None,
+    place_names=None,
+    dialect_names=None,
+):
+    # focus is used for ranking only — not shown in display.
+    # Tags/place/dialect: prefer dictionary names («verbum, глагол») over codes.
     parts = []
-    if focus:
-        parts.append("ответ: " + " · ".join(focus))
     if lexical:
         parts.append(" · ".join(lexical))
     if fields:
         parts.append("поля: " + ", ".join(fields))
     if tags:
-        parts.append("пометы: " + ", ".join(tags))
+        labels = [_display_label(t, tag_names) for t in tags]
+        parts.append("пометы: " + ", ".join(labels))
     if place:
-        parts.append("место: " + place)
+        parts.append("место: " + _display_label(place, place_names))
     if dialect:
-        parts.append("говор: " + dialect)
+        parts.append("говор: " + _display_label(dialect, dialect_names))
     display = "искали: " + "; ".join(parts) if parts else ""
     if dropped:
         dropped_s = "«" + "», «".join(dropped) + "»"
@@ -210,8 +260,88 @@ def _build_display(lexical, focus, fields, tags, place, dialect, dropped):
     return _clip_str(display, MAX_DISPLAY_LEN)
 
 
+def _tag_alias_map(tag_rows):
+    """Lowercased tag/name → canonical Tag.tag for types 2 and 3."""
+    out = {}
+    for row in tag_rows or []:
+        if row.get("type") not in (2, 3):
+            continue
+        tag = row.get("tag") or ""
+        if not tag:
+            continue
+        out[tag.lower()] = tag
+        name = (row.get("name") or "").strip()
+        if name:
+            out[name.lower()] = tag
+            # "verbum, глагол" / "adjectivum, имя прилагательное"
+            if "," in name:
+                gloss = name.split(",")[-1].strip().lower()
+                if gloss:
+                    out[gloss] = tag
+                    if gloss.startswith("имя "):
+                        out[gloss[4:].strip()] = tag
+    for lemma, tag in POS_LEMMA_TO_TAG.items():
+        out[lemma] = tag
+    return out
+
+
+def _promote_tag_lemmas(items, tags, alias_map, allowed_tag_set=None):
+    """
+    Closed-list tag / POS lemmas leave free axes. If the tag is allowed, add it
+    to tags; otherwise drop the lemma (never leave POS in related).
+    """
+    kept = []
+    allowed = allowed_tag_set
+    for item in items:
+        key = (item or "").strip().lower()
+        canon = alias_map.get(key)
+        if canon:
+            if allowed is None or canon in allowed:
+                if canon not in tags:
+                    tags.append(canon)
+            continue
+        kept.append(item)
+    return kept
+
+
+def _narrow_grammar_tags(tags, query):
+    """
+    If the LLM piled several type-2 POS tags, keep only those named in the query
+    (глагол→v). Stylistic tags (type 3) are untouched.
+
+    Grammar parents come from KNOWN_GRAMMAR_TAGS; DB type=2 covers the same
+    and any extra grammar tags not in the POS alias map.
+    """
+    if not tags or not query:
+        return tags
+    from dict.models import Tag as TagModel
+
+    type2 = {t for t in tags if t in KNOWN_GRAMMAR_TAGS}
+    type2 |= set(
+        TagModel.objects.filter(tag__in=tags, type=2).values_list("tag", flat=True)
+    )
+    if len(type2) <= 1:
+        return tags
+    q = query.lower()
+    justified = set()
+    for lemma, tag in POS_LEMMA_TO_TAG.items():
+        if tag in type2 and lemma in q:
+            justified.add(tag)
+    if not justified:
+        # Fall back: drop piled grammar tags (stylistic-only / mark-only query).
+        return [t for t in tags if t not in type2]
+    return [t for t in tags if t not in type2 or t in justified]
+
+
 def _normalize_parsed(
-    data, field_defs, allowed_tags, allowed_dialects, allowed_places=None
+    data,
+    field_defs,
+    allowed_tags,
+    allowed_dialects,
+    allowed_places=None,
+    tag_alias_map=None,
+    tag_names=None,
+    query="",
 ):
     """
     Validate LLM JSON against closed lists. Returns payload dict
@@ -222,6 +352,8 @@ def _normalize_parsed(
     allowed_tag_set = set(allowed_tags)
     dialect_by_key = _closed_lookup(allowed_dialects)
     place_by_key = _closed_lookup(allowed_places or {})
+    alias_map = tag_alias_map or {}
+    names_by_tag = tag_names or {}
 
     raw_fields, _ = _as_str_list(data.get("fields"))
     fields = []
@@ -234,9 +366,11 @@ def _normalize_parsed(
     raw_tags, _ = _as_str_list(data.get("tags"))
     tags = []
     for tag in raw_tags:
-        if tag in allowed_tag_set and tag not in tags:
-            tags.append(tag)
-        elif tag not in allowed_tag_set:
+        key = tag.strip().lower()
+        canon = alias_map.get(key, tag)
+        if canon in allowed_tag_set and canon not in tags:
+            tags.append(canon)
+        elif canon not in allowed_tag_set and tag not in allowed_tag_set:
             warnings.append(f"unknown tag: {tag}")
 
     lexical, lex_trunc = _as_str_list(data.get("lexical"))
@@ -254,6 +388,29 @@ def _normalize_parsed(
     if drop_trunc:
         warnings.append("dropped items truncated")
 
+    # Tag / POS lemmas must not stay in lexical/focus/related («рядом по теме»).
+    lexical = _promote_tag_lemmas(lexical, tags, alias_map, allowed_tag_set)
+    focus = _promote_tag_lemmas(focus, tags, alias_map, allowed_tag_set)
+    related_raw = _promote_tag_lemmas(related_raw, tags, alias_map, allowed_tag_set)
+
+    tags = _narrow_grammar_tags(tags, query)
+
+    # Mark / POS query: search is tags (AND), not semantic related/fields.
+    # Drop speculative fields when grammar∩stylistic marks are both present.
+    from dict.models import Tag as TagModel
+
+    grammar_in_tags = any(t in KNOWN_GRAMMAR_TAGS for t in tags)
+    tag_types = set(
+        TagModel.objects.filter(tag__in=tags).values_list("type", flat=True)
+    )
+    if grammar_in_tags:
+        tag_types.add(2)
+    # Unit tests may lack Tag rows: non-grammar tags beside POS ≈ stylistic.
+    if grammar_in_tags and any(t not in KNOWN_GRAMMAR_TAGS for t in tags):
+        tag_types.add(3)
+    if 2 in tag_types and 3 in tag_types and fields:
+        fields = []
+
     lex_lower = {x.lower() for x in lexical}
     focus_lower = {x.lower() for x in focus}
     # related must not duplicate lexical or focus
@@ -262,21 +419,31 @@ def _normalize_parsed(
         for r in related_raw
         if r.lower() not in lex_lower and r.lower() not in focus_lower
     ]
+    # Tags-primary (no content lemmas): discard LLM «рядом по теме» invented
+    # from marks — search becomes pure tag filter on our side.
+    if tags and not lexical and not focus:
+        related = []
+        fields = []
 
     place = _resolve_closed(data.get("place"), place_by_key, "place", warnings)
     dialect = _resolve_closed(data.get("dialect"), dialect_by_key, "dialect", warnings)
 
-    display_raw = data.get("display")
-    display = ""
-    if isinstance(display_raw, str):
-        display = display_raw.strip()
-        if len(display) > MAX_DISPLAY_LEN:
-            warnings.append("display too long; rebuilt from axes")
-            display = ""
-    if not display:
-        display = _build_display(lexical, focus, fields, tags, place, dialect, dropped)
-    else:
-        display = _clip_str(display, MAX_DISPLAY_LEN)
+    raw_display = data.get("display") if isinstance(data.get("display"), str) else ""
+    if len(raw_display) > MAX_DISPLAY_LEN:
+        warnings.append("display too long")
+    # Always rebuild from validated axes so marks never linger in display.
+    display = _build_display(
+        lexical,
+        focus,
+        fields,
+        tags,
+        place,
+        dialect,
+        dropped,
+        tag_names=names_by_tag,
+        place_names=allowed_places or {},
+        dialect_names=allowed_dialects or {},
+    )
 
     parse_ok = bool(lexical or focus or fields or tags or place or dialect)
     return {
@@ -327,13 +494,21 @@ def parse_query(query, timeout=PARSE_TIMEOUT):
     if not field_defs:
         return _empty_result(query, "empty_ontology", latency_ms=0)
 
-    allowed_tags = [row["tag"] for row in tag_rows if row.get("type") == 3]
+    allowed_tags = [
+        row["tag"] for row in tag_rows if row.get("type") in (2, 3) and row.get("tag")
+    ]
+    tag_names = {
+        row["tag"]: row.get("name") or ""
+        for row in tag_rows
+        if row.get("type") in (2, 3) and row.get("tag")
+    }
     allowed_dialects = {
         row["tag"]: row.get("name") or "" for row in tag_rows if row.get("type") == 4
     }
     allowed_places = {
         row["tag"]: row.get("name") or "" for row in tag_rows if row.get("type") == 1
     }
+    tag_aliases = _tag_alias_map(tag_rows)
     model = getattr(settings, "TIMEWEB_AI_MODEL_QUERY", "")
     data = ai_client.chat_json(
         SYSTEM_PROMPT_QUERY_PARSE,
@@ -347,7 +522,14 @@ def parse_query(query, timeout=PARSE_TIMEOUT):
         return _empty_result(query, "llm_unavailable", latency_ms=latency_ms)
 
     payload = _normalize_parsed(
-        data, field_defs, allowed_tags, allowed_dialects, allowed_places
+        data,
+        field_defs,
+        allowed_tags,
+        allowed_dialects,
+        allowed_places,
+        tag_alias_map=tag_aliases,
+        tag_names=tag_names,
+        query=query,
     )
     if truncated_input:
         payload["warnings"] = list(payload["warnings"]) + ["query truncated"]

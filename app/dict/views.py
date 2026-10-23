@@ -214,18 +214,18 @@ def robots_txt(request):
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
 
 
-def ai_search(request):
-    """
-    Smart search page: LLM parse → grouped retrieval. Separate from /search/.
-    """
-    from dict.ai.query_parse import parse_query
-    from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, normalize_sort
-    from dict.ai.search import _field_meta, hydrate_group_articles, search_by_parsed
+def _ai_client_key(request):
+    if not request.session.session_key:
+        request.session.save()
+    return (request.session.session_key or "")[:64]
 
-    raw = request.GET.get("query", "")
-    query = raw.strip()
-    sort = normalize_sort(request.GET.get("sort"))
-    context = {
+
+def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
+    from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, normalize_sort
+    from dict.ai.search import _field_meta
+
+    sort = normalize_sort(sort)
+    ctx = {
         "ABC": KRL_ABC,
         "ai_search": "true",
         "query": query,
@@ -238,27 +238,195 @@ def ai_search(request):
         "fallback_count": None,
         "fallback_page": None,
         "fallback_found": 0,
+        "job_id": "",
+        "job_status": "",
+        "pending_query": "",
     }
-    if not query:
-        return render(request, "ai_search.html", context)
+    if job is not None:
+        from dict.ai.jobs import hydrate_job_groups, mark_stale_running
 
-    parsed = parse_query(query)
-    groups, fallback_count = search_by_parsed(parsed, sort=sort)
-    groups = hydrate_group_articles(groups)
-    context["parsed"] = parsed
-    context["groups"] = groups
-    context["fallback_count"] = fallback_count
-    context["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
+        mark_stale_running(job)
+        job.refresh_from_db()
+        ctx["job_id"] = str(job.id)
+        ctx["job_status"] = job.status
+        ctx["query"] = job.query or query
+        # Prefer requested sort (UI toggle) over the sort stored when job ran.
+        ctx["sort"] = sort
+        if job.status == "done":
+            parsed = job.parsed or {}
+            groups = hydrate_job_groups(job, sort=sort)
+            ctx["parsed"] = parsed
+            ctx["groups"] = groups
+            ctx["fallback_count"] = job.fallback_count
+            ctx["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
+            if job.fallback_count is not None and job.fallback_count > 0:
+                translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
+                page_obj, found_count, *_rest = search_by_translate_linked(
+                    (job.query or "").translate(translation_table), 1
+                )
+                ctx["fallback_page"] = page_obj
+                ctx["fallback_found"] = found_count
+        elif job.status == "error":
+            ctx["parsed"] = job.parsed or {
+                "ok": False,
+                "parse_ok": False,
+                "display": "",
+                "error": job.error or "error",
+            }
+    return ctx
 
-    if fallback_count is not None and fallback_count > 0:
-        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
-        page_obj, found_count, *_rest = search_by_translate_linked(
-            query.translate(translation_table), 1
+
+def ai_search(request):
+    """
+    Smart search shell: JS → POST /ai-search/jobs/ → poll (no sync LLM path).
+    ?job=<uuid> shows a finished or in-flight job without re-parse.
+    """
+    from dict.ai.rank import normalize_sort
+    from dict.models import AiSearchJob
+
+    raw = request.GET.get("query", "")
+    query = raw.strip()
+    sort = normalize_sort(request.GET.get("sort"))
+    job_id = (request.GET.get("job") or "").strip()
+
+    if job_id:
+        job = AiSearchJob.objects.filter(pk=job_id).first()
+        if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+            ctx = _ai_search_shell_context(request, query=query, sort=sort)
+            ctx["job_missing"] = True
+            return render(request, "ai_search.html", ctx)
+        return render(
+            request,
+            "ai_search.html",
+            _ai_search_shell_context(request, query=query, sort=sort, job=job),
         )
-        context["fallback_page"] = page_obj
-        context["fallback_found"] = found_count
 
-    return render(request, "ai_search.html", context)
+    if not query:
+        return render(
+            request,
+            "ai_search.html",
+            _ai_search_shell_context(request, query="", sort=sort),
+        )
+
+    ctx = _ai_search_shell_context(request, query=query, sort=sort)
+    ctx["pending_query"] = query
+    return render(request, "ai_search.html", ctx)
+
+
+def ai_search_job_create(request):
+    """POST /ai-search/jobs/ → 202 {id, status}."""
+    import json
+
+    from dict.ai.jobs import create_job, rate_limit_ok
+    from dict.ai.rank import normalize_sort
+
+    if request.method != "POST":
+        return JsonResponse({"error": "method_not_allowed"}, status=405)
+
+    client_key = _ai_client_key(request)
+    if not rate_limit_ok(client_key):
+        return JsonResponse({"error": "rate_limited"}, status=429)
+
+    query = ""
+    sort = "relevance"
+    ctype = (request.content_type or "").split(";")[0].strip().lower()
+    if ctype == "application/json":
+        try:
+            body = json.loads(request.body.decode("utf-8") or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "bad_json"}, status=400)
+        query = (body.get("query") or "").strip()
+        sort = normalize_sort(body.get("sort"))
+    else:
+        query = (request.POST.get("query") or "").strip()
+        sort = normalize_sort(request.POST.get("sort"))
+
+    if not query:
+        return JsonResponse({"error": "empty_query"}, status=400)
+
+    job = create_job(query, sort=sort, client_key=client_key)
+    return JsonResponse(
+        {"id": str(job.id), "status": job.status, "query": job.query},
+        status=202,
+    )
+
+
+def ai_search_job_status(request, job_id):
+    """GET /ai-search/jobs/<uuid>/ → JSON status (+ parsed/groups when done)."""
+    from dict.ai.jobs import mark_stale_running
+    from dict.models import AiSearchJob
+
+    job = AiSearchJob.objects.filter(pk=job_id).first()
+    if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+        return JsonResponse({"error": "not_found"}, status=404)
+
+    mark_stale_running(job)
+    job.refresh_from_db()
+
+    from dict.ai.search import _field_meta
+
+    payload = {
+        "id": str(job.id),
+        "status": job.status,
+        "query": job.query,
+        "sort": job.sort,
+        "error": job.error or None,
+    }
+    if job.status == AiSearchJob.STATUS_DONE:
+        parsed = job.parsed or {}
+        payload["parsed"] = parsed
+        payload["groups"] = job.groups
+        payload["fallback_count"] = job.fallback_count
+        payload["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
+        payload["html_ready"] = True
+    elif job.status == AiSearchJob.STATUS_ERROR:
+        payload["parsed"] = job.parsed
+        payload["ontology_fields"] = []
+    return JsonResponse(payload)
+
+
+def ai_search_job_partial(request, job_id):
+    """GET /ai-search/jobs/<uuid>/partial/ → HTML fragment of result groups."""
+    from dict.ai.jobs import hydrate_job_groups, mark_stale_running
+    from dict.ai.rank import normalize_sort
+    from dict.ai.search import _field_meta
+    from dict.models import AiSearchJob
+
+    job = AiSearchJob.objects.filter(pk=job_id).first()
+    if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+        return HttpResponse("Not found", status=404)
+
+    mark_stale_running(job)
+    job.refresh_from_db()
+    if job.status != AiSearchJob.STATUS_DONE:
+        return HttpResponse("Not ready", status=409)
+
+    sort = normalize_sort(request.GET.get("sort") or job.sort)
+    parsed = job.parsed or {}
+    groups = hydrate_job_groups(job, sort=sort)
+    ontology_fields = _field_meta(list(parsed.get("fields") or []))
+    fallback_page = None
+    fallback_found = 0
+    if job.fallback_count is not None and job.fallback_count > 0:
+        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
+        fallback_page, fallback_found, *_rest = search_by_translate_linked(
+            (job.query or "").translate(translation_table), 1
+        )
+
+    return render(
+        request,
+        "ai_search_results.html",
+        {
+            "query": job.query,
+            "parsed": parsed,
+            "groups": groups,
+            "ontology_fields": ontology_fields,
+            "fallback_count": job.fallback_count,
+            "fallback_page": fallback_page,
+            "fallback_found": fallback_found,
+            "sort": sort,
+        },
+    )
 
 
 def ontology_index(request):
