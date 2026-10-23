@@ -44,6 +44,14 @@ def serialize_groups_for_job(groups):
             item["fields"] = g["fields"]
         if g.get("demote_ids"):
             item["demote_ids"] = list(g["demote_ids"])
+        if g.get("dialect"):
+            item["dialect"] = g["dialect"]
+        if g.get("dialect_relaxed"):
+            item["dialect_relaxed"] = True
+        if g.get("place"):
+            item["place"] = g["place"]
+        if g.get("place_relaxed"):
+            item["place_relaxed"] = True
         out.append(item)
     return out
 

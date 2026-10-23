@@ -433,6 +433,59 @@ class SearchByParsedTestCase(TestCase):
         words = {a["word"] for a in groups[0]["articles"]}
         self.assertEqual(words, {"kaza-vsg"})
 
+    def test_dialect_plus_field_uses_field_pool_not_all_dialect(self):
+        """Theme + всг. with empty lemma∩field → field∩всг., not every всг. article."""
+        weather = SemanticField.objects.create(
+            name="Природа и погода", definition="погода", sorting=2
+        )
+        # всг. in weather field
+        rain = Article.objects.create(word="vihma-vsg", article_html="<b>v</b>")
+        ArticleIndexTag.objects.create(article=rain, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=rain, field=weather)
+        # всг. outside weather (other field only) — must not appear
+        other = Article.objects.create(word="other-vsg", article_html="<b>o</b>")
+        ArticleIndexTag.objects.create(article=other, tag=self.tag_d)
+        ArticleIndexTranslate.objects.create(article=other, rus_word="прочее")
+        # lemma «погода» misses; field still set
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="весьегонские слова про погоду",
+                lexical=["погоданеттакогоxyz"],
+                fields=["Природа и погода"],
+                dialect="всг.",
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("vihma-vsg", words)
+        self.assertNotIn("other-vsg", words)
+        self.assertNotIn("kaza-vsg", words)
+        self.assertFalse(groups[0].get("dialect_relaxed"))
+
+    def test_dialect_plus_field_relaxes_when_field_dialect_empty(self):
+        """field∩всг. empty → show theme without dialect, not all всг."""
+        weather = SemanticField.objects.create(
+            name="Природа и погода", definition="погода", sorting=2
+        )
+        # weather article WITHOUT всг.
+        rain = Article.objects.create(word="vihma", article_html="<b>v</b>")
+        ArticleIndexTranslate.objects.create(article=rain, rus_word="дождь")
+        ArticleSemanticField.objects.create(article=rain, field=weather)
+        # всг. only in another field (setUp kaza-vsg)
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="весьегонская погода",
+                lexical=["дождь"],
+                fields=["Природа и погода"],
+                dialect="всг.",
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("vihma", words)
+        self.assertNotIn("kaza-vsg", words)
+        self.assertTrue(groups[0].get("dialect_relaxed"))
+
     def test_fallback_when_parse_fails(self):
         groups, fallback = search_by_parsed(
             {
@@ -449,7 +502,8 @@ class SearchByParsedTestCase(TestCase):
         self.assertEqual(groups, [])
         self.assertGreaterEqual(fallback, 1)
 
-    def test_fallback_when_related_misses_field(self):
+    def test_missed_lemmas_still_browse_named_field(self):
+        """Named field + missing lemmas → browse field pool (not empty fallback)."""
         groups, fallback = search_by_parsed(
             self._parsed(
                 query="коза",
@@ -458,8 +512,10 @@ class SearchByParsedTestCase(TestCase):
                 fields=["Животный мир"],
             )
         )
-        self.assertEqual(groups, [])
-        self.assertGreaterEqual(fallback, 0)
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("lehmä", words)
+        self.assertIn("kaza", words)
 
     def test_hydrate_shows_all_cards(self):
         """Debug beta: no «ещё N» — all articles in article_objs."""

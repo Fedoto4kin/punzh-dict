@@ -351,55 +351,66 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     kw_focus = exact_keyword_ids(focus)
     kw_lex = exact_keyword_ids(lexical)
 
-    lex_ids = _lemma_hit_ids(lexical)
-    # Theme seeds: translations first, keywords second (field contour).
-    theme_tr = _lemma_hit_ids(related) | _lemma_hit_ids(lexical) | _lemma_hit_ids(focus)
-    theme_kw = (
+    # Raw (pre dialect/place) sets — needed to relax говор without dumping all всг.
+    lex_ids_raw = _lemma_hit_ids(lexical)
+    theme_tr_raw = (
+        _lemma_hit_ids(related) | _lemma_hit_ids(lexical) | _lemma_hit_ids(focus)
+    )
+    theme_kw_raw = (
         _keyword_hit_ids(related) | _keyword_hit_ids(lexical) | _keyword_hit_ids(focus)
     )
-    theme_ids = theme_tr | theme_kw
-    # Hard tags (named in query) → AND filter. Soft (LLM inference) → rank only.
-    hard_tag_ids = _tag_ids(tags)
-    soft_tag_ids = _tag_ids(tags_soft)
-    # Classified field assignments only — см./от referrers added after, then demoted.
-    field_pool = _field_ids(fields, include_referrers=False)
-    # Strongest theme field (usually from lexical «животные» → Животный мир).
+    theme_ids_raw = theme_tr_raw | theme_kw_raw
+    hard_tag_ids_raw = _tag_ids(tags)
+    soft_tag_ids_raw = _tag_ids(tags_soft)
+    field_pool_raw = _field_ids(fields, include_referrers=False)
     primary_theme = (theme_fields[:1] if theme_fields else fields[:1]) or []
-    primary_field_pool = _field_ids(primary_theme, include_referrers=False)
+    primary_field_pool_raw = _field_ids(primary_theme, include_referrers=False)
     place_ids = _tag_type_filter_ids(place, 1)
     dialect_ids = _tag_type_filter_ids(dialect, 4)
+    has_theme = bool(fields or lexical or focus or related)
 
-    lex_ids = _apply_and_filters(lex_ids, place_ids, dialect_ids)
-    hard_tag_ids = _apply_and_filters(hard_tag_ids, place_ids, dialect_ids)
-    soft_tag_ids = _apply_and_filters(soft_tag_ids, place_ids, dialect_ids)
-    field_pool = _apply_and_filters(field_pool, place_ids, dialect_ids)
+    lex_ids = _apply_and_filters(lex_ids_raw, place_ids, dialect_ids)
+    hard_tag_ids = _apply_and_filters(hard_tag_ids_raw, place_ids, dialect_ids)
+    soft_tag_ids = _apply_and_filters(soft_tag_ids_raw, place_ids, dialect_ids)
+    field_pool = _apply_and_filters(field_pool_raw, place_ids, dialect_ids)
+    primary_field_pool = _apply_and_filters(
+        primary_field_pool_raw, place_ids, dialect_ids
+    )
     focus_exact = _apply_and_filters(focus_exact, place_ids, dialect_ids)
     focus_soft = _apply_and_filters(focus_soft, place_ids, dialect_ids)
-    theme_tr = _apply_and_filters(theme_tr, place_ids, dialect_ids)
-    theme_kw = _apply_and_filters(theme_kw, place_ids, dialect_ids)
+    theme_tr = _apply_and_filters(theme_tr_raw, place_ids, dialect_ids)
+    theme_kw = _apply_and_filters(theme_kw_raw, place_ids, dialect_ids)
+    theme_ids = theme_tr | theme_kw
+
+    def _field_contour(pool, tr, kw):
+        """Field ∩ theme (tr/kw), or whole pool when no lemmas."""
+        if not (fields and pool):
+            return set(), set()
+        if related or lexical or focus:
+            tr_ids = pool & tr
+            return tr_ids, tr_ids | (pool & kw)
+        return set(), set(pool)
+
+    def _content_from(lex, f_exact, f_soft):
+        out = set()
+        if lexical and lex:
+            out |= lex
+        if f_exact or f_soft:
+            out |= f_exact | f_soft
+        return out
 
     # Field contour: (1) field ∩ translations, (2) field ∩ keywords.
-    field_tr_ids = set()
-    field_ids = set()
-    if fields and field_pool:
-        if related or lexical or focus:
-            field_tr_ids = field_pool & theme_tr
-            field_ids = field_tr_ids | (field_pool & theme_kw)
-        else:
-            field_ids = field_pool
-            field_tr_ids = set()
-
-    content_ids = set()
-    if lexical and lex_ids:
-        content_ids |= lex_ids
-    if focus_exact or focus_soft:
-        content_ids |= focus_exact | focus_soft
+    field_tr_ids, field_ids = _field_contour(field_pool, theme_tr, theme_kw)
+    content_ids = _content_from(lex_ids, focus_exact, focus_soft)
 
     # Hard tags AND. Soft tags never filter. Relax: if hard ∩ content is empty,
     # drop the hard filter and keep content (avoid empty → fallback).
     tags_hard_active = list(tags)
-    tag_ids = set(hard_tag_ids)  # score: hard hits
-    tag_ids |= soft_tag_ids  # score: soft boost among results
+    tag_ids = set(hard_tag_ids) | set(soft_tag_ids)
+    dialect_relaxed = False
+    place_relaxed = False
+    active_place_ids = place_ids
+    active_dialect_ids = dialect_ids
 
     if tags_hard_active and hard_tag_ids:
         field_tag = (primary_field_pool & hard_tag_ids) if primary_field_pool else set()
@@ -421,18 +432,46 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         main_ids = set(content_ids)
         if field_ids:
             main_ids |= field_ids
-        if not main_ids:
-            if dialect_ids:
-                main_ids = set(dialect_ids)
-            elif place_ids:
-                main_ids = set(place_ids)
+
+    # Empty after dialect/place AND: never dump all всг. when theme was asked.
+    if not main_ids:
+        if has_theme:
+            if field_pool:
+                # Browse field ∩ dialect even if lemma ∩ field was empty.
+                main_ids = set(field_pool)
+            else:
+                # No hits in говор for this theme → drop dialect/place, keep theme.
+                dialect_relaxed = bool(dialect_ids)
+                place_relaxed = bool(place_ids)
+                active_place_ids = None
+                active_dialect_ids = None
+                field_pool = field_pool_raw
+                primary_field_pool = primary_field_pool_raw
+                lex_ids = lex_ids_raw
+                theme_tr = theme_tr_raw
+                theme_kw = theme_kw_raw
+                theme_ids = theme_ids_raw
+                focus_exact = exact_translate_ids(focus)
+                focus_soft = _lemma_hit_ids(focus)
+                hard_tag_ids = hard_tag_ids_raw
+                soft_tag_ids = soft_tag_ids_raw
+                tag_ids = set(hard_tag_ids) | set(soft_tag_ids)
+                field_tr_ids, field_ids = _field_contour(field_pool, theme_tr, theme_kw)
+                content_ids = _content_from(lex_ids, focus_exact, focus_soft)
+                main_ids = set(content_ids)
+                if field_ids:
+                    main_ids |= field_ids
+        elif dialect_ids:
+            main_ids = set(dialect_ids)
+        elif place_ids:
+            main_ids = set(place_ids)
 
     # One hop of incoming см./от only (stubs → hit), not outgoing hit → target.
     direct_ids = set(main_ids)
     main_ids = _apply_and_filters(
         expand_by_links(direct_ids, sides="incoming"),
-        place_ids,
-        dialect_ids,
+        active_place_ids,
+        active_dialect_ids,
     )
     demote_ids = main_ids - direct_ids
 
@@ -480,8 +519,12 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             g["tags_soft"] = list(tags_soft)
         if dialect:
             g["dialect"] = dialect
+            if dialect_relaxed:
+                g["dialect_relaxed"] = True
         if place:
             g["place"] = place
+            if place_relaxed:
+                g["place_relaxed"] = True
         groups.append(g)
 
     groups.sort(key=lambda g: KIND_ORDER.index(g["kind"]))

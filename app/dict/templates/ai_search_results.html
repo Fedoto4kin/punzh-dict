@@ -46,6 +46,9 @@
         <h5 class="mb-3">{{ g.title }}
             <span class="badge badge-secondary">{{ g.total }}</span>
         </h5>
+        {% if g.dialect_relaxed or g.place_relaxed %}
+        <p class="small text-muted mb-2">В выбранном говоре/ареале по теме пусто — показываем без этого фильтра.</p>
+        {% endif %}
         <div class="row ai-card-grid">
             {% for a in g.article_objs %}
             <div class="col-md-6 col-lg-4">
