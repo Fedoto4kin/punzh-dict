@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE
+from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, lemmas_with_exact_translate
 from dict.ai.search import (
     TITLE_MAIN,
     _enrich_fields,
@@ -13,6 +13,7 @@ from dict.models import (
     ArticleIndexTag,
     ArticleIndexTranslate,
     ArticleKeyword,
+    ArticleLink,
     ArticleSemanticField,
     SemanticField,
     Tag,
@@ -77,6 +78,50 @@ class SearchByParsedTestCase(TestCase):
         self.assertIn("kaza", words)
         self.assertGreaterEqual(groups[0]["total"], 1)
 
+    def test_dialect_only_returns_dialect_articles(self):
+        """«весьегонский говор» → dialect всг., no lexical → all всг. hits."""
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="весьегонский говор",
+                lexical=[],
+                dialect="всг.",
+            )
+        )
+        self.assertIsNone(fallback)
+        self.assertEqual(len(groups), 1)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("kaza-vsg", words)
+        self.assertNotIn("kaza", words)
+
+    def test_see_referrer_demoted_on_relevance_not_alpha(self):
+        """см./от pull-in sinks to bottom on relevance; alpha keeps ABC order."""
+        head = Article.objects.create(word="veičči", article_html="<b>veičči</b>")
+        ArticleIndexTranslate.objects.create(article=head, rus_word="нож")
+        stub = Article.objects.create(word="aaa-see", article_html="<b>см.</b>")
+        ArticleLink.objects.create(
+            from_article=stub, to_article=head, kind=ArticleLink.KIND_SEE
+        )
+        other = Article.objects.create(word="mmm-lex", article_html="<b>m</b>")
+        ArticleIndexTranslate.objects.create(article=other, rus_word="хлеб")
+
+        parsed = self._parsed(
+            query="чем режут хлеб",
+            lexical=["хлеб"],
+            focus=["нож"],
+            related=[],
+            fields=[],
+        )
+        by_rel, _ = search_by_parsed(parsed, sort=SORT_RELEVANCE)
+        words_rel = [a["word"] for a in by_rel[0]["articles"]]
+        self.assertIn("veičči", words_rel)
+        self.assertIn("aaa-see", words_rel)
+        self.assertEqual(words_rel[-1], "aaa-see")
+        self.assertLess(words_rel.index("veičči"), words_rel.index("aaa-see"))
+
+        by_alpha, _ = search_by_parsed(parsed, sort=SORT_ALPHA)
+        words_alpha = [a["word"] for a in by_alpha[0]["articles"]]
+        self.assertEqual(words_alpha[0], "aaa-see")  # alphabetically first
+
     def test_main_group_title_is_neutral(self):
         groups, _ = search_by_parsed(self._parsed(lexical=["коза"], query="коза"))
         self.assertEqual(groups[0]["title"], TITLE_MAIN)
@@ -124,6 +169,65 @@ class SearchByParsedTestCase(TestCase):
         )
         self.assertIn("Животный мир", enriched)
         self.assertIn("Человек и тело", enriched)
+
+    def test_enrich_prefers_lexical_theme_over_related(self):
+        """«про животных» in lexical must beat related «поведение» from «примета»."""
+        ArticleIndexTranslate.objects.create(article=self.a_lex, rus_word="животные")
+        behavior = SemanticField.objects.create(
+            name="Характер и поведение", definition="характер", sorting=5
+        )
+        noisy = Article.objects.create(word="beh", article_html="<b>beh</b>")
+        ArticleIndexTranslate.objects.create(article=noisy, rus_word="поведение")
+        ArticleSemanticField.objects.create(article=noisy, field=behavior)
+        enriched = _enrich_fields(
+            [],
+            focus=[],
+            related=["поведение", "признаки"],
+            lexical=["животные"],
+        )
+        self.assertIn("Животный мир", enriched)
+        self.assertEqual(enriched[0], "Животный мир")
+
+    def test_marks_plus_theme_uses_field_intersect_tags(self):
+        """
+        «глаголы в приметах про животных»: field ∩ tags, not weak lexical ∩ tags.
+        Omen verbs in animals often lack the translation «животные».
+        """
+        tag_priem = Tag.objects.create(
+            tag="примета", name="примета", type=3, sorting=20
+        )
+        tag_v = Tag.objects.create(
+            tag="v", name="verbum, глагол", type=2, level=0, sorting=1
+        )
+        # Seed for enrich: «животные» on an animals-field article (not the omen verb).
+        ArticleIndexTranslate.objects.create(article=self.a_lex, rus_word="животные")
+        # In animals + omen verb — no «животные» translation of its own
+        good = Article.objects.create(word="ulvuo", article_html="<b>ulvuo</b>")
+        ArticleIndexTranslate.objects.create(article=good, rus_word="выть")
+        ArticleSemanticField.objects.create(article=good, field=self.field)
+        ArticleIndexTag.objects.create(article=good, tag=tag_priem)
+        ArticleIndexTag.objects.create(article=good, tag=tag_v)
+        # Lexical «животные» ∩ tags outside the animals field
+        noise = Article.objects.create(word="noise-v", article_html="<b>n</b>")
+        ArticleIndexTranslate.objects.create(article=noise, rus_word="животные")
+        ArticleIndexTag.objects.create(article=noise, tag=tag_priem)
+        ArticleIndexTag.objects.create(article=noise, tag=tag_v)
+
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="глаголы в приметах про животных",
+                lexical=["животные"],
+                related=["поведение"],
+                fields=[],  # enrich should add Животный мир
+                tags=["примета", "v"],
+            )
+        )
+        self.assertEqual(len(groups), 1)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("ulvuo", words)
+        self.assertNotIn("noise-v", words)
+        field_names = [f["name"] for f in groups[0].get("fields") or []]
+        self.assertIn("Животный мир", field_names)
 
     def test_focus_exact_ranks_first(self):
         """«чем режут хлеб» → focus нож ahead of хлеб/резать hits."""
@@ -352,3 +456,14 @@ class BenchmarkCheckTestCase(TestCase):
             parsed, {"lexical_contains": ["слон"], "tags_any": ["xyz."]}
         )
         self.assertFalse(bad)
+
+
+class LemmasWithExactTranslateTestCase(TestCase):
+    def test_keeps_only_lemmas_present_as_translations(self):
+        art = Article.objects.create(word="olut", article_html="<b>olut</b>")
+        ArticleIndexTranslate.objects.create(article=art, rus_word="пиво")
+        ArticleIndexTranslate.objects.create(article=art, rus_word="хмель")
+        self.assertEqual(
+            lemmas_with_exact_translate(["дрожжи", "хмель", "сусло", "пиво", "хмель"]),
+            ["хмель", "пиво"],
+        )

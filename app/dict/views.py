@@ -220,6 +220,29 @@ def _ai_client_key(request):
     return (request.session.session_key or "")[:64]
 
 
+def _ai_dict_linked_lemmas(parsed):
+    """
+    Lemmas from the parse that exist as exact translations → /search/ links.
+    Order: focus → lexical (e.g. «кошка») → related; deduped.
+    """
+    from dict.ai.rank import lemmas_with_exact_translate
+
+    parsed = parsed or {}
+    out = []
+    seen = set()
+    for bucket in (
+        parsed.get("focus") or [],
+        parsed.get("lexical") or [],
+        parsed.get("related") or [],
+    ):
+        for w in lemmas_with_exact_translate(bucket):
+            key = w.lower()
+            if key not in seen:
+                out.append(w)
+                seen.add(key)
+    return out
+
+
 def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
     from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, normalize_sort
     from dict.ai.search import _field_meta
@@ -241,6 +264,7 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
         "job_id": "",
         "job_status": "",
         "pending_query": "",
+        "related_linked": [],
     }
     if job is not None:
         from dict.ai.jobs import hydrate_job_groups, mark_stale_running
@@ -253,10 +277,13 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
         # Prefer requested sort (UI toggle) over the sort stored when job ran.
         ctx["sort"] = sort
         if job.status == "done":
+            from dict.ai.rank import lemmas_with_exact_translate
+
             parsed = job.parsed or {}
             groups = hydrate_job_groups(job, sort=sort)
             ctx["parsed"] = parsed
             ctx["groups"] = groups
+            ctx["related_linked"] = _ai_dict_linked_lemmas(parsed)
             ctx["fallback_count"] = job.fallback_count
             ctx["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
             if job.fallback_count is not None and job.fallback_count > 0:
@@ -405,6 +432,7 @@ def ai_search_job_partial(request, job_id):
     parsed = job.parsed or {}
     groups = hydrate_job_groups(job, sort=sort)
     ontology_fields = _field_meta(list(parsed.get("fields") or []))
+    related_linked = _ai_dict_linked_lemmas(parsed)
     fallback_page = None
     fallback_found = 0
     if job.fallback_count is not None and job.fallback_count > 0:
@@ -421,6 +449,7 @@ def ai_search_job_partial(request, job_id):
             "parsed": parsed,
             "groups": groups,
             "ontology_fields": ontology_fields,
+            "related_linked": related_linked,
             "fallback_count": job.fallback_count,
             "fallback_page": fallback_page,
             "fallback_found": fallback_found,

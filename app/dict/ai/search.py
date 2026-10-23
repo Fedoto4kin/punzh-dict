@@ -19,6 +19,7 @@ from dict.models import (
     Tag,
 )
 from dict.ai.rank import (
+    SORT_ALPHA,
     SORT_RELEVANCE,
     exact_keyword_ids,
     exact_translate_ids,
@@ -26,7 +27,12 @@ from dict.ai.rank import (
     order_articles,
     relevance_score,
 )
-from dict.search import article_ids_for_semantic_field, krl_article_ids, rus_search_core
+from dict.search import (
+    article_ids_for_semantic_field,
+    expand_by_links,
+    krl_article_ids,
+    rus_search_core,
+)
 
 # Debug beta: show every card (no «ещё N» collapse). Kept as aliases for tests.
 TOP_N = None  # None = unlimited
@@ -38,12 +44,17 @@ def _normalize_yo(text):
     return (text or "").translate(str.maketrans({"ё": "е"}))
 
 
-def _lemma_hit_ids(lemmas):
-    """Articles matching any lemma via translation index (ILIKE/token OR)."""
+def _lemma_hit_ids(lemmas, *, expand_links=False):
+    """
+    Articles matching any lemma via translation index (ILIKE/token OR).
+
+    Default expand_links=False so AI search can demote см./от pull-ins
+    separately; classical /search/ still expands inside rus_search_core.
+    """
     if not lemmas:
         return set()
     query = _normalize_yo(" ".join(lemmas))
-    core = rus_search_core(query)
+    core = rus_search_core(query, expand_links=expand_links)
     return set(core.result_ids or ())
 
 
@@ -87,14 +98,16 @@ def _tag_ids(tag_strings):
     return ids or set()
 
 
-def _field_ids(field_names):
+def _field_ids(field_names, *, include_referrers=True):
     if not field_names:
         return set()
     ids = set()
     for name, fid in SemanticField.objects.filter(name__in=field_names).values_list(
         "name", "id"
     ):
-        ids |= article_ids_for_semantic_field(fid, include_all=True)
+        ids |= article_ids_for_semantic_field(
+            fid, include_all=True, include_referrers=include_referrers
+        )
     return ids
 
 
@@ -186,7 +199,9 @@ def _field_names_frequent_among(article_ids, limit=4):
 def _enrich_fields(fields, focus, related, lexical):
     """
     Union LLM fields with fields frequent among theme seeds.
-    First pass: translation-index hits only; second: keywords too.
+    Seeds: focus → lexical → related (lexical before related so
+    «про животных» wins over «поведение» invented from «примета»).
+    First pass: translation-index hits; second: keywords if still thin.
     """
     out = []
     seen = set()
@@ -194,9 +209,7 @@ def _enrich_fields(fields, focus, related, lexical):
         if name and name not in seen:
             seen.add(name)
             out.append(name)
-    seed = list(focus or []) + list(related or [])
-    if not seed:
-        seed = list(lexical or [])
+    seed = list(focus or []) + list(lexical or []) + list(related or [])
     # 1) translations → fields
     for name in _field_names_frequent_among(_lemma_hit_ids(seed), limit=4):
         if name and name not in seen:
@@ -288,7 +301,10 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     focus = list(parsed.get("focus") or [])
     related = list(parsed.get("related") or [])
     tags = list(parsed.get("tags") or [])
-    fields = _enrich_fields(list(parsed.get("fields") or []), focus, related, lexical)
+    llm_fields = list(parsed.get("fields") or [])
+    # Theme for marks∩field: lexical/focus only (ignore related invented from «примета»).
+    theme_fields = _enrich_fields(llm_fields, focus, [], lexical)
+    fields = _enrich_fields(llm_fields, focus, related, lexical)
     place = parsed.get("place")
     dialect = parsed.get("dialect")
 
@@ -306,7 +322,11 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     )
     theme_ids = theme_tr | theme_kw
     tag_ids = _tag_ids(tags)
-    field_pool = _field_ids(fields)
+    # Classified field assignments only — см./от referrers added after, then demoted.
+    field_pool = _field_ids(fields, include_referrers=False)
+    # Strongest theme field (usually from lexical «животные» → Животный мир).
+    primary_theme = (theme_fields[:1] if theme_fields else fields[:1]) or []
+    primary_field_pool = _field_ids(primary_theme, include_referrers=False)
     place_ids = _tag_type_filter_ids(place, 1)
     dialect_ids = _tag_type_filter_ids(dialect, 4)
 
@@ -335,10 +355,16 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     if focus_exact or focus_soft:
         content_ids |= focus_exact | focus_soft
 
-    # Tags are AND filter. For «глаголы в приметах» tags alone define the set —
-    # speculative fields must not shrink a pure tag query.
+    # Tags / dialect / place as primary sets when there is no lexical content.
+    # «глаголы в приметах» → tags AND; «весьегонский говор» → all всг. articles.
+    # Marks + theme («…про животных»): field ∩ tags is the answer set —
+    # lexical «животные» often misses omen verbs (доить/выть) that live in
+    # the field but not under that translation.
     if tags and tag_ids:
-        if content_ids:
+        field_tag = (primary_field_pool & tag_ids) if primary_field_pool else set()
+        if field_tag:
+            main_ids = set(field_tag)
+        elif content_ids:
             main_ids = content_ids & tag_ids
             if field_ids:
                 main_ids |= field_ids & tag_ids
@@ -348,6 +374,16 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         main_ids = set(content_ids)
         if field_ids:
             main_ids |= field_ids
+        if not main_ids:
+            if dialect_ids:
+                main_ids = set(dialect_ids)
+            elif place_ids:
+                main_ids = set(place_ids)
+
+    # Pull см./от cluster; demote those ids on relevance sort (not on alpha).
+    direct_ids = set(main_ids)
+    main_ids = _apply_and_filters(expand_by_links(direct_ids), place_ids, dialect_ids)
+    demote_ids = main_ids - direct_ids
 
     def score(aid):
         return relevance_score(
@@ -365,7 +401,12 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         )
 
     def _group(kind, title, ids):
-        articles, total = order_articles(ids, score, sort_mode)
+        articles, total = order_articles(
+            ids,
+            score,
+            sort_mode,
+            demote_ids=demote_ids if sort_mode != SORT_ALPHA else None,
+        )
         return {
             "kind": kind,
             "title": title,
@@ -377,10 +418,16 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     groups = []
     if main_ids:
         g = _group("lexical", TITLE_MAIN, main_ids)
-        if fields:
+        if tags and primary_theme:
+            g["fields"] = _field_meta(primary_theme)
+        elif fields:
             g["fields"] = _field_meta(fields)
         if tags:
             g["tags"] = list(tags)
+        if dialect:
+            g["dialect"] = dialect
+        if place:
+            g["place"] = place
         groups.append(g)
 
     groups.sort(key=lambda g: KIND_ORDER.index(g["kind"]))

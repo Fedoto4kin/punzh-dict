@@ -148,9 +148,106 @@ class OntologyViewTestCase(TestCase):
 
     def test_marked_referrer_does_not_inherit_another_field(self):
         # aiga (animals) → muu (flax): outgoing from animals must not pull muu.
-        # muu already has its own field, so it also must not inherit animals.
         content = search_by_semantic_field(self.animals.id, 1, include_all=True)
         words = [a.word for a in content.page_obj.object_list]
+        self.assertNotIn("muu", words)
+
+    def test_partial_referrer_inherits_missing_target_field(self):
+        goat = Article.objects.create(word="goat")
+        ArticleSemanticField.objects.create(article=goat, field=self.animals)
+        ArticleSemanticField.objects.create(article=goat, field=self.flax)
+        kid = Article.objects.create(word="kid")
+        ArticleSemanticField.objects.create(article=kid, field=self.animals)
+        ArticleLink.objects.create(
+            from_article=kid, to_article=goat, kind=ArticleLink.KIND_SEE
+        )
+
+        flax_words = [
+            a.word
+            for a in search_by_semantic_field(
+                self.flax.id, 1, include_all=True
+            ).page_obj.object_list
+        ]
+        self.assertIn("kid", flax_words)
+        self.assertIn("goat", flax_words)
+        translation_only = [
+            a.word
+            for a in search_by_semantic_field(self.flax.id, 1).page_obj.object_list
+        ]
+        self.assertNotIn("kid", translation_only)
+
+        counts = {f.name: f for f in semantic_fields_with_counts()}
+        self.assertEqual(1, counts["Лён"].translation_count)
+        self.assertEqual(3, counts["Лён"].article_count)
+
+    def test_extra_field_blocks_inheritance_from_that_target(self):
+        goat = Article.objects.create(word="goat2")
+        ArticleSemanticField.objects.create(article=goat, field=self.animals)
+        ArticleSemanticField.objects.create(article=goat, field=self.flax)
+        weed = Article.objects.create(word="weed")
+        ArticleSemanticField.objects.create(article=weed, field=self.empty)
+        ArticleLink.objects.create(
+            from_article=weed, to_article=goat, kind=ArticleLink.KIND_DERIV
+        )
+
+        for field in (self.animals, self.flax):
+            words = [
+                a.word
+                for a in search_by_semantic_field(
+                    field.id, 1, include_all=True
+                ).page_obj.object_list
+            ]
+            self.assertNotIn("weed", words)
+        empty_words = [
+            a.word
+            for a in search_by_semantic_field(
+                self.empty.id, 1, include_all=True
+            ).page_obj.object_list
+        ]
+        self.assertEqual(["weed"], empty_words)
+
+    def test_subset_of_one_target_does_not_open_another(self):
+        goat = Article.objects.create(word="goat3")
+        ArticleSemanticField.objects.create(article=goat, field=self.animals)
+        ArticleSemanticField.objects.create(article=goat, field=self.flax)
+        rock = Article.objects.create(word="rock")
+        ArticleSemanticField.objects.create(article=rock, field=self.empty)
+        kid = Article.objects.create(word="kid2")
+        ArticleSemanticField.objects.create(article=kid, field=self.animals)
+        ArticleLink.objects.create(
+            from_article=kid, to_article=goat, kind=ArticleLink.KIND_SEE
+        )
+        ArticleLink.objects.create(
+            from_article=kid, to_article=rock, kind=ArticleLink.KIND_SEE
+        )
+
+        flax_words = [
+            a.word
+            for a in search_by_semantic_field(
+                self.flax.id, 1, include_all=True
+            ).page_obj.object_list
+        ]
+        empty_words = [
+            a.word
+            for a in search_by_semantic_field(
+                self.empty.id, 1, include_all=True
+            ).page_obj.object_list
+        ]
+        self.assertIn("kid2", flax_words)
+        self.assertNotIn("kid2", empty_words)
+
+    def test_foreign_field_referrer_does_not_inherit(self):
+        ArticleLink.objects.create(
+            from_article=self.other,
+            to_article=self.ciga,
+            kind=ArticleLink.KIND_SEE,
+        )
+        words = [
+            a.word
+            for a in search_by_semantic_field(
+                self.animals.id, 1, include_all=True
+            ).page_obj.object_list
+        ]
         self.assertNotIn("muu", words)
 
     def test_cf_referrer_not_inherited(self):

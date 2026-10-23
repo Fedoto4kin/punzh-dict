@@ -114,6 +114,50 @@ class NormalizeParsedTestCase(TestCase):
         self.assertIn("verbum, глагол", payload["display"])
         self.assertIn("примета", payload["display"])
 
+    def test_dropped_does_not_repeat_lexical(self):
+        """LLM may put «три» in lexical and dropped — keep axis, clear dropped."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["один", "два", "три"],
+                "focus": [],
+                "related": [],
+                "fields": [],
+                "tags": [],
+                "dialect": None,
+                "dropped": ["три"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            query="один два три",
+        )
+        self.assertEqual(payload["lexical"], ["один", "два", "три"])
+        self.assertEqual(payload["dropped"], [])
+        self.assertNotIn("пропущено", payload["display"])
+
+    def test_dialect_meta_lemmas_stripped_from_lexical(self):
+        """«весьегонский говор» → dialect only; не lexical «весьегонский»."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["весьегонский"],
+                "focus": [],
+                "related": [],
+                "fields": [],
+                "tags": [],
+                "dialect": "всг.",
+                "dropped": ["говор"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            query="весьегонский говор",
+        )
+        self.assertEqual(payload["dialect"], "всг.")
+        self.assertEqual(payload["lexical"], [])
+        self.assertIn("говор:", payload["display"])
+
     def test_related_pos_words_stripped_not_theme(self):
         """Союз/предлог/… must not stay in related («рядом по теме»)."""
         self.allowed_tags = list(self.allowed_tags) + [

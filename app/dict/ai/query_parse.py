@@ -69,6 +69,30 @@ POS_LEMMA_TO_TAG = {
 }
 KNOWN_GRAMMAR_TAGS = frozenset(POS_LEMMA_TO_TAG.values())
 
+# Meta words for dialect-only queries («весьегонский говор») — not translations.
+DIALECT_META_LEMMAS = frozenset(
+    {
+        "весьегонский",
+        "весьегонские",
+        "весьегонского",
+        "весьегонском",
+        "весьегонская",
+        "весьегонскую",
+        "говор",
+        "говоры",
+        "говора",
+        "говоре",
+        "диалект",
+        "диалекты",
+        "диалекта",
+        "всг",
+        "всг.",
+        "параллель",
+        "параллели",
+        "лексические параллели",
+    }
+)
+
 
 def looks_like_krl_query(query):
     """
@@ -245,7 +269,8 @@ def _build_display(
     if lexical:
         parts.append(" · ".join(lexical))
     if fields:
-        parts.append("поля: " + ", ".join(fields))
+        # User-facing: «темы», not internal «поля» (SemanticField).
+        parts.append("темы: " + ", ".join(fields))
     if tags:
         labels = [_display_label(t, tag_names) for t in tags]
         parts.append("пометы: " + ", ".join(labels))
@@ -408,7 +433,9 @@ def _normalize_parsed(
     # Unit tests may lack Tag rows: non-grammar tags beside POS ≈ stylistic.
     if grammar_in_tags and any(t not in KNOWN_GRAMMAR_TAGS for t in tags):
         tag_types.add(3)
-    if 2 in tag_types and 3 in tag_types and fields:
+    # Pure mark/POS query → drop speculative fields. Keep fields when the
+    # user also named a theme («про животных» → lexical/focus still set).
+    if 2 in tag_types and 3 in tag_types and fields and not lexical and not focus:
         fields = []
 
     lex_lower = {x.lower() for x in lexical}
@@ -427,6 +454,29 @@ def _normalize_parsed(
 
     place = _resolve_closed(data.get("place"), place_by_key, "place", warnings)
     dialect = _resolve_closed(data.get("dialect"), dialect_by_key, "dialect", warnings)
+
+    # Dialect-only intent: drop meta lemmas from free axes (LLM often puts
+    # «весьегонский» in lexical, which AND-filters всг. hits down to nothing).
+    if dialect:
+
+        def _not_dialect_meta(item):
+            return (item or "").strip().lower() not in DIALECT_META_LEMMAS
+
+        lexical = [x for x in lexical if _not_dialect_meta(x)]
+        focus = [x for x in focus if _not_dialect_meta(x)]
+        related = [x for x in related if _not_dialect_meta(x)]
+        if not lexical and not focus:
+            related = []
+            fields = []
+
+    # LLM sometimes puts the same lemma in lexical AND dropped («один два три»
+    # → три in both). Keep the axis; strip contradictions from dropped.
+    kept_lower = (
+        {x.lower() for x in lexical}
+        | {x.lower() for x in focus}
+        | {x.lower() for x in related}
+    )
+    dropped = [d for d in dropped if (d or "").strip().lower() not in kept_lower]
 
     raw_display = data.get("display") if isinstance(data.get("display"), str) else ""
     if len(raw_display) > MAX_DISPLAY_LEN:
@@ -452,8 +502,11 @@ def _normalize_parsed(
         "related": related,
         "fields": fields,
         "tags": tags,
+        "tags_display": [_display_label(t, names_by_tag) for t in tags],
         "place": place,
+        "place_display": _display_label(place, allowed_places or {}),
         "dialect": dialect,
+        "dialect_display": _display_label(dialect, allowed_dialects or {}),
         "dropped": dropped,
         "display": display,
         "parse_ok": parse_ok,

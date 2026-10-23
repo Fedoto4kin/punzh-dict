@@ -62,6 +62,40 @@ def exact_translate_ids(lemmas):
     )
 
 
+def lemmas_with_exact_translate(lemmas):
+    """
+    Subset of lemmas (order preserved) that appear as rus_word in the
+    translation index (iexact, ё→е). For UI links under «рядом по теме».
+    """
+    cleaned = []
+    for lem in lemmas or []:
+        s = (lem or "").strip()
+        if s:
+            cleaned.append(s)
+    if not cleaned:
+        return []
+    from django.db.models import Q
+
+    q = None
+    for lem in cleaned:
+        clause = Q(rus_word__iexact=_normalize_yo(lem))
+        q = clause if q is None else (q | clause)
+    hit_keys = {
+        _normalize_yo(w).lower()
+        for w in ArticleIndexTranslate.objects.filter(q)
+        .values_list("rus_word", flat=True)
+        .distinct()
+    }
+    out = []
+    seen = set()
+    for lem in cleaned:
+        key = _normalize_yo(lem).lower()
+        if key in hit_keys and key not in seen:
+            out.append(lem)
+            seen.add(key)
+    return out
+
+
 def exact_keyword_ids(lemmas):
     if not lemmas:
         return set()
@@ -118,17 +152,27 @@ def relevance_score(
     return s
 
 
-def order_articles(article_ids, score_fn, sort_mode=SORT_RELEVANCE):
+def order_articles(article_ids, score_fn, sort_mode=SORT_RELEVANCE, *, demote_ids=None):
     """
     Return [{id, word}, ...] and total.
     sort_mode=alpha → Karelian alphabet only; else score desc, then alpha.
+    demote_ids — on relevance sort, push these ids to the bottom (см./от
+    pull-ins) while keeping relative order among themselves by score/alpha.
     """
     if not article_ids:
         return [], 0
     rows = list(Article.objects.filter(id__in=article_ids).only("id", "word"))
     mode = normalize_sort(sort_mode)
+    demote = demote_ids or set()
     if mode == SORT_ALPHA:
         rows.sort(key=lambda a: (sorted_by_krl(a, "word"), a.id))
     else:
-        rows.sort(key=lambda a: (-score_fn(a.id), sorted_by_krl(a, "word"), a.id))
+        rows.sort(
+            key=lambda a: (
+                1 if a.id in demote else 0,
+                -score_fn(a.id),
+                sorted_by_krl(a, "word"),
+                a.id,
+            )
+        )
     return [{"id": a.id, "word": a.word} for a in rows], len(rows)

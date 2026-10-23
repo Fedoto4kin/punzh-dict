@@ -401,10 +401,11 @@ class RusSearchCore:
     candidates: list
 
 
-def rus_search_core(query: str, f=None) -> RusSearchCore:
+def rus_search_core(query: str, f=None, expand_links=True) -> RusSearchCore:
     """
     Full Russian lexical pipeline without pagination.
     `query` must already be ё→е normalized (as in views.search).
+    expand_links=False — seed hits only (no см./от cluster); used by AI rank.
     """
     # 1. ILIKE (exact rus_word match, case-insensitive)
     ids_ilike = set(
@@ -430,8 +431,8 @@ def rus_search_core(query: str, f=None) -> RusSearchCore:
     seed_ids = ids_ilike | token_match_ids
     all_ids = list(seed_ids)
 
-    # 4. Расширяем через связи ArticleLink
-    expanded_ids = expand_by_links(all_ids)
+    # 4. Расширяем через связи ArticleLink (optional)
+    expanded_ids = expand_by_links(all_ids) if expand_links else set(all_ids)
 
     # 5. Кандидаты для сужающих тегов (SPEC v2, механизм 1)
     high_freq_anchor = query.strip().lower() in HIGH_FREQ_ANCHOR_QUERIES
@@ -1040,19 +1041,40 @@ def search_by_tags_smart(by_geo, by_tags, by_ling, by_dialect, by_other, page):
     return Content(page_obj=page_obj, trigrams_dict=trigrams_dict)
 
 
-def article_ids_for_semantic_field(field_id, include_all=True):
+def _referrers_inheriting_field(classified, referrers_by_target, fields_by_article):
     """
-    Articles in a semantic field, plus unmarked «см.» referrers when include_all.
+    See/deriv referrers that belong in this field via a target already in it.
 
-    Lemmas classified into the field are the core set. Articles that only
-    point at those lemmas via ArticleLink (см. / от, no translation for the
-    LLM to tag) inherit the field at read time — same kinds as
-    expand_by_links in Russian search, but one-way: we do not follow
-    outgoing links, which would leak unrelated targets into the listing.
-    Referrers that already have any semantic field keep their own markup.
+    Included when at least one such target already has every field the
+    referrer has (no markup is a subset). A field the target lacks blocks
+    inheritance from that target only; other targets are checked on their own.
+    """
+    inherited = set()
+    for target_id in classified:
+        target_fields = fields_by_article.get(target_id)
+        if not target_fields:
+            continue
+        for referrer_id in referrers_by_target.get(target_id, ()):
+            referrer_fields = fields_by_article.get(referrer_id, frozenset())
+            if referrer_fields <= target_fields:
+                inherited.add(referrer_id)
+    return inherited
+
+
+def article_ids_for_semantic_field(field_id, include_all=True, include_referrers=True):
+    """
+    Articles in a semantic field, plus «см.» / «от» referrers when include_all
+    and include_referrers.
+
+    Lemmas classified into the field are the core set. A referrer inherits
+    this field at read time when it points at one of those lemmas and every
+    field it already has is also on that target. Same kinds as expand_by_links
+    in Russian search, but one-way: outgoing links are not followed.
+    The field is not copied onto ArticleSemanticField.
 
     include_all=False — only assignments with from_translation=True (no
-    illustration-only fields, no unmarked referrer inheritance).
+    illustration-only fields, no referrer inheritance).
+    include_referrers=False — classified assignments only (no см./от pull-in).
     """
     if not include_all:
         return set(
@@ -1065,30 +1087,34 @@ def article_ids_for_semantic_field(field_id, include_all=True):
             "article_id", flat=True
         )
     )
-    if not classified:
+    if not classified or not include_referrers:
         return classified
-    referrers = set(
-        ArticleLink.objects.filter(
-            to_article_id__in=classified,
-            kind__in=ArticleLink.KINDS_LISTING,
-        ).values_list("from_article_id", flat=True)
-    )
-    if not referrers:
+    referrers_by_target = defaultdict(set)
+    referrer_ids = set()
+    for from_id, to_id in ArticleLink.objects.filter(
+        to_article_id__in=classified,
+        kind__in=ArticleLink.KINDS_LISTING,
+    ).values_list("from_article_id", "to_article_id"):
+        referrers_by_target[to_id].add(from_id)
+        referrer_ids.add(from_id)
+    if not referrer_ids:
         return classified
-    marked = set(
-        ArticleSemanticField.objects.filter(article_id__in=referrers).values_list(
-            "article_id", flat=True
-        )
+    fields_by_article = defaultdict(set)
+    for fid, aid in ArticleSemanticField.objects.filter(
+        article_id__in=classified | referrer_ids
+    ).values_list("field_id", "article_id"):
+        fields_by_article[aid].add(fid)
+    return classified | _referrers_inheriting_field(
+        classified, referrers_by_target, fields_by_article
     )
-    return classified | (referrers - marked)
 
 
 def semantic_fields_with_counts():
     """
     Attach badge counts to each SemanticField:
     translation_count — articles with from_translation=True (x);
-    article_count — full listing size incl. illustrations + unmarked
-    referrers (y). Templates show x/y.
+    article_count — full listing size, same referrer rule as
+    article_ids_for_semantic_field (y). Templates show x/y.
 
     Computed in a few queries for all fields (not N×article_ids_for_semantic_field).
     """
@@ -1104,10 +1130,12 @@ def semantic_fields_with_counts():
     }
 
     classified_by_field = defaultdict(set)
+    fields_by_article = defaultdict(set)
     for field_id, article_id in ArticleSemanticField.objects.values_list(
         "field_id", "article_id"
     ):
         classified_by_field[field_id].add(article_id)
+        fields_by_article[article_id].add(field_id)
 
     all_classified = set()
     for ids in classified_by_field.values():
@@ -1121,25 +1149,13 @@ def semantic_fields_with_counts():
         ).values_list("from_article_id", "to_article_id"):
             referrers_by_target[to_id].add(from_id)
 
-    all_referrer_ids = set()
-    for ids in referrers_by_target.values():
-        all_referrer_ids |= ids
-
-    marked = set()
-    if all_referrer_ids:
-        marked = set(
-            ArticleSemanticField.objects.filter(
-                article_id__in=all_referrer_ids
-            ).values_list("article_id", flat=True)
-        )
-
     for field in fields:
         field.translation_count = translation_counts.get(field.pk, 0)
         classified = classified_by_field.get(field.pk, set())
-        referrers = set()
-        for aid in classified:
-            referrers |= referrers_by_target.get(aid, set())
-        field.article_count = len(classified | (referrers - marked))
+        inherited = _referrers_inheriting_field(
+            classified, referrers_by_target, fields_by_article
+        )
+        field.article_count = len(classified | inherited)
     return fields
 
 

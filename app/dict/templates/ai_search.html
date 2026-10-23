@@ -27,19 +27,27 @@
                        id="ai-search-input"
                        type="text"
                        value="{{ query }}"
-                       placeholder="Например: найди слова про разведение коз"
+                       placeholder="Русский запрос в произвольной форме"
                        aria-label="Умный поиск"
                        autofocus>
                 <input type="hidden" name="sort" id="ai-sort-input" value="{{ sort }}">
                 <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="submit" id="ai-search-submit">
+                    <button class="btn btn-outline-secondary" type="submit" id="ai-search-submit"
+                            title="Искать" aria-label="Искать">
                         <i class="fas fa-search"></i>
                     </button>
+                    <a href="{% url 'ai_search' %}"
+                       class="btn btn-outline-secondary{% if not query %} d-none{% endif %}"
+                       id="ai-search-clear"
+                       title="Новый запрос"
+                       aria-label="Очистить и начать новый запрос">
+                        <i class="fas fa-times"></i>
+                    </a>
                 </div>
             </div>
             <p class="small text-muted pl-1 mb-0 mt-1" id="ai-meta-links">
                 {% if query %}
-                <a href="/search/{{ query|urlencode }}" id="ai-literal-link">Искать «{{ query }}» буквально</a><span id="ai-ontology-links">{% for f in ontology_fields %} · <a href="{% url 'ontology_field' f.id %}">Открыть поле «{{ f.name }}»</a>{% endfor %}</span>
+                <a href="/search/{{ query|urlencode }}" id="ai-literal-link">Искать «{{ query }}» буквально</a><span id="ai-ontology-links">{% for f in ontology_fields %} · <a href="{% url 'ontology_field' f.id %}">Открыть тему «{{ f.name }}»</a>{% endfor %}</span>
                 · порядок:
                 {% if sort == sort_alpha %}
                 <a href="#" data-ai-sort="{{ sort_relevance }}" class="ai-sort-link">по смыслу</a>
@@ -56,7 +64,9 @@
             <noscript>
                 <p class="small text-warning mt-2 mb-0">
                     Умный поиск нужен JavaScript.
-                    Воспользуйтесь <a href="/search/{% if query %}{{ query|urlencode }}{% endif %}">обычным поиском</a>.
+                    {% if query %}
+                    <a href="/search/{{ query|urlencode }}">Искать «{{ query }}» буквально</a>.
+                    {% endif %}
                 </p>
             </noscript>
         </form>
@@ -73,7 +83,15 @@
 <div class="row mt-2">
     <div class="col-12">
         <p class="text-muted small">
-            Примеры: «разведение коз», «загорать по карельски», «лаз в подполье для кошки».
+            Примеры:
+            <a href="{% url 'ai_search' %}?query={{ 'чем режут хлеб'|urlencode }}">чем режут хлеб</a>
+            <span class="text-muted">(ответ / фокус)</span>,
+            <a href="{% url 'ai_search' %}?query={{ 'приметы про животных'|urlencode }}">приметы про животных</a>
+            <span class="text-muted">(пометы + тема)</span>,
+            <a href="{% url 'ai_search' %}?query={{ 'как варили пиво'|urlencode }}">как варили пиво</a>
+            <span class="text-muted">(тема)</span>,
+            <a href="{% url 'ai_search' %}?query={{ 'весьегонские слова про погоду'|urlencode }}">весьегонские слова про погоду</a>
+            <span class="text-muted">(говор + тема)</span>.
         </p>
     </div>
 </div>
@@ -90,6 +108,7 @@
 
   var input = document.getElementById("ai-search-input");
   var sortInput = document.getElementById("ai-sort-input");
+  var clearBtn = document.getElementById("ai-search-clear");
   var statusEl = document.getElementById("ai-status");
   var resultsEl = document.getElementById("ai-results");
   var csrfInput = form.querySelector("[name=csrfmiddlewaretoken]");
@@ -98,6 +117,12 @@
   var maxWaitMs = 30000;
   // Live job id — SSR json_script goes stale after a new async search.
   var currentJobId = "";
+
+  function syncClearButton() {
+    if (!clearBtn || !input) return;
+    var has = !!(input.value || "").trim();
+    clearBtn.classList.toggle("d-none", !has);
+  }
 
   function readJsonScript(id) {
     var el = document.getElementById(id);
@@ -171,7 +196,7 @@
         return (
           ' · <a href="/ontology/' +
           encodeURIComponent(id) +
-          '/">Открыть поле «' +
+          '/">Открыть тему «' +
           escapeHtml(name) +
           "»</a>"
         );
@@ -272,6 +297,12 @@
         showError(msg, query);
       });
   }
+
+  if (input) {
+    input.addEventListener("input", syncClearButton);
+    input.addEventListener("change", syncClearButton);
+  }
+  syncClearButton();
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
