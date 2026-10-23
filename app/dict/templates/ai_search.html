@@ -19,7 +19,8 @@
         <p class="text-muted small mb-3">
             Исследовательский поиск по смыслу (закрытая бета).
         </p>
-        <form action="{% url 'ai_search' %}" method="get" id="ai-search-form">
+        <form action="{% url 'ai_search' %}" method="get" id="ai-search-form"
+              autocomplete="off">
             {% csrf_token %}
             <div class="input-group">
                 <input class="form-control"
@@ -29,6 +30,14 @@
                        value="{{ query }}"
                        placeholder="Русский запрос в произвольной форме"
                        aria-label="Умный поиск"
+                       autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       spellcheck="false"
+                       inputmode="text"
+                       data-lpignore="true"
+                       data-1p-ignore="true"
+                       role="presentation"
                        autofocus>
                 <input type="hidden" name="sort" id="ai-sort-input" value="{{ sort }}">
                 <div class="input-group-append">
