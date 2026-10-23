@@ -220,6 +220,23 @@ def _ai_client_key(request):
     return (request.session.session_key or "")[:64]
 
 
+def _ai_job_for_session(request, job_id):
+    """
+    Load AiSearchJob by id only if it belongs to this session (client_key).
+    Expired / missing / other session → None (caller returns 404).
+    """
+    from dict.models import AiSearchJob
+
+    job = AiSearchJob.objects.filter(pk=job_id).first()
+    if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+        return None
+    key = _ai_client_key(request)
+    # Jobs created without a key (tests/legacy) stay readable only with empty key.
+    if (job.client_key or "") != key:
+        return None
+    return job
+
+
 def _ai_dict_linked_lemmas(parsed):
     """
     Lemmas from the parse that exist as exact translations → /search/ links.
@@ -309,7 +326,6 @@ def ai_search(request):
     ?job=<uuid> shows a finished or in-flight job without re-parse.
     """
     from dict.ai.rank import normalize_sort
-    from dict.models import AiSearchJob
 
     raw = request.GET.get("query", "")
     query = raw.strip()
@@ -317,8 +333,8 @@ def ai_search(request):
     job_id = (request.GET.get("job") or "").strip()
 
     if job_id:
-        job = AiSearchJob.objects.filter(pk=job_id).first()
-        if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+        job = _ai_job_for_session(request, job_id)
+        if job is None:
             ctx = _ai_search_shell_context(request, query=query, sort=sort)
             ctx["job_missing"] = True
             return render(request, "ai_search.html", ctx)
@@ -383,8 +399,8 @@ def ai_search_job_status(request, job_id):
     from dict.ai.jobs import mark_stale_running
     from dict.models import AiSearchJob
 
-    job = AiSearchJob.objects.filter(pk=job_id).first()
-    if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+    job = _ai_job_for_session(request, job_id)
+    if job is None:
         return JsonResponse({"error": "not_found"}, status=404)
 
     mark_stale_running(job)
@@ -419,8 +435,8 @@ def ai_search_job_partial(request, job_id):
     from dict.ai.search import _field_meta
     from dict.models import AiSearchJob
 
-    job = AiSearchJob.objects.filter(pk=job_id).first()
-    if job is None or job.status == AiSearchJob.STATUS_EXPIRED:
+    job = _ai_job_for_session(request, job_id)
+    if job is None:
         return HttpResponse("Not found", status=404)
 
     mark_stale_running(job)

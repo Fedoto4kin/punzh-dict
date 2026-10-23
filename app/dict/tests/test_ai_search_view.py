@@ -154,3 +154,40 @@ class AiSearchJobApiTestCase(TestCase):
 
         resp = self.client.get(reverse("ai_search_job_status", args=[uuid.uuid4()]))
         self.assertEqual(resp.status_code, 404)
+
+    def test_job_isolated_to_creating_session(self):
+        """Another session must not poll / partial / ?job= for this UUID."""
+        from django.test import Client
+
+        from dict.ai.jobs import run_job
+
+        mock_parsed = self._parsed_ok()
+        with patch("dict.ai.jobs.schedule_ai_search_job", return_value=True):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data=json.dumps({"query": "коза", "sort": "relevance"}),
+                content_type="application/json",
+            )
+        self.assertEqual(resp.status_code, 202)
+        job_id = resp.json()["id"]
+        job = AiSearchJob.objects.get(pk=job_id)
+        self.assertTrue(job.client_key)
+
+        with patch("dict.ai.query_parse.parse_query", return_value=mock_parsed):
+            run_job(job_id)
+
+        # Owner session still OK.
+        self.assertEqual(
+            self.client.get(reverse("ai_search_job_status", args=[job_id])).status_code,
+            200,
+        )
+
+        other = Client()
+        st = other.get(reverse("ai_search_job_status", args=[job_id]))
+        self.assertEqual(st.status_code, 404)
+        partial = other.get(reverse("ai_search_job_partial", args=[job_id]))
+        self.assertEqual(partial.status_code, 404)
+        page = other.get(reverse("ai_search"), {"job": job_id})
+        self.assertEqual(page.status_code, 200)
+        self.assertTrue(page.context["job_missing"])
+        self.assertNotContains(page, "искали: коза")
