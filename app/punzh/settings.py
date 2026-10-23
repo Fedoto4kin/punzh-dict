@@ -18,9 +18,10 @@ from punzh.dotenv import DOTENV_PATH, dotenv_should_overwrite
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-# Local compose bind-mounts the host .env over DOTENV_PATH. The runserver
-# worker inherits os.environ from the reloader parent, so overwrite there and
-# pick up edits without rebuilding the image. Elsewhere, existing variables win.
+# Compose bind-mounts the host .env over DOTENV_PATH, so a container restart
+# sees edits without an image rebuild. The runserver worker inherits
+# os.environ from the reloader parent, so overwrite there. Elsewhere,
+# including uwsgi after restart, existing variables win.
 env.read_env(DOTENV_PATH, overwrite=dotenv_should_overwrite())
 
 

@@ -7,6 +7,8 @@ services:
     command: uwsgi --ini /app/uwsgi.ini
     volumes:
       - ./app:/app
+      # Host file shadows the copy baked into the image. docker restart re-reads it.
+      - ./.env:/.env:ro
     expose:
       - "3000"
     ports:

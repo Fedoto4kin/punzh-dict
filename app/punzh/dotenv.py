@@ -1,9 +1,9 @@
-"""Host .env for local Docker, re-read by runserver without an image rebuild."""
+"""Host .env bind-mounted in dev and prod; read again when the process starts."""
 
 import os
 from pathlib import Path
 
-# Baked into the image at build. Local compose bind-mounts the host file here.
+# Baked into the image at build. Compose bind-mounts the host file over this path.
 DOTENV_PATH = Path("/.env")
 
 

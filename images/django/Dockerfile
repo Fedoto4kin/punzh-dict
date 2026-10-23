@@ -21,7 +21,7 @@ RUN apt-get -y autoclean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # Upgrade pip and install requirements
 RUN pip install --upgrade pip --no-cache-dir
 COPY ./app/requirements.txt /tmp/
-# Prod image bakes .env. Local compose mounts the host file over this path.
+# Fallback when the container has no mount. Compose files mount the host .env here.
 COPY ./.env /.env
 RUN pip install -q -Ur /tmp/requirements.txt
 
