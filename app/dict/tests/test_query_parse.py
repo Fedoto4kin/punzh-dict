@@ -328,7 +328,7 @@ class NormalizeParsedTestCase(TestCase):
         self.assertIsNone(bad["dialect"])
         self.assertTrue(any("unknown dialect" in w for w in bad["warnings"]))
 
-    def test_rebuilds_long_display(self):
+    def test_clips_long_llm_display(self):
         payload = qp._normalize_parsed(
             {
                 "lexical": ["коза"],
@@ -343,8 +343,43 @@ class NormalizeParsedTestCase(TestCase):
             self.allowed_dialects,
         )
         self.assertLessEqual(len(payload["display"]), qp.MAX_DISPLAY_LEN)
-        self.assertIn("коза", payload["display"])
+        self.assertTrue(payload["display"].startswith("x"))
         self.assertTrue(any("display too long" in w for w in payload["warnings"]))
+
+    def test_keeps_llm_display_prose(self):
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["варить", "пиво"],
+                "fields": ["Пища и напитки"],
+                "tags": ["v"],
+                "dialect": None,
+                "dropped": ["как"],
+                "display": "Ищем глаголы про варку пива",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+            tag_names=self.tag_names,
+            query="глаголы про то как варить пиво",
+        )
+        self.assertEqual(payload["display"], "Ищем глаголы про варку пива")
+
+    def test_empty_llm_display_falls_back_to_axes(self):
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["коза"],
+                "fields": [],
+                "tags": [],
+                "dialect": None,
+                "dropped": ["найди"],
+                "display": "  ",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+        )
+        self.assertIn("искали:", payload["display"])
+        self.assertIn("коза", payload["display"])
 
     def test_caps_list_length(self):
         many = [f"лемма{i}" for i in range(qp.MAX_LIST_ITEMS + 5)]

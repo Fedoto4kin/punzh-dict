@@ -134,6 +134,24 @@ def _tag_ids(tag_strings):
     return ids or set()
 
 
+def _split_pos_tags(tag_strings):
+    """
+    Split hard tags into POS (Tag.type=2) vs the rest.
+
+    POS must only narrow an existing candidate set, never replace it with
+    field∩v (thousands of verbs). Stylistic/other hard tags keep browse/AND.
+    """
+    tags = [t for t in (tag_strings or []) if (t or "").strip()]
+    if not tags:
+        return [], [], set(), set()
+    pos_codes = set(
+        Tag.objects.filter(tag__in=tags, type=2).values_list("tag", flat=True)
+    )
+    pos = [t for t in tags if t in pos_codes]
+    other = [t for t in tags if t not in pos_codes]
+    return other, pos, _tag_ids(other), _tag_ids(pos)
+
+
 def _field_ids(field_names, *, include_referrers=True):
     if not field_names:
         return set()
@@ -403,35 +421,42 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     field_tr_ids, field_ids = _field_contour(field_pool, theme_tr, theme_kw)
     content_ids = _content_from(lex_ids, focus_exact, focus_soft)
 
-    # Hard tags AND. Soft tags never filter. Relax: if hard ∩ content is empty,
-    # drop the hard filter and keep content (avoid empty → fallback).
-    tags_hard_active = list(tags)
+    # Hard tags: stylistic/other may AND or browse field∩mark. POS (type 2)
+    # only narrows later — never main = field∩v.
+    other_tags, pos_tags, other_ids, pos_ids = _split_pos_tags(tags)
+    other_ids = _apply_and_filters(other_ids, place_ids, dialect_ids)
+    pos_ids = _apply_and_filters(pos_ids, place_ids, dialect_ids)
+    tags_hard_active = list(other_tags) + list(pos_tags)
     tag_ids = set(hard_tag_ids) | set(soft_tag_ids)
     dialect_relaxed = False
     place_relaxed = False
     active_place_ids = place_ids
     active_dialect_ids = dialect_ids
 
-    if tags_hard_active and hard_tag_ids:
-        field_tag = (primary_field_pool & hard_tag_ids) if primary_field_pool else set()
+    if other_tags and other_ids:
+        field_tag = (primary_field_pool & other_ids) if primary_field_pool else set()
         if field_tag:
             main_ids = set(field_tag)
         elif content_ids:
-            main_ids = content_ids & hard_tag_ids
+            main_ids = content_ids & other_ids
             if field_ids:
-                main_ids |= field_ids & hard_tag_ids
+                main_ids |= field_ids & other_ids
             if not main_ids:
-                # Relax-on-empty: invented/mismatched hard mark must not wipe lexical.
                 main_ids = set(content_ids)
                 if field_ids:
                     main_ids |= field_ids
-                tags_hard_active = []
+                tags_hard_active = list(pos_tags)  # dropped stylistic; POS may remain
+                other_tags = []
         else:
-            main_ids = set(hard_tag_ids)
+            main_ids = set(other_ids)
     else:
         main_ids = set(content_ids)
         if field_ids:
             main_ids |= field_ids
+        if other_tags and not other_ids:
+            # Named hard mark with no articles — ignore mark, keep content.
+            tags_hard_active = list(pos_tags)
+            other_tags = []
 
     # Empty after dialect/place AND: never dump all всг. when theme was asked.
     if not main_ids:
@@ -455,6 +480,9 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
                 focus_soft = _lemma_hit_ids(focus)
                 hard_tag_ids = hard_tag_ids_raw
                 soft_tag_ids = soft_tag_ids_raw
+                _, pos_tags, other_ids, pos_ids = _split_pos_tags(tags)
+                other_ids = set(other_ids)
+                pos_ids = set(pos_ids)
                 tag_ids = set(hard_tag_ids) | set(soft_tag_ids)
                 field_tr_ids, field_ids = _field_contour(field_pool, theme_tr, theme_kw)
                 content_ids = _content_from(lex_ids, focus_exact, focus_soft)
@@ -465,6 +493,29 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             main_ids = set(dialect_ids)
         elif place_ids:
             main_ids = set(place_ids)
+
+    # POS tightens only: intersect base, never replace with all verbs in a field.
+    if pos_ids:
+        if main_ids:
+            narrowed = main_ids & pos_ids
+            if narrowed:
+                main_ids = narrowed
+            else:
+                # No POS hits among candidates — drop POS, keep theme/lex.
+                tags_hard_active = [t for t in tags_hard_active if t not in pos_tags]
+                pos_tags = []
+        else:
+            # POS-only browse («глаголы»).
+            main_ids = set(pos_ids)
+
+    # Soft marks: never AND, but do enter candidates so ranking can surface them.
+    # Applied after POS so soft∩field (e.g. бранн.) is not wiped by v.
+    # With a field → soft ∩ field (bounded). Else only if main still empty.
+    if soft_tag_ids:
+        if field_pool:
+            main_ids |= soft_tag_ids & field_pool
+        elif not main_ids:
+            main_ids |= set(soft_tag_ids)
 
     # One hop of incoming см./от only (stubs → hit), not outgoing hit → target.
     direct_ids = set(main_ids)

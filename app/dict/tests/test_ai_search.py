@@ -372,6 +372,71 @@ class SearchByParsedTestCase(TestCase):
         self.assertIn("kirota", words)
         self.assertNotIn("lehmä", words)
 
+    def test_soft_tag_unions_field_pool_even_under_hard_pos(self):
+        """Inferred soft mark enters via soft∩field; hard v must not hide it."""
+        tag_v = Tag.objects.create(
+            tag="v", name="verbum, глагол", type=2, level=0, sorting=1
+        )
+        # Verb in field (hard v ∩ field path) — not бран.
+        verb = Article.objects.create(word="riijellä", article_html="<b>r</b>")
+        ArticleIndexTranslate.objects.create(article=verb, rus_word="ругаться")
+        ArticleIndexTag.objects.create(article=verb, tag=tag_v)
+        ArticleSemanticField.objects.create(article=verb, field=self.field)
+        # Soft-mark hit in same field, no v (like бранн. nouns in prod).
+        swear = Article.objects.create(word="pahala", article_html="<b>p</b>")
+        ArticleIndexTag.objects.create(article=swear, tag=self.tag_br)
+        ArticleSemanticField.objects.create(article=swear, field=self.field)
+        # Soft mark outside field — must not leak in.
+        outside = Article.objects.create(word="out-br", article_html="<b>o</b>")
+        ArticleIndexTag.objects.create(article=outside, tag=self.tag_br)
+
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="как ругаться на карельском",
+                lexical=["ругаться"],
+                focus=["ругаться"],
+                fields=["Животный мир"],
+                tags=["v"],
+                tags_soft=["бран."],
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("riijellä", words)
+        self.assertIn("pahala", words)
+        self.assertNotIn("out-br", words)
+
+    def test_pos_narrows_theme_not_all_field_verbs(self):
+        """«глаголы … варить пиво» → theme∩v, not every verb in the food field."""
+        food = SemanticField.objects.create(
+            name="Пища и напитки", definition="еда", sorting=2
+        )
+        tag_v = Tag.objects.create(
+            tag="v", name="verbum, глагол", type=2, level=0, sorting=1
+        )
+        cook = Article.objects.create(word="keittiä", article_html="<b>k</b>")
+        ArticleIndexTranslate.objects.create(article=cook, rus_word="варить")
+        ArticleIndexTag.objects.create(article=cook, tag=tag_v)
+        ArticleSemanticField.objects.create(article=cook, field=food)
+        # Verb in same field, unrelated lemma — must not appear via field∩v dump.
+        noise = Article.objects.create(word="ajatella", article_html="<b>a</b>")
+        ArticleIndexTranslate.objects.create(article=noise, rus_word="думать")
+        ArticleIndexTag.objects.create(article=noise, tag=tag_v)
+        ArticleSemanticField.objects.create(article=noise, field=food)
+
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="глаголы про то как варить пиво",
+                lexical=["варить", "пиво"],
+                fields=["Пища и напитки"],
+                tags=["v"],
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("keittiä", words)
+        self.assertNotIn("ajatella", words)
+
     def test_priemeta_and_verb_tags(self):
         """«глаголы в приметах» → примета ∩ v."""
         tag_prim = Tag.objects.create(tag="примета", name="примета", type=3, sorting=20)

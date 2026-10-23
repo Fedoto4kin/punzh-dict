@@ -546,10 +546,12 @@ def _normalize_parsed(
     dropped = [d for d in dropped if (d or "").strip().lower() not in kept_lower]
 
     raw_display = data.get("display") if isinstance(data.get("display"), str) else ""
+    raw_display = raw_display.strip()
     if len(raw_display) > MAX_DISPLAY_LEN:
         warnings.append("display too long")
-    # Always rebuild from validated axes so marks never linger in display.
-    display = _build_display(
+        raw_display = _clip_str(raw_display, MAX_DISPLAY_LEN)
+    # Prefer LLM prose for «Как поняли»; fall back to axes if model left it empty.
+    display = raw_display or _build_display(
         lexical,
         focus,
         fields,

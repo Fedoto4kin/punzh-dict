@@ -205,11 +205,18 @@ class SoftTagAndRelaxTestCase(TestCase):
         words = [a["word"] for a in groups[0]["articles"]]
         self.assertIn("olut", words)
         # Soft mark must not require ∩ — beer stays without с.-х.
+        # farm is с.-х. but not in food field → soft∩field must not pull it.
+        self.assertNotIn("beika", words)
 
     def test_relax_hard_tag_when_intersection_empty(self):
-        Tag.objects.create(tag="с.-х.", name="сельское хозяйство", type=3, sorting=1)
+        tag = Tag.objects.create(
+            tag="с.-х.", name="сельское хозяйство", type=3, sorting=1
+        )
         beer = Article.objects.create(word="olut2", article_html="<b>olut2</b>")
         ArticleIndexTranslate.objects.create(article=beer, rus_word="пиво")
+        # Some с.-х. article exists so hard_tag_ids is non-empty, but not on beer.
+        other = Article.objects.create(word="beika2", article_html="<b>b</b>")
+        ArticleIndexTag.objects.create(article=other, tag=tag)
         groups, fb = search_by_parsed(
             {
                 "ok": True,
@@ -228,6 +235,7 @@ class SoftTagAndRelaxTestCase(TestCase):
         self.assertIsNone(fb)
         words = [a["word"] for a in groups[0]["articles"]]
         self.assertIn("olut2", words)
+        self.assertNotIn("beika2", words)
         self.assertEqual(groups[0].get("tags"), None)
 
 
