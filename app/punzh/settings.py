@@ -13,10 +13,15 @@ from pathlib import Path
 
 import environ
 
+from punzh.dotenv import DOTENV_PATH, dotenv_should_overwrite
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-env.read_env("/.env")
+# Local compose bind-mounts the host .env over DOTENV_PATH. The runserver
+# worker inherits os.environ from the reloader parent, so overwrite there and
+# pick up edits without rebuilding the image. Elsewhere, existing variables win.
+env.read_env(DOTENV_PATH, overwrite=dotenv_should_overwrite())
 
 
 # Quick-start development settings - unsuitable for production
@@ -54,9 +59,7 @@ TIMEWEB_AI_MODEL_CLASSIFY = env(
     "TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-v4-flash"
 )
 # Soft re-rank of AI search tops (same gateway; default = query model).
-TIMEWEB_AI_MODEL_RERANK = env(
-    "TIMEWEB_AI_MODEL_RERANK", default=TIMEWEB_AI_MODEL_QUERY
-)
+TIMEWEB_AI_MODEL_RERANK = env("TIMEWEB_AI_MODEL_RERANK", default=TIMEWEB_AI_MODEL_QUERY)
 # Second LLM pass after SQL. On in DEBUG; set AI_SEARCH_LLM_RERANK=0 to disable.
 AI_SEARCH_LLM_RERANK = env.bool("AI_SEARCH_LLM_RERANK", default=DEBUG)
 
