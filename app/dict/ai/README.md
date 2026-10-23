@@ -1,7 +1,7 @@
 # `dict/ai/` — рантайм LLM
 
 Код, который участвует в **живых** сценариях сайта или management-командах
-«на лету»: классификация статьи, будущий AI-поиск, шлюз к Timeweb.
+«на лету»: классификация статьи, AI-поиск (`/ai-search/`), шлюз к Timeweb.
 
 **Не сюда:** разовая/пакетная подготовка данных на 16k статей — это
 `app/agents/` (см. `agents/AGENTS.md`).
@@ -21,7 +21,8 @@
 | `classify_bg.py` | Фон (daemon-thread) для админки: `schedule_classify_article` после add / кнопки; notice → message на следующем `/admin/` (F5). |
 | `ontology_status.py` | Корзины очереди онтологии (админка рядом со смысловыми полями). |
 
-Страница: `/ai-search/`. REPL: `manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`).
+Страница: `/ai-search/` (закрытая альфа на prod, async job+poll). REPL:
+`manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`, промпт 1.13).
 
 ## Исключение: общий промпт в `prompts.py`
 

@@ -14,13 +14,14 @@
 | [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
 
-## Спеки (ещё не обязательно в коде)
+## Спеки и UX
 
 | Файл | О чём |
 |------|--------|
-| [ai-search.md](ai-search.md) | UX AI-поиска — **следующий фокус разработки** |
-| [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL, фазы A–C |
-| [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке |
+| [ai-search.md](ai-search.md) | UX AI-поиска — **закрытая альфа на prod** |
+| [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL; фазы A–C на prod |
+| [plans/ai-search-async.md](plans/ai-search-async.md) | Async job+poll (сделано); SSE/worker — позже |
+| [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке (ещё не в коде) |
 
 ## Runbook
 

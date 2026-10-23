@@ -1,7 +1,7 @@
 # AI-поиск: асинхронный контур (план)
 
-**Статус:** фазы A–C **в коде** (job+PG+poll, partial HTML, JS на `/ai-search/`).
-SSE / отдельный worker / WebSocket — позже.  
+**Статус:** фазы A–C **на prod** (2026-10-23, закрытая альфа): job+PG+poll,
+partial HTML, JS на `/ai-search/`. SSE / отдельный worker / WebSocket — позже.  
 **Зачем:** синхронный `GET /ai-search/?query=…` → полный HTML упирается в
 лимиты воркера и LLM; страница «висит» или обрывается.  
 **Ограничение:** если WebSocket — **без сторонних SaaS** (Pusher/Ably/Cloudflare
