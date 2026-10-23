@@ -5,7 +5,9 @@ from django.test import TestCase, override_settings
 from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE
 from dict.ai.rerank import (
     apply_rerank_to_groups,
+    complete_head_order,
     llm_reorder_ids,
+    parse_keep_tail,
     validate_order,
     validate_permutation,
 )
@@ -25,21 +27,23 @@ class ValidateOrderTestCase(TestCase):
         self.assertEqual(validate_permutation([1, 2, 3], [3, 1, 2]), [3, 1, 2])
 
     def test_rejects_extra_or_dupes(self):
-        self.assertIsNone(validate_order([1, 2], [1, 2, 3], allow_drop=True))
-        self.assertIsNone(validate_order([1, 2], [1, 1], allow_drop=True))
-        self.assertIsNone(validate_order([1, 2], [1, 9], allow_drop=True))
-
-    def test_subset_ok_when_above_min_keep(self):
-        ids = list(range(1, 11))  # 10 → min_keep 8
-        got = validate_order(ids, [10, 9, 8, 7, 6, 5, 4, 3], allow_drop=True)
-        self.assertEqual(got, [10, 9, 8, 7, 6, 5, 4, 3])
-
-    def test_subset_rejected_below_min_keep(self):
-        ids = list(range(1, 11))
-        self.assertIsNone(validate_order(ids, [1, 2, 3], allow_drop=True))
+        self.assertIsNone(validate_order([1, 2], [1, 2, 3], allow_drop=False))
+        self.assertIsNone(validate_order([1, 2], [1, 1], allow_drop=False))
+        self.assertIsNone(validate_order([1, 2], [1, 9], allow_drop=False))
 
     def test_strict_permutation_rejects_subset(self):
         self.assertIsNone(validate_permutation([1, 2, 3], [1, 2]))
+
+    def test_complete_head_order_prefix(self):
+        self.assertEqual(complete_head_order([1, 2, 3, 4], [3, 1]), [3, 1, 2, 4])
+        self.assertIsNone(complete_head_order([1, 2], [1, 9]))
+
+    def test_parse_keep_tail(self):
+        self.assertTrue(parse_keep_tail(True))
+        self.assertFalse(parse_keep_tail(False))
+        self.assertTrue(parse_keep_tail(None, default=True))
+        self.assertFalse(parse_keep_tail("false"))
+        self.assertTrue(parse_keep_tail("да"))
 
 
 @override_settings(AI_SEARCH_LLM_RERANK=True, TIMEWEB_AI_MODEL_RERANK="test/model")
@@ -82,7 +86,8 @@ class ApplyRerankTestCase(TestCase):
     @patch("dict.ai.rerank.ai_client.chat_json")
     def test_llm_permutation_applied(self, mock_chat):
         mock_chat.return_value = {
-            "order": [self.a_kin.id, self.a_grandma.id, self.a_sex.id]
+            "order": [self.a_kin.id, self.a_grandma.id, self.a_sex.id],
+            "keep_tail": True,
         }
         groups = apply_rerank_to_groups(
             "названия родственных связей", self._groups(), sort=SORT_RELEVANCE
@@ -92,45 +97,68 @@ class ApplyRerankTestCase(TestCase):
         user = mock_chat.call_args[0][1]
         self.assertIn("родство", user)
         self.assertIn("связь", user)
+        self.assertIn("keep_tail", user)
 
     @patch("dict.ai.rerank.ai_client.chat_json")
     def test_invalid_order_keeps_sql(self, mock_chat):
-        # Pool of 3 → min_keep 3; dropping to 1 is rejected.
-        mock_chat.return_value = {"order": [self.a_kin.id]}
+        mock_chat.return_value = {"order": [999999], "keep_tail": False}
         groups = apply_rerank_to_groups("q", self._groups(), sort=SORT_RELEVANCE)
         words = [a["word"] for a in groups[0]["articles"]]
         self.assertEqual(words, [self.a_sex.word, self.a_grandma.word, self.a_kin.word])
 
     @patch("dict.ai.rerank.ai_client.chat_json")
-    def test_drop_offtopic_above_min_keep(self, mock_chat):
+    def test_prefix_order_completes_head(self, mock_chat):
+        mock_chat.return_value = {"order": [self.a_kin.id], "keep_tail": True}
+        groups = apply_rerank_to_groups("q", self._groups(), sort=SORT_RELEVANCE)
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertEqual(words[0], self.a_kin.word)
+        self.assertEqual(
+            set(words), {self.a_sex.word, self.a_grandma.word, self.a_kin.word}
+        )
+
+    @patch("dict.ai.rerank.ai_client.chat_json")
+    def test_keep_tail_false_drops_tail_only(self, mock_chat):
         extras = []
-        for i in range(7):
+        for i in range(5):
             a = Article.objects.create(word=f"extra{i}", article_html=f"<b>e{i}</b>")
             ArticleIndexTranslate.objects.create(article=a, rus_word=f"лишнее{i}")
             extras.append(a)
-        # 3 + 7 = 10 → min_keep 8; drop 2 ok.
+        # Force head=3 by patching TOP_N via articles length: use 3 head + mark
+        # extras as tail by temporarily lowering — put 3 then 5; RERANK_TOP_N=30
+        # so all 8 are head. Build 32 articles so extras sit in tail.
+        filler = []
+        for i in range(27):
+            a = Article.objects.create(word=f"fill{i}", article_html=f"<b>f{i}</b>")
+            ArticleIndexTranslate.objects.create(article=a, rus_word=f"заполнитель{i}")
+            filler.append(a)
         arts = [
             {"id": self.a_sex.id, "word": self.a_sex.word},
             {"id": self.a_grandma.id, "word": self.a_grandma.word},
             {"id": self.a_kin.id, "word": self.a_kin.word},
-        ] + [{"id": a.id, "word": a.word} for a in extras]
+        ]
+        arts += [{"id": a.id, "word": a.word} for a in filler]
+        arts += [{"id": a.id, "word": a.word} for a in extras]
         groups = [
             {
                 "kind": "lexical",
                 "title": "Нашлось",
-                "total": 10,
+                "total": len(arts),
                 "more": 0,
                 "articles": arts,
                 "demote_ids": [],
             }
         ]
-        keep = [self.a_kin.id, self.a_grandma.id] + [a.id for a in extras]
-        mock_chat.return_value = {"order": keep}  # drop sex
+        head_ids = [a["id"] for a in arts[:30]]
+        order = [self.a_kin.id] + [i for i in head_ids if i != self.a_kin.id]
+        self.assertEqual(len(order), 30)
+        mock_chat.return_value = {"order": order, "keep_tail": False}
         out = apply_rerank_to_groups("родство", groups, sort=SORT_RELEVANCE)
         words = [a["word"] for a in out[0]["articles"]]
-        self.assertNotIn(self.a_sex.word, words)
         self.assertEqual(words[0], self.a_kin.word)
-        self.assertEqual(out[0]["total"], 9)
+        self.assertEqual(len(words), 30)
+        self.assertTrue(out[0].get("tail_dropped"))
+        for a in extras:
+            self.assertNotIn(a.word, words)
 
     @patch("dict.ai.rerank.ai_client.chat_json")
     def test_alpha_skips_llm(self, mock_chat):
@@ -155,7 +183,8 @@ class ApplyRerankTestCase(TestCase):
                 self.a_kin.id,
                 self.a_grandma.id,
                 self.a_sex.id,
-            ]
+            ],
+            "keep_tail": True,
         }
         out = apply_rerank_to_groups("q", groups, sort=SORT_RELEVANCE)
         words = [a["word"] for a in out[0]["articles"]]
