@@ -12,18 +12,18 @@
 |--------|------------|
 | `client.py` | HTTP-клиент к шлюзу Timeweb (`chat_json`, настройки из env). |
 | `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии (включая аддендумы). Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py`. Промпт «по переводу» (`SYSTEM_PROMPT_TRANSLATION_FIELDS`) — общий с `pick_translation_fields.py`; вход — только `ArticleIndexTranslate`. |
-| `query_prompts.py` / `query_parse.py` | Разбор → оси; пометы/POS → `tags` (не related); `display` из имён `Tag`. |
+| `query_prompts.py` / `query_parse.py` | Разбор → оси; hard/soft-пометы; `display` + `axes_display`. |
 | `rank.py` | Релевантность (focus exact ≫ lexical ≫ field-tr ≫ слабые KW). |
-| `search.py` | Retrieval: tags AND, field∩translations, `search_by_parsed`. |
-| `rerank_prompts.py` / `rerank.py` | Мягкий LLM re-rank топа (все переводы кандидата); `AI_SEARCH_LLM_RERANK`. |
-| `jobs.py` | Async job: thread-воркер + Postgres `AiSearchJob` (poll API). |
+| `search.py` | Retrieval: hard AND / soft∩field, POS сужает, dialect+тема, см. входящие. |
+| `rerank_prompts.py` / `rerank.py` | LLM: permute топ-30 + `keep_tail`; `TIMEWEB_AI_MODEL_RERANK`. |
+| `jobs.py` | Async job: thread + PG; `client_key` = session (изоляция poll). |
 | `telemetry.py` | JSONL/событие разбора (REPL и будущие логи). |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |
 | `classify_bg.py` | Фон (daemon-thread) для админки: `schedule_classify_article` после add / кнопки; notice → message на следующем `/admin/` (F5). |
 | `ontology_status.py` | Корзины очереди онтологии (админка рядом со смысловыми полями). |
 
 Страница: `/ai-search/` (закрытая альфа на prod, async job+poll). REPL:
-`manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`, промпт 1.14).
+`manage.py ai_query` (см. `docs/SPEC_ai_query_parse.md`, промпт 1.15).
 
 ## Исключение: общий промпт в `prompts.py`
 

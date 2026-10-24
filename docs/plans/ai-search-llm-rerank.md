@@ -1,6 +1,8 @@
 # AI-поиск: мягкий LLM re-rank
 
-**Статус:** в коде (после альфы MVP).  
+**Статус:** **на prod** (2026-10-24), `AI_SEARCH_LLM_RERANK=1`,
+`TIMEWEB_AI_MODEL_RERANK=xiaomi/mimo-v2.6-flash` (parse по-прежнему
+`TIMEWEB_AI_MODEL_QUERY`).  
 **Связано:** `docs/ai-search.md`, `docs/SPEC_ai_query_parse.md`,
 `docs/plans/ai-search-async.md`, `app/dict/ai/rerank.py`.
 
@@ -21,7 +23,8 @@ parse → SQL + score → status=ranking
 
 - `sort=alpha` — без LLM.
 - `AI_SEARCH_LLM_RERANK=False` — без LLM.
-- Сбой / битый JSON / неполная перестановка головы — SQL-порядок.
+- Сбой / битый JSON / чужие id в `order` — SQL-порядок.
+- Префикс `order` дополняется остатком головы в prior-порядке.
 - `keep_tail` отсутствует/битый → `true` (безопаснее оставить хвост).
 
 UI poll: `running` → «Разбираем запрос…»; `ranking` →
@@ -49,12 +52,13 @@ UI poll: `running` → «Разбираем запрос…»; `ranking` →
   Из головы не удаляем.
 - `keep_tail=false` — отбросить статьи после топ-30 целиком.
 
-Промпт: `PROMPT_VERSION` в `rerank_prompts.py`. Модель:
-`TIMEWEB_AI_MODEL_RERANK` (дефолт = `TIMEWEB_AI_MODEL_QUERY`).
+Промпт: `PROMPT_VERSION` в `rerank_prompts.py` (1.3+). Модель:
+`TIMEWEB_AI_MODEL_RERANK` (prod: MiMo V2.6 Flash; дефолт кода = QUERY).
 
-## Пометы (parse → search)
+## Пометы / POS (parse → search) — рядом с re-rank
 
-- **Hard** (`tags`): ярлык есть в тексте запроса → AND-фильтр.
-- **Soft** (`tags_soft`): выведено LLM, в тексте нет → только бонус ранга.
-- **Relax-on-empty:** hard ∩ lexical = ∅ → снять hard, оставить lexical
-  (не пустой fallback).
+- **Hard** (`tags`): ярлык в тексте → AND (стилистика/прочее).
+- **Soft** (`tags_soft`): вывод модели → union `soft∩field` + бонус ранга,
+  не AND-опустошение.
+- **POS (Tag.type=2):** только сужение кандидатов, не `field∩v` как вся выдача.
+- **Relax-on-empty:** hard ∩ lexical = ∅ → снять hard.
