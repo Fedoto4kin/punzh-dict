@@ -10,6 +10,73 @@
 <style>
     .ai-card-grid > [class*="col-"] > .card { margin-left: 0; margin-right: 0; }
     #ai-status.loading { color: #6c757d; }
+    .ai-feedback-bar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.88);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        padding: 0.5rem 0.35rem 0.4rem;
+        margin: 0 -0.35rem 0.75rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .ai-feedback-bar__title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+        line-height: 1.3;
+    }
+    .ai-feedback-controls {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.875rem;
+    }
+    .ai-feedback-ask {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    .ai-feedback-vote {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .ai-feedback-hint {
+        font-size: 0.75rem;
+        font-style: italic;
+        color: #6c757d;
+        line-height: 1.3;
+    }
+    .ai-feedback-bar #ai-feedback-down-form { margin: 0.35rem 0 0; }
+    .ai-feedback-reasons label {
+        display: block;
+        margin-bottom: 0.35rem;
+    }
+    @media (min-width: 768px) {
+        .ai-feedback-bar__head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            column-gap: 0.85rem;
+            row-gap: 0.25rem;
+        }
+        .ai-feedback-controls {
+            margin-top: 0;
+        }
+        .ai-feedback-ask {
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: baseline;
+            column-gap: 0.5rem;
+        }
+        .ai-feedback-reasons label {
+            display: inline-block;
+            margin-right: 1rem;
+            margin-bottom: 0.25rem;
+        }
+    }
 </style>
 <div class="row mt-5 mb-3">
     <div class="col-12">
@@ -219,7 +286,117 @@
     }).then(function (html) {
       resultsEl.innerHTML = html;
       setStatus("");
+      initAiFeedback();
     });
+  }
+
+  var feedbackDelayMs = 2500;
+
+  function feedbackStorageKey(logId) {
+    return "ai-fb-dismiss-" + logId;
+  }
+
+  function initAiFeedback() {
+    var root = document.getElementById("ai-feedback");
+    if (!root) return;
+    var logId = root.getAttribute("data-log-id") || "";
+    var url = root.getAttribute("data-url") || "";
+    if (!logId || !url) return;
+    try {
+      if (sessionStorage.getItem(feedbackStorageKey(logId))) return;
+    } catch (e) {}
+
+    var ask = document.getElementById("ai-feedback-ask");
+    var downForm = document.getElementById("ai-feedback-down-form");
+    var thanks = document.getElementById("ai-feedback-thanks");
+    var btnUp = document.getElementById("ai-feedback-up");
+    var btnDown = document.getElementById("ai-feedback-down");
+    var btnDismiss = document.getElementById("ai-feedback-dismiss");
+    var btnSend = document.getElementById("ai-feedback-send");
+    var btnCancel = document.getElementById("ai-feedback-cancel");
+
+    function hideAll() {
+      root.hidden = true;
+      if (downForm) downForm.classList.add("d-none");
+    }
+
+    function rememberDismiss() {
+      try { sessionStorage.setItem(feedbackStorageKey(logId), "1"); } catch (e) {}
+    }
+
+    function showThanks() {
+      if (ask) ask.classList.add("d-none");
+      if (downForm) downForm.classList.add("d-none");
+      if (thanks) thanks.classList.remove("d-none");
+      rememberDismiss();
+      setTimeout(hideAll, 1200);
+    }
+
+    function postVote(payload) {
+      return fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken(),
+        },
+        body: JSON.stringify(payload),
+      }).then(function (r) {
+        if (!r.ok) throw new Error("feedback " + r.status);
+        return r.json();
+      });
+    }
+
+    if (btnDismiss) {
+      btnDismiss.addEventListener("click", function () {
+        rememberDismiss();
+        hideAll();
+      });
+    }
+    if (btnUp) {
+      btnUp.addEventListener("click", function () {
+        postVote({ log_id: logId, vote: "up" })
+          .then(showThanks)
+          .catch(function () { rememberDismiss(); hideAll(); });
+      });
+    }
+    if (btnDown) {
+      btnDown.addEventListener("click", function () {
+        if (ask) ask.classList.add("d-none");
+        if (downForm) downForm.classList.remove("d-none");
+      });
+    }
+    if (btnCancel) {
+      btnCancel.addEventListener("click", function () {
+        if (downForm) downForm.classList.add("d-none");
+        if (ask) ask.classList.remove("d-none");
+      });
+    }
+    if (btnSend) {
+      btnSend.addEventListener("click", function () {
+        var reasons = [];
+        var boxes = document.querySelectorAll("#ai-feedback-reasons input:checked");
+        boxes.forEach(function (el) { reasons.push(el.value); });
+        var commentEl = document.getElementById("ai-feedback-comment");
+        var comment = commentEl ? (commentEl.value || "").trim() : "";
+        postVote({
+          log_id: logId,
+          vote: "down",
+          reasons: reasons,
+          comment: comment,
+        })
+          .then(showThanks)
+          .catch(function () { rememberDismiss(); hideAll(); });
+      });
+    }
+
+    setTimeout(function () {
+      if (!document.getElementById("ai-feedback")) return;
+      try {
+        if (sessionStorage.getItem(feedbackStorageKey(logId))) return;
+      } catch (e) {}
+      root.hidden = false;
+    }, feedbackDelayMs);
   }
 
   function pollJob(jobId, query, sort, started) {
@@ -330,9 +507,11 @@
   setCurrentJobId(jid);
   if (jq && !jid) {
     startJob(jq, sortInput.value || "relevance");
-  } else if (jid && (st === "queued" || st === "running")) {
+  } else if (jid && (st === "queued" || st === "running" || st === "ranking")) {
     setStatus("Разбираем запрос…", true);
     pollJob(jid, (input.value || "").trim(), sortInput.value || "relevance", Date.now());
+  } else {
+    initAiFeedback();
   }
 })();
 </script>

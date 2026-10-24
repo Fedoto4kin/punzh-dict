@@ -8,9 +8,10 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| **1** | **альфа на prod** | **AI-поиск:** async job+poll, hard/soft-пометы, POS-сужение, говор+тема, см. входящие, session-bound job. LLM re-rank выключен (гипотеза не подтвердилась) | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md` |
+| **1** | **альфа на prod** (`eb95bc3`) | **AI-поиск:** async job+poll, hard/soft-пометы, POS-сужение, говор+тема (эталон «всг. про погоду»), см. входящие, session-bound job. LLM re-rank выключен | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md` |
+| **1a** | **следующий код AI** | **Декларативные схемы retrieval** (YAML/Python): оси → множества без if-каши | `plans/ai-search-retrieval-schemas.md` |
 | 2 | параллельно | Связи «от» / `ArticleLink.kind` (подсветка на сайте) | `backlog.md` §1 — **отдельный контур**, не смешивать с AI |
-| 3 | следующий по AI | Обратная связь альфы / beta-логи 👍/👎; пункт в навигации | `SPEC_ai_query_parse.md` §6, `plans/ai-search-async.md` |
+| 3 | **в работе** | Обратная связь альфы: `AiSearchLog` + 👍/👎; пункт в навигации — позже | `SPEC_ai_query_parse.md` §6 |
 
 **AI на prod (2026-10-24):** скрытый `/ai-search/`. Re-rank выключен
 (`AI_SEARCH_LLM_RERANK=0`): на эталонах не улучшил порядок SQL, код
@@ -27,7 +28,6 @@
 | 6 | бэклог | **Стоп-токены в token-OR** (вариант A: «о корове» без раздува от «о») | `docs/plans/search-query-stopwords.md` |
 | 7 | бэклог | KRL в русской транслитерации → формальные правила → «возможно вы искали» | `docs/ai-search.md` §Перспектива (Метрика) |
 | 8 | бэклог AI | Пункт «умный поиск» в навигации; SSE/worker — по нагрузке | `plans/ai-search-async.md` |
-| 9 | бэклог AI | **Декларативные схемы retrieval** (YAML/Python): оси → множества без if-каши | `plans/ai-search-retrieval-schemas.md` |
 
 ## Лексический `/search/` — baseline готов
 

@@ -1,0 +1,20 @@
+{# Feedback controls; sits under/ beside group title inside .ai-feedback-bar. #}
+<span class="ai-feedback-controls text-muted font-weight-normal"
+      id="ai-feedback"
+      data-log-id="{{ ai_log_id }}"
+      data-url="{{ ai_feedback_url }}"
+      hidden>
+    <span id="ai-feedback-ask" class="ai-feedback-ask">
+        <span class="ai-feedback-vote">
+            <span class="mr-1">Помогло?</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 mr-1"
+                    id="ai-feedback-up" title="Да" aria-label="Помогло">👍</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 mr-1"
+                    id="ai-feedback-down" title="Нет" aria-label="Не помогло">👎</button>
+            <button type="button" class="btn btn-sm btn-link text-muted p-0 ml-1 align-baseline"
+                    id="ai-feedback-dismiss" title="Скрыть" aria-label="Скрыть">✕</button>
+        </span>
+        <em class="ai-feedback-hint">Ответы помогают улучшить поиск.</em>
+    </span>
+    <span class="d-none" id="ai-feedback-thanks" role="status">Спасибо.</span>
+</span>

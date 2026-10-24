@@ -7,10 +7,10 @@
 Здесь — контракт разбора, фазы разработки, интерактивная консольная утилита,
 эталоны и сбор логов на beta. Не дублировать приоритеты из INDEX.
 
-**Статус (2026-10-23):** фазы **A–C на prod** (parse + валидация, `ai_query`,
-`dict/ai/search`, async `/ai-search/`). Закрытая альфа. Beta-логи (§6) и
-отдельная keyword-группа — вне текущего scope. Данные не блокер — см.
-«Готовность» в `docs/ai-search.md`.
+**Статус (2026-10-24):** фазы **A–C на prod** (parse + валидация, `ai_query`,
+`dict/ai/search`, async `/ai-search/`). Закрытая альфа. Телеметрия и 👍/👎 —
+§6 (`AiSearchLog` / `AiSearchFeedback`). Отдельная keyword-группа — вне
+scope. Данные не блокер — см. «Готовность» в `docs/ai-search.md`.
 
 ---
 
@@ -197,51 +197,63 @@ python manage.py ai_query --log-file logs/ai_query.jsonl
 
 ---
 
-## 6. Телеметрия и оценки (beta, не MVP)
+## 6. Телеметрия и оценки (альфа)
 
-Цель: на closed beta собрать запросы и сигналы «плохо/хорошо» для итерации промпта.
+Цель: на закрытой альфе собрать **все** запросы (знаменатель) и опциональные
+👍/👎 для ручной доводки промпта/ранга. Не авто-обучение весов.
 
 ### Две сущности
 
 | | **AiSearchLog** (автомат) | **AiSearchFeedback** (кнопка) |
 |---|---|---|
-| Когда | каждый AI-запрос на beta | пользователь нажал 👍/👎 |
-| Связь | — | FK → log |
+| Когда | каждый завершённый job (done **и** error) | 👍 или 👎 |
+| Связь | `job_id` UUID без FK (job TTL ~24ч) | OneToOne → log |
+| Смысл | факт запроса/выдачи | оценка (и up, и down) |
+
+Пишет `persist_ai_search_log()` из `run_job` (и stale/crash). Raw LLM в БД
+**не** кладём. `session_key` = тот же анонимный ключ, что `client_key` у job;
+**без** IP и user id.
 
 ### Поля лога (минимум)
 
-- `query_raw`, `parsed_json`, `groups_json` (top article_ids по группе, не все 16k)
-- `display`, `parse_ok`, `fallback_used`
-- `model_query`, `prompt_version`, `latency_ms`, `created_at`
-- `session_key` — анонимная cookie; **без** IP и user id
+- `query_raw`, `parsed_json`, `groups_json` (top article_ids по группе)
+- `display`, `parse_ok`, `ok`, `error`, `fallback_count`
+- `model_query`, `prompt_version`, `latency_ms`, `created_at`, `session_key`
 
-### UI beta (под выдачей)
+### UI (в одной строке с заголовком первой группы; sticky)
 
-«Помогло?» 👍 / 👎; при 👎 — короткий комментарий и опционально «разбор неверный» /
-«не те слова» / «мало результатов». Одна оценка на log (upsert). Строка:
-«Beta: ответы помогают улучшить поиск».
+«Нашлось по запросу N» · Помогло? 👍 👎 ✕ (без групп — в строке
+«По смыслу не нашли»). Полоска `position: sticky` + полупрозрачный фон.
+Показ на `done` при log без feedback и `parsed.ok`
+(не при «Разбор по смыслу недоступен…»); задержка ~2.5 с;
+крестик = dismiss в `sessionStorage`. 👍 → upsert `vote=up`. 👎 → мини-опрос
+под заголовком: `parse_wrong` / `bad_hits` / `too_few` / `too_many` + comment.
+`POST /ai-search/feedback/` (session = `log.session_key`).
+
+**Использование:** 👎 (+ reasons) — очередь ручного разбора → эталоны /
+промпт / rank. 👍 — храним (response rate, редкие кандидаты в golden
+глазами); **не** автолить в `ai_query_benchmarks.json`.
 
 ### Флаги
 
 ```python
-AI_SEARCH_BETA = True
-AI_SEARCH_LOG_QUERIES = True  # beta / dev
+AI_SEARCH_LOG_QUERIES = True   # durable log на каждый finished job
+AI_SEARCH_FEEDBACK = True      # виджет 👍/👎
 ```
 
-Prod после beta: логи выключить или только ошибки; feedback убрать или оставить
-«сообщить об ошибке».
+После альфы: логи выключить или только ошибки; UI — убрать или оставить
+как «сообщить об ошибке» (lazy log при клике).
 
-### Экспорт и итерация
+### Экспорт и итерация (бэклог команды)
 
 ```bash
 manage.py export_ai_search_logs --since … --with-feedback
+manage.py purge_ai_search_logs   # retention ~90 дней
 ```
 
-Кейсы с 👎 + comment → эталоны в `ai_query_benchmarks.json` → `--benchmark` в REPL.
+Кейсы с 👎 + comment → эталоны в `ai_query_benchmarks.json` → `--benchmark`.
 
-**Retention:** например 90 дней beta → `purge_ai_search_logs`.
-
-REPL и web используют **один** `serialize_ai_search_event()` (JSONL на dev, БД на beta).
+REPL и web: **один** `serialize_ai_search_event()` (JSONL в REPL, БД на сайте).
 
 ---
 

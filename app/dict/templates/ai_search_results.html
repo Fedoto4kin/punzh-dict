@@ -44,9 +44,21 @@
 {% for g in groups %}
 <div class="row mt-4 ai-result-group">
     <div class="col-12">
+        {% if forloop.first and ai_feedback_show and ai_log_id %}
+        <div class="ai-feedback-bar">
+            <div class="ai-feedback-bar__head">
+                <h5 class="ai-feedback-bar__title">{{ g.title }}
+                    <span class="badge badge-secondary">{{ g.total }}</span>
+                </h5>
+                {% include "ai_search_feedback.html" %}
+            </div>
+            {% include "ai_search_feedback_form.html" %}
+        </div>
+        {% else %}
         <h5 class="mb-3">{{ g.title }}
             <span class="badge badge-secondary">{{ g.total }}</span>
         </h5>
+        {% endif %}
         {% if g.dialect_relaxed or g.place_relaxed %}
         <p class="small text-muted mb-2">В выбранном говоре/ареале по теме пусто — показываем без этого фильтра.</p>
         {% endif %}
@@ -67,7 +79,17 @@
     <div class="col-12">
         {% if not groups %}
         <div class="alert alert-secondary" role="alert">
+            {% if ai_feedback_show and ai_log_id %}
+            <div class="ai-feedback-bar">
+                <div class="ai-feedback-bar__head">
+                    <h5 class="ai-feedback-bar__title alert-heading mb-0">По смыслу не нашли</h5>
+                    {% include "ai_search_feedback.html" %}
+                </div>
+                {% include "ai_search_feedback_form.html" %}
+            </div>
+            {% else %}
             <h5 class="alert-heading">По смыслу не нашли</h5>
+            {% endif %}
             {% if fallback_found %}
             <p class="mb-0">Есть совпадения по словам ({{ fallback_found|pluralize_words|safe }}):</p>
             {% else %}

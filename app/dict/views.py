@@ -260,6 +260,33 @@ def _ai_dict_linked_lemmas(parsed):
     return out
 
 
+def _ai_feedback_context(job):
+    """log_id + whether to show the inline thumbs widget (done jobs only)."""
+    from django.urls import reverse
+
+    from dict.ai.telemetry import feedback_ui_enabled, log_for_job
+    from dict.models import AiSearchFeedback
+
+    ctx = {
+        "ai_log_id": "",
+        "ai_feedback_show": False,
+        "ai_feedback_url": "",
+    }
+    if job is None or job.status != "done" or not feedback_ui_enabled():
+        return ctx
+    # No thumbs when LLM/infra failed («Разбор по смыслу недоступен…»).
+    parsed = job.parsed or {}
+    if not parsed.get("ok"):
+        return ctx
+    log = log_for_job(job.id)
+    if log is None or AiSearchFeedback.objects.filter(log_id=log.id).exists():
+        return ctx
+    ctx["ai_log_id"] = str(log.id)
+    ctx["ai_feedback_show"] = True
+    ctx["ai_feedback_url"] = reverse("ai_search_feedback")
+    return ctx
+
+
 def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
     from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, normalize_sort
     from dict.ai.search import _field_meta
@@ -282,6 +309,9 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
         "job_status": "",
         "pending_query": "",
         "related_linked": [],
+        "ai_log_id": "",
+        "ai_feedback_show": False,
+        "ai_feedback_url": "",
     }
     if job is not None:
         from dict.ai.jobs import hydrate_job_groups, mark_stale_running
@@ -294,8 +324,6 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
         # Prefer requested sort (UI toggle) over the sort stored when job ran.
         ctx["sort"] = sort
         if job.status == "done":
-            from dict.ai.rank import lemmas_with_exact_translate
-
             parsed = job.parsed or {}
             groups = hydrate_job_groups(job, sort=sort)
             ctx["parsed"] = parsed
@@ -310,6 +338,7 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
                 )
                 ctx["fallback_page"] = page_obj
                 ctx["fallback_found"] = found_count
+            ctx.update(_ai_feedback_context(job))
         elif job.status == "error":
             ctx["parsed"] = job.parsed or {
                 "ok": False,
@@ -457,20 +486,72 @@ def ai_search_job_partial(request, job_id):
             (job.query or "").translate(translation_table), 1
         )
 
-    return render(
-        request,
-        "ai_search_results.html",
-        {
-            "query": job.query,
-            "parsed": parsed,
-            "groups": groups,
-            "ontology_fields": ontology_fields,
-            "related_linked": related_linked,
-            "fallback_count": job.fallback_count,
-            "fallback_page": fallback_page,
-            "fallback_found": fallback_found,
-            "sort": sort,
+    ctx = {
+        "query": job.query,
+        "parsed": parsed,
+        "groups": groups,
+        "ontology_fields": ontology_fields,
+        "related_linked": related_linked,
+        "fallback_count": job.fallback_count,
+        "fallback_page": fallback_page,
+        "fallback_found": fallback_found,
+        "sort": sort,
+    }
+    ctx.update(_ai_feedback_context(job))
+    return render(request, "ai_search_results.html", ctx)
+
+
+def ai_search_feedback(request):
+    """POST /ai-search/feedback/ → upsert AiSearchFeedback for this session's log."""
+    import json
+
+    from dict.ai.telemetry import feedback_ui_enabled
+    from dict.models import AiSearchFeedback, AiSearchLog
+
+    if request.method != "POST":
+        return JsonResponse({"error": "method_not_allowed"}, status=405)
+    if not feedback_ui_enabled():
+        return JsonResponse({"error": "disabled"}, status=404)
+
+    try:
+        body = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "bad_json"}, status=400)
+
+    log_id = (body.get("log_id") or "").strip()
+    vote = (body.get("vote") or "").strip()
+    if vote not in (AiSearchFeedback.VOTE_UP, AiSearchFeedback.VOTE_DOWN):
+        return JsonResponse({"error": "bad_vote"}, status=400)
+
+    log = AiSearchLog.objects.filter(pk=log_id).first()
+    if log is None:
+        return JsonResponse({"error": "not_found"}, status=404)
+    key = _ai_client_key(request)
+    if (log.session_key or "") != key:
+        return JsonResponse({"error": "not_found"}, status=404)
+
+    reasons = body.get("reasons") or []
+    if not isinstance(reasons, list):
+        reasons = []
+    allowed = set(AiSearchFeedback.REASON_CHOICES)
+    reasons = [r for r in reasons if r in allowed][:5]
+    if vote == AiSearchFeedback.VOTE_UP:
+        reasons = []
+    comment = (body.get("comment") or "").strip()[:500]
+    if vote == AiSearchFeedback.VOTE_UP:
+        comment = ""
+
+    fb, _created = AiSearchFeedback.objects.update_or_create(
+        log=log,
+        defaults={
+            "vote": vote,
+            "reasons": reasons,
+            "comment": comment,
         },
+    )
+    return JsonResponse(
+        {"ok": True, "vote": fb.vote, "log_id": str(log.id)},
+        status=200,
     )
 
 

@@ -1,0 +1,27 @@
+{# Expanded after 👎; must be a sibling under the same heading block. #}
+<div class="small mb-3 d-none" id="ai-feedback-down-form">
+    <p class="mb-2 text-muted">Что не так?</p>
+    <div class="mb-2 ai-feedback-reasons" id="ai-feedback-reasons">
+        <label class="font-weight-normal">
+            <input type="checkbox" value="parse_wrong"> разбор неверный
+        </label>
+        <label class="font-weight-normal">
+            <input type="checkbox" value="bad_hits"> не те слова
+        </label>
+        <label class="font-weight-normal">
+            <input type="checkbox" value="too_few"> мало результатов
+        </label>
+        <label class="font-weight-normal">
+            <input type="checkbox" value="too_many"> слишком много результатов
+        </label>
+    </div>
+    <div class="form-group mb-2">
+        <input type="text" class="form-control form-control-sm"
+               id="ai-feedback-comment" maxlength="500"
+               placeholder="Комментарий (необязательно)">
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            id="ai-feedback-send">Отправить</button>
+    <button type="button" class="btn btn-sm btn-link text-muted"
+            id="ai-feedback-cancel">Отмена</button>
+</div>

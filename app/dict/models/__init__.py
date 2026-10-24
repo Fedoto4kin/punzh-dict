@@ -1,4 +1,4 @@
-from .ai_search import AiSearchJob
+from .ai_search import AiSearchFeedback, AiSearchJob, AiSearchLog
 from .articles import *
 from .levenshtein import Levenshtein
 from .semantic import *

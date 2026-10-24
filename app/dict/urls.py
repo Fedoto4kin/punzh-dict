@@ -49,6 +49,11 @@ urlpatterns = [
         views.ai_search_job_partial,
         name="ai_search_job_partial",
     ),
+    path(
+        "ai-search/feedback/",
+        views.ai_search_feedback,
+        name="ai_search_feedback",
+    ),
     path("tags/", views.tag_search, name="tags"),
     path("tags/compatible/<str:tags>", views.tags_compatible, name="tags_compatible"),
     path("tags/<str:tags>", views.tag_search, name="tags"),

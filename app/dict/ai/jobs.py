@@ -101,6 +101,9 @@ def mark_stale_running(job):
     job.error = "timeout_or_stale"
     job.finished_at = timezone.now()
     job.save(update_fields=["status", "error", "finished_at", "updated_at"])
+    from dict.ai.telemetry import persist_ai_search_log
+
+    persist_ai_search_log(job=job)
     return True
 
 
@@ -156,7 +159,7 @@ def schedule_ai_search_job(job_id: str) -> bool:
             close_old_connections()
             run_job(jid)
         except Exception:
-            logger.exception("ai search job %s crashed", jid)
+            logger.error("ai search job %s crashed", jid)
             try:
                 close_old_connections()
                 AiSearchJob.objects.filter(pk=jid).update(
@@ -164,8 +167,13 @@ def schedule_ai_search_job(job_id: str) -> bool:
                     error="worker_crash",
                     finished_at=timezone.now(),
                 )
-            except Exception:
-                logger.exception("failed to mark job %s error", jid)
+                job = AiSearchJob.objects.filter(pk=jid).first()
+                if job is not None:
+                    from dict.ai.telemetry import persist_ai_search_log
+
+                    persist_ai_search_log(job=job)
+            except Exception as mark_exc:
+                logger.error("failed to mark job %s error: %s", jid, mark_exc)
         finally:
             close_old_connections()
             with _lock:
@@ -229,12 +237,22 @@ def run_job(job_id: str):
                 "updated_at",
             ]
         )
+        from dict.ai.telemetry import persist_ai_search_log
+
+        persist_ai_search_log(
+            job=job,
+            parse_result=parsed,
+            groups_serialized=job.groups,
+        )
     except Exception as exc:
-        logger.exception("ai search job %s failed", job_id)
+        logger.error("ai search job %s failed: %s", job_id, exc)
         job.status = AiSearchJob.STATUS_ERROR
         job.error = (str(exc) or "error")[:200]
         job.finished_at = timezone.now()
         job.save(update_fields=["status", "error", "finished_at", "updated_at"])
+        from dict.ai.telemetry import persist_ai_search_log
+
+        persist_ai_search_log(job=job)
 
 
 def hydrate_job_groups(job, sort=None):
