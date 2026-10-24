@@ -8,12 +8,13 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| **1** | **альфа на prod** | **AI-поиск:** async job+poll, hard/soft-пометы, POS-сужение, говор+тема, см. входящие, session-bound job, LLM re-rank (голова + `keep_tail`) | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md` |
+| **1** | **альфа на prod** | **AI-поиск:** async job+poll, hard/soft-пометы, POS-сужение, говор+тема, см. входящие, session-bound job. LLM re-rank выключен (гипотеза не подтвердилась) | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md` |
 | 2 | параллельно | Связи «от» / `ArticleLink.kind` (подсветка на сайте) | `backlog.md` §1 — **отдельный контур**, не смешивать с AI |
 | 3 | следующий по AI | Обратная связь альфы / beta-логи 👍/👎; пункт в навигации | `SPEC_ai_query_parse.md` §6, `plans/ai-search-async.md` |
 
-**AI на prod (2026-10-24):** скрытый `/ai-search/`, re-rank вкл.
-(`TIMEWEB_AI_MODEL_RERANK=xiaomi/mimo-v2.6-flash`). Контракт —
+**AI на prod (2026-10-24):** скрытый `/ai-search/`. Re-rank выключен
+(`AI_SEARCH_LLM_RERANK=0`): на эталонах не улучшил порядок SQL, код
+под удаление или переделку — `plans/ai-search-llm-rerank.md`. Контракт —
 `SPEC_ai_query_parse.md`.
 
 ## Дальше (продукт)
@@ -26,6 +27,7 @@
 | 6 | бэклог | **Стоп-токены в token-OR** (вариант A: «о корове» без раздува от «о») | `docs/plans/search-query-stopwords.md` |
 | 7 | бэклог | KRL в русской транслитерации → формальные правила → «возможно вы искали» | `docs/ai-search.md` §Перспектива (Метрика) |
 | 8 | бэклог AI | Пункт «умный поиск» в навигации; SSE/worker — по нагрузке | `plans/ai-search-async.md` |
+| 9 | бэклог AI | **Декларативные схемы retrieval** (YAML/Python): оси → множества без if-каши | `plans/ai-search-retrieval-schemas.md` |
 
 ## Лексический `/search/` — baseline готов
 
@@ -39,7 +41,8 @@
 - **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28.
 - **AI-поиск (prod 2026-10-24):** `/ai-search/` async + session isolation;
   hard/soft-пометы, POS сужает, dialect relax, см. только входящие;
-  UI «Как поняли» + «Что искали»; LLM re-rank голова/`keep_tail` (MiMo Flash) —
+  UI «Как поняли» + «Что искали». LLM re-rank написан и выключен
+  (2026-10-24, гипотеза не подтвердилась) —
   `docs/ai-search.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md`.
 - KRL `/search/`: фильтры по пометам `?t=` / `?ph=` — `plans/krl-search-tag-filters.md`.
 - Массовая пометка `from_translation` на prod (`pick_translation_fields` + `load_translation_fields`) — `backlog.md` §4.

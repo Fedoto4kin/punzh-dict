@@ -556,8 +556,8 @@ class SearchByParsedTestCase(TestCase):
 
     def test_dialect_label_theme_tiers_lex_vsg_then_theme_vsg(self):
         """
-        1) lexical∩тема∩всг. first; 2) rest of тема∩всг.
-        Non-всг. lexical and out-of-theme всг. stay out.
+        1) (lexical|related)∩тема∩всг. first; 2) rest of тема∩всг.
+        Model often puts «погода» in lexical and дождь/снег in related.
         """
         weather = SemanticField.objects.create(
             name="Природа и погода", definition="погода", sorting=2
@@ -583,22 +583,50 @@ class SearchByParsedTestCase(TestCase):
         groups, fallback = search_by_parsed(
             self._parsed(
                 query="весьегонские слова про погоду",
-                lexical=["погода", "дождь", "снег"],
+                lexical=["погода"],
+                related=["дождь", "снег", "ветер"],
                 fields=["Природа и погода"],
                 dialect="всг.",
             )
         )
         self.assertIsNone(fallback)
         arts = groups[0]["articles"]
-        words = {a["word"] for a in arts}
-        self.assertIn("vihma-vsg", words)
+        words = [a["word"] for a in arts]
+        wordset = set(words)
+        self.assertIn("vihma-vsg", wordset)
+        self.assertIn("alava-vsg", wordset)
+        self.assertNotIn("vihma", wordset)
+        self.assertNotIn("mood-vsg", wordset)
+        self.assertNotIn("kaza-vsg", wordset)
+        self.assertFalse(groups[0].get("dialect_relaxed"))
+        self.assertEqual(words[0], "vihma-vsg")
+        self.assertLess(words.index("vihma-vsg"), words.index("alava-vsg"))
+
+    def test_dialect_label_theme_keeps_vsg_when_no_lemma_vsg(self):
+        """No lemma∩всг. → still only тема∩всг., not non-всг. weather glosses."""
+        weather = SemanticField.objects.create(
+            name="Природа и погода", definition="погода", sorting=2
+        )
+        rain = Article.objects.create(word="vihma", article_html="<b>v</b>")
+        ArticleIndexTranslate.objects.create(article=rain, rus_word="дождь")
+        ArticleSemanticField.objects.create(article=rain, field=weather)
+        land = Article.objects.create(word="alava-vsg", article_html="<b>a</b>")
+        ArticleIndexTag.objects.create(article=land, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=land, field=weather)
+        ArticleIndexTranslate.objects.create(article=land, rus_word="низина")
+        groups, _ = search_by_parsed(
+            self._parsed(
+                query="весьегонские слова про погоду",
+                lexical=["погода"],
+                related=["дождь", "снег"],
+                fields=["Природа и погода"],
+                dialect="всг.",
+            )
+        )
+        words = {a["word"] for a in groups[0]["articles"]}
         self.assertIn("alava-vsg", words)
         self.assertNotIn("vihma", words)
-        self.assertNotIn("mood-vsg", words)
-        self.assertNotIn("kaza-vsg", words)
         self.assertFalse(groups[0].get("dialect_relaxed"))
-        # Lexical всг. before theme-only всг.
-        self.assertEqual(arts[0]["word"], "vihma-vsg")
 
     def test_dialect_plus_field_relaxes_when_field_dialect_empty(self):
         """field∩всг. empty → show theme lemmas without dialect, not all всг."""

@@ -453,30 +453,30 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     active_place_ids = place_ids
     active_dialect_ids = dialect_ids
 
-    # Lexical anchors in theme∩говор (translations/focus only — not KW illustrations).
+    # Lemma anchors = translations of lexical|focus|related ∩ тема (not KW).
+    lemma_in_theme = set()
+    if field_pool_raw and (lexical or focus or related):
+        lemma_in_theme = theme_tr_raw & field_pool_raw
     lex_vsg = set()
-    if (dialect_ids or place_ids) and field_pool_raw and (lexical or focus):
-        lex_vsg = _content_from(
-            _apply_and_filters(lex_ids_raw, place_ids, dialect_ids),
-            _apply_and_filters(exact_translate_ids(focus), place_ids, dialect_ids),
-            _apply_and_filters(_lemma_hit_ids(focus), place_ids, dialect_ids),
-        )
-        lex_vsg &= field_pool_raw
+    if lemma_in_theme and (dialect_ids or place_ids):
+        lex_vsg = _apply_and_filters(lemma_in_theme, place_ids, dialect_ids)
 
     if label_theme and not other_tags:
-        # Tier 1: lexical∩тема∩говор; tier 2: rest of тема∩говор.
+        # Query named a говор → answer with that говор, not «погода по всему
+        # словарю» under dialect_relaxed. Tier 1: lemma∩тема∩говор; tier 2:
+        # rest of тема∩говор. Non-всг. glosses are not shown as if they were всг.
         theme_vsg = set(primary_field_pool or field_pool)
+        if primary_theme:
+            fields = list(primary_theme) if len(primary_theme) == 1 else list(fields)
         main_ids = set(lex_vsg) | theme_vsg
         content_ids = set(lex_vsg)
-        if theme_vsg:
-            field_pool = theme_vsg
-            if primary_theme:
-                fields = (
-                    list(primary_theme) if len(primary_theme) == 1 else list(fields)
-                )
-        # Scoring: only dialect lexical anchors count as lex hits.
+        field_pool = set(theme_vsg)
         lex_ids = set(lex_vsg)
         field_tr_ids = set(lex_vsg)
+        # KW illustrations must not outrank («дождь» on муравейник / чибис).
+        kw_lex = set()
+        kw_focus = set()
+        theme_ids = set(theme_tr_raw) & (field_pool_raw or set())
     elif other_tags and other_ids:
         field_tag = (primary_field_pool & other_ids) if primary_field_pool else set()
         if field_tag:
@@ -591,6 +591,8 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         active_dialect_ids,
     )
     demote_ids = main_ids - direct_ids
+    if label_theme and lex_vsg:
+        demote_ids |= main_ids - lex_vsg
     # No own translations (KW/illustration-only) → same demote tier as см./от.
     if main_ids:
         with_tr = set(

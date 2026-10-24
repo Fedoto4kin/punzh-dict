@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 
 # Cheaper/slower Timeweb models need more headroom than YandexGPT-class.
 PARSE_TIMEOUT = 30
-# Lite models sometimes repeat one lemma until the JSON is truncated.
-PARSE_MAX_TOKENS = 600
+# Output cap. Haiku spends part of this budget before the JSON, so 600
+# came back empty (finish_reason=length). 2000 still stops a repeat loop.
+PARSE_MAX_TOKENS = 2000
 MAX_QUERY_LEN = 300
 MAX_LIST_ITEMS = 10
 MAX_RELATED_ITEMS = 12
