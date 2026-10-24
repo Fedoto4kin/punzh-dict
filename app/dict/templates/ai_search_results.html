@@ -8,7 +8,7 @@
             <strong>Как поняли:</strong> {{ parsed.display }}
             {% endif %}
             {% if parsed.axes_display %}
-            {% if parsed.display %}<br>{% endif %}<span class="text-muted">Что искали:</span> {{ parsed.axes_display }}
+            {% if parsed.display %}<br>{% endif %}<span class="text-muted">Что искали:</span> {{ parsed.axes_display|link_ontology_themes:ontology_fields }}
             {% endif %}
             {% if parsed.focus %}
             <br><span class="small text-muted">В фокусе:

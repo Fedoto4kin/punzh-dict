@@ -1,12 +1,36 @@
 import re
 
 from django import template
+from django.urls import reverse
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from ..helpers import normalization
 from ..see_audit import link_deriv_lemmas, link_see_lemmas
 from ..tag_highlight import highlight_tags as highlight_tags_html
 
 register = template.Library()
+
+
+@register.filter
+def link_ontology_themes(text, fields):
+    """Turn SemanticField names in axes_display into /ontology/<id>/ links."""
+    if not text:
+        return ""
+    escaped = escape(text)
+    if not fields:
+        return mark_safe(escaped)
+    # Longest names first so shorter substrings do not break longer labels.
+    ordered = sorted(
+        (f for f in fields if f.get("id") and f.get("name")),
+        key=lambda f: len(f["name"]),
+        reverse=True,
+    )
+    for f in ordered:
+        name = escape(f["name"])
+        href = reverse("ontology_field", args=[f["id"]])
+        escaped = escaped.replace(name, f'<a href="{escape(href)}">{name}</a>')
+    return mark_safe(escaped)
 
 
 @register.filter

@@ -61,6 +61,7 @@ class AiSearchJobApiTestCase(TestCase):
             "dialect": None,
             "dropped": [],
             "display": "искали: коза",
+            "axes_display": "коза; темы: Животный мир",
             "krl_headword": False,
             "warnings": [],
             "error": None,
@@ -102,11 +103,17 @@ class AiSearchJobApiTestCase(TestCase):
         self.assertEqual(partial.status_code, 200)
         self.assertContains(partial, "kaza")
         self.assertContains(partial, "card-body")
+        theme_href = reverse("ontology_field", args=[self.field.id])
+        self.assertContains(partial, f'href="{theme_href}"')
+        self.assertContains(partial, "Животный мир")
+        self.assertNotContains(partial, "Открыть тему")
 
         page = self.client.get(reverse("ai_search"), {"job": job_id})
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "искали: коза")
         self.assertContains(page, "kaza")
+        self.assertContains(page, f'href="{theme_href}"')
+        self.assertNotContains(page, "Открыть тему")
 
     def test_sort_switch_reuses_job_without_llm(self):
         from dict.ai.jobs import run_job

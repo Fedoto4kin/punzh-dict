@@ -65,7 +65,7 @@
             </div>
             <p class="small text-muted pl-1 mb-0 mt-1" id="ai-meta-links">
                 {% if query %}
-                <a href="/search/{{ query|urlencode }}" id="ai-literal-link">Искать «{{ query }}» буквально</a><span id="ai-ontology-links">{% for f in ontology_fields %} · <a href="{% url 'ontology_field' f.id %}">Открыть тему «{{ f.name }}»</a>{% endfor %}</span>
+                <a href="/search/{{ query|urlencode }}" id="ai-literal-link">Искать «{{ query }}» буквально</a>
                 · порядок:
                 {% if sort == sort_alpha %}
                 <a href="#" data-ai-sort="{{ sort_relevance }}" class="ai-sort-link">по смыслу</a>
@@ -75,7 +75,7 @@
                 · <a href="#" data-ai-sort="{{ sort_alpha }}" class="ai-sort-link">по алфавиту</a>
                 {% endif %}
                 {% else %}
-                <a href="/search/" id="ai-literal-link" class="d-none"></a><span id="ai-ontology-links"></span>
+                <a href="/search/" id="ai-literal-link" class="d-none"></a>
                 <span class="text-muted" id="ai-meta-placeholder">После запроса появятся ссылки и порядок сортировки.</span>
                 {% endif %}
             </p>
@@ -200,30 +200,6 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  function updateOntologyLinks(fields) {
-    var slot = document.getElementById("ai-ontology-links");
-    if (!slot) return;
-    if (!fields || !fields.length) {
-      slot.innerHTML = "";
-      return;
-    }
-    slot.innerHTML = fields
-      .map(function (f) {
-        var id = f && f.id;
-        var name = (f && f.name) || "";
-        if (!id || !name) return "";
-        return (
-          ' · <a href="/ontology/' +
-          encodeURIComponent(id) +
-          '/">Открыть тему «' +
-          escapeHtml(name) +
-          "»</a>"
-        );
-      })
-      .filter(Boolean)
-      .join("");
-  }
-
   function showError(msg, query) {
     setStatus("");
     resultsEl.innerHTML =
@@ -260,12 +236,10 @@
         if (data.status === "done") {
           setCurrentJobId(jobId);
           updateHistory(query, jobId, sort);
-          updateOntologyLinks(data.ontology_fields || []);
           return loadPartial(jobId);
         }
         if (data.status === "error") {
           setCurrentJobId("");
-          updateOntologyLinks([]);
           showError(
             "Разбор не удался" + (data.error ? " (" + data.error + ")" : "") + ".",
             query
@@ -288,7 +262,6 @@
     setStatus("Разбираем запрос…", true);
     resultsEl.innerHTML = "";
     setCurrentJobId("");
-    updateOntologyLinks([]);
     updateHistory(query, "", sort);
     fetch(createUrl, {
       method: "POST",
