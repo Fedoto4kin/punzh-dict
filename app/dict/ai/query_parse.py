@@ -26,6 +26,8 @@ from dict.ai.query_prompts import (
 logger = logging.getLogger(__name__)
 
 PARSE_TIMEOUT = 15
+# Lite models sometimes repeat one lemma until the JSON is truncated.
+PARSE_MAX_TOKENS = 600
 MAX_QUERY_LEN = 300
 MAX_LIST_ITEMS = 10
 MAX_RELATED_ITEMS = 12
@@ -594,7 +596,7 @@ def _normalize_parsed(
     }
 
 
-def parse_query(query, timeout=PARSE_TIMEOUT):
+def parse_query(query, timeout=PARSE_TIMEOUT, model=None):
     """
     Parse one user query string. Returns a dict with ok, axes, parse_ok, warnings,
     raw, error, meta. ok=False only on LLM/infra failure; parse_ok=False means
@@ -602,6 +604,9 @@ def parse_query(query, timeout=PARSE_TIMEOUT):
 
     Latin/KRL headword queries that hit ArticleIndexWord skip the LLM
     (krl_headword=True); ä/a are NOT folded — kazi ≠ käzi.
+
+    model overrides TIMEWEB_AI_MODEL_QUERY (comparison runs). None keeps
+    the configured model.
     """
     query = (query or "").strip()
     if not query:
@@ -640,12 +645,13 @@ def parse_query(query, timeout=PARSE_TIMEOUT):
         row["tag"]: row.get("name") or "" for row in tag_rows if row.get("type") == 1
     }
     tag_aliases = _tag_alias_map(tag_rows)
-    model = getattr(settings, "TIMEWEB_AI_MODEL_QUERY", "")
+    model = model or getattr(settings, "TIMEWEB_AI_MODEL_QUERY", "")
     data = ai_client.chat_json(
         SYSTEM_PROMPT_QUERY_PARSE,
         build_query_parse_user_prompt(query, field_defs, tag_rows),
         model,
         timeout=timeout,
+        max_tokens=PARSE_MAX_TOKENS,
     )
     latency_ms = int((time.monotonic() - t0) * 1000)
 

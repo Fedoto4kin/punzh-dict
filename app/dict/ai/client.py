@@ -51,28 +51,32 @@ def is_available():
     return _get_client() is not None
 
 
-def chat_json(system, user, model, timeout=10):
+def chat_json(system, user, model, timeout=10, max_tokens=None):
     """
     Один запрос к УКАЗАННОЙ модели, ожидающий JSON-ответ.
     model — строка вида 'yandex/yandexgpt-lite' или 'deepseek/deepseek-v4-flash'
     (берётся вызывающим из settings: TIMEWEB_AI_MODEL_QUERY для разбора запроса,
     TIMEWEB_AI_MODEL_CLASSIFY для классификации слова).
+    max_tokens ограничивает ответ: у lite-модели список лемм иногда зацикливается.
     Возвращает распарсенный объект или None (при любой проблеме — тихо,
     чтобы вызывающий ушёл в fallback).
     """
     client = _get_client()
     if client is None:
         return None
+    kwargs = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "temperature": 0,
+        "timeout": timeout,
+    }
+    if max_tokens:
+        kwargs["max_tokens"] = max_tokens
     try:
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            temperature=0,
-            timeout=timeout,
-        )
+        resp = client.chat.completions.create(**kwargs)
         text = resp.choices[0].message.content
     except Exception as e:  # noqa: BLE001
         logger.warning("AI-запрос не удался (уходим в fallback): %s", e)
