@@ -399,6 +399,31 @@ class SearchByParsedTestCase(TestCase):
         self.assertIn("kirota", words)
         self.assertNotIn("lehmä", words)
 
+    def test_soft_tag_constrains_pos_only_dump(self):
+        """«бранные существительные» → бран.∩s, not every noun."""
+        tag_s = Tag.objects.create(
+            tag="s", name="substantivum", type=2, level=0, sorting=2
+        )
+        swear_n = Article.objects.create(word="pahus", article_html="<b>p</b>")
+        ArticleIndexTag.objects.create(article=swear_n, tag=self.tag_br)
+        ArticleIndexTag.objects.create(article=swear_n, tag=tag_s)
+        plain_n = Article.objects.create(word="lehmä-s", article_html="<b>l</b>")
+        ArticleIndexTag.objects.create(article=plain_n, tag=tag_s)
+        swear_v = Article.objects.create(word="kirota-v", article_html="<b>k</b>")
+        ArticleIndexTag.objects.create(article=swear_v, tag=self.tag_br)
+
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="найди слова-ругательства существительные",
+                tags=["s"],
+                tags_soft=["бран."],
+            )
+        )
+        self.assertIsNone(fallback)
+        self.assertEqual(len(groups), 1)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertEqual(words, {"pahus"})
+
     def test_soft_tag_unions_field_pool_even_under_hard_pos(self):
         """Inferred soft mark enters via soft∩field; hard v must not hide it."""
         tag_v = Tag.objects.create(

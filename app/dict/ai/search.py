@@ -574,14 +574,19 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             # POS-only browse («глаголы»).
             main_ids = set(pos_ids)
 
-    # Soft marks: never AND, but do enter candidates so ranking can surface them.
-    # Applied after POS so soft∩field (e.g. бранн.) is not wiped by v.
-    # With a field → soft ∩ field (bounded). Else only if main still empty.
+    # Soft marks: never hard-AND onto a theme, but must enter / constrain
+    # candidates. Applied after POS so soft∩field (e.g. бранн.) is not wiped
+    # by v. With a field → soft ∩ field (union into main). Empty main → all
+    # soft. POS-only dump (no theme/content) → soft ∩ POS, else «бранные
+    # существительные» becomes every noun in the dictionary.
+    theme_or_mark = bool(content_ids or field_ids or other_tags)
     if soft_tag_ids:
         if field_pool:
             main_ids |= soft_tag_ids & field_pool
         elif not main_ids:
             main_ids |= set(soft_tag_ids)
+        elif pos_ids and not theme_or_mark:
+            main_ids &= soft_tag_ids
 
     # One hop of incoming см./от only (stubs → hit), not outgoing hit → target.
     direct_ids = set(main_ids)

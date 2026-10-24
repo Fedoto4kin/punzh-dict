@@ -32,7 +32,7 @@ AI-поиск — **отдельный контур** (`/ai-search/`), не ра
          fallback → /search/…
 ```
 
-LLM re-rank после retrieval — `docs/plans/ai-search-llm-rerank.md`
+LLM re-rank после retrieval выключен (`AI_SEARCH_LLM_RERANK=0`, гипотеза не подтвердилась) — `docs/plans/ai-search-llm-rerank.md`
 (голова: order-префикс; хвост: `keep_tail`; модель `TIMEWEB_AI_MODEL_RERANK`).
 Пометы: hard (`tags`, AND) vs soft (`tags_soft`, union∩field + ранг);
 POS сужает; relax-on-empty если hard ∩ lexical пуст.
@@ -72,7 +72,7 @@ REPL `ai_query` по-прежнему синхронный. Обратная з�
 | `place` | `str\|null` | Ареальная помета (Tag type 1): точное или ближайшее село из списка. |
 | `fields` | `[str]` | Имена **строго** из `SemanticField.name`. Для запросов только про пометы — обычно пусто. |
 | `tags` | `[str]` | Hard-пометы из текста (type 2/3). Несколько = **AND**. POS после retrieval только сужает. |
-| `tags_soft` | `[str]` | Вывод модели (type 3 без явного упоминания); не AND — `soft∩field` + ранг. |
+| `tags_soft` | `[str]` | Вывод модели (type 3 без явного упоминания); не AND на тему — `soft∩field` + ранг; без темы с POS → `soft∩POS` (как в предметном указателе). |
 | `dialect` | `str\|null` | Говор (Tag type 4), если явно назван / выводим из географии. |
 | `dropped` | `[str]` | Служебное: «по-карельски», «найди», «все слова», «связанные с», «как сказать», «перевод» — не ищем буквально. |
 | `display` | `str` | UI «Как поняли» — проза LLM (клип); пусто → только оси. |

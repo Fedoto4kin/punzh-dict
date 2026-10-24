@@ -2,10 +2,12 @@
 
 **Статус (2026-10-24):** **закрытая альфа на prod.** Разбор (промпт 1.15),
 retrieval (hard/soft-пометы, POS сужает, говор+тема, см. входящие), async
-job+poll (job привязан к сессии), LLM re-rank головы + `keep_tail`, REPL
-`manage.py ai_query`. Вход только по прямой ссылке `/ai-search/` (в шапке нет).
-Спека async: [`plans/ai-search-async.md`](plans/ai-search-async.md). Re-rank:
-[`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md). Контракт
+job+poll (job привязан к сессии), REPL `manage.py ai_query`. LLM re-rank
+выключен (`AI_SEARCH_LLM_RERANK=0` локально и на prod): гипотеза не подтвердилась, код под
+удаление или переделку.
+([`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md)).
+Вход только по прямой ссылке `/ai-search/` (в шапке нет).
+Спека async: [`plans/ai-search-async.md`](plans/ai-search-async.md). Контракт
 разбора: [`SPEC_ai_query_parse.md`](SPEC_ai_query_parse.md). Очередь:
 `docs/plans/INDEX.md`.
 
@@ -70,10 +72,11 @@ AI-поиск — своя страница `/ai-search/`. Обычный пои
 ### 2. Разбор моделью
 Русский запрос → модель (YandexGPT через шлюз) → оси: поля + пометы + говор.
 **Hard-пометы** (явные в тексте) — AND. **Soft** (`tags_soft`, вывод модели) —
-не опустошают выдачу: union `soft∩field` + бонус ранга. **POS (type 2)** только
-сужает уже набранное (не `main = field∩v`). Говор + тема: при пустом ∩ —
-поле∩говор или relax говора, не дамп всех всг. Контракт —
-`docs/SPEC_ai_query_parse.md`.
+не опустошают тему: union `soft∩field` + бонус ранга; без темы с POS —
+`soft∩POS` (как в предметном указателе: «бранные существительные» ≠ все
+существительные). **POS (type 2)** только сужает уже набранное (не
+`main = field∩v`). Говор + тема: при пустом ∩ — поле∩говор или relax говора,
+не дамп всех всг. Контракт — `docs/SPEC_ai_query_parse.md`.
 
 ### 3. Поиск + группы по ПРИРОДЕ попадания (одноуровневые)
 Результаты — группами, ранжированными по природе попадания (это И порядок, И
@@ -107,9 +110,10 @@ Jobs: create пишет `client_key` (= session); status / partial / `?job=` т�
 ## Ранжирование
 
 Детерминированный score (`dict/ai/rank.py`: focus exact ≫ lexical ≫ field-tr ≫
-KW), затем опционально LLM re-rank топ-30: перестановка головы + `keep_tail`
+KW). LLM re-rank топ-30 в коде есть и выключен: на эталонах не поднял точный
+перевод выше SQL
 ([`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md)).  
-`?sort=relevance|alpha` (alpha без LLM).
+`?sort=relevance|alpha`.
 
 ---
 
@@ -170,7 +174,7 @@ KW), затем опционально LLM re-rank топ-30: перестано
 | Лексический `/search/` | baseline готов, fallback возможен |
 | Шлюз Timeweb + `parse_query` | канал есть; разбор JSON есть |
 | `manage.py ai_query`, retrieval, `/ai-search/` async | **на prod** (закрытая альфа) |
-| LLM re-rank (`AI_SEARCH_LLM_RERANK`, MiMo Flash) | **на prod** (2026-10-24) |
+| LLM re-rank | выключен (2026-10-24): гипотеза не подтвердилась; код под удаление или переделку |
 
 Не блокеры альфы: beta-логи 👍/👎, пункт в меню, повторный LLM-cleanup, чистка
 keywords, фильтр по `from_translation`, эмбеддинги (этап 2).
