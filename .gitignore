@@ -1,6 +1,9 @@
 .env
 .idea
 
+# Article draft (Studia Nordica) — keep local, do not commit
+research/studia-nordica/article-draft.md
+
 *.log
 *.pot
 *.pyc

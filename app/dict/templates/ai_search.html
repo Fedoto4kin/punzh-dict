@@ -123,7 +123,8 @@
   var csrfInput = form.querySelector("[name=csrfmiddlewaretoken]");
   var createUrl = "{% url 'ai_search_job_create' %}";
   var pollMs = 500;
-  var maxWaitMs = 30000;
+  // Parse ≤30s + optional re-rank ≤25s + slack (cheaper/slower models).
+  var maxWaitMs = 90000;
   // Live job id — SSR json_script goes stale after a new async search.
   var currentJobId = "";
 

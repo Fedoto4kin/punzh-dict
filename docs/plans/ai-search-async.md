@@ -18,7 +18,7 @@ Realtime и т.п.). Self-hosted Redis не вводим без отдельно
 | Слой | Лимит | Роль |
 |------|-------|------|
 | uWSGI | **`harakiri = 20`** | убивает запрос >20 с |
-| LLM | `PARSE_TIMEOUT = 15` | разбор запроса |
+| LLM | `PARSE_TIMEOUT = 30` | разбор (дешёвые модели медленнее) |
 | Nginx | `uwsgi_read_timeout 60s` | шире harakiri — не спасает |
 | Prod | 4 process, threads on | WSGI, не ASGI |
 

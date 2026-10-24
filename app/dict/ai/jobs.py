@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 _lock = threading.Lock()
 _inflight: set[str] = set()
 
-STALE_RUNNING_SECONDS = 90
+# Parse (30s) + optional re-rank (25s) + SQL slack; must exceed UI maxWaitMs.
+STALE_RUNNING_SECONDS = 120
 JOB_TTL_HOURS = 24
 RATE_LIMIT_PER_MINUTE = 20
 MAX_QUERY_LEN = 300

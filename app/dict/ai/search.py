@@ -9,6 +9,15 @@ from __future__ import annotations
 
 from django.db.models import Count, Prefetch, Q
 
+from dict.ai.rank import (
+    SORT_ALPHA,
+    SORT_RELEVANCE,
+    exact_keyword_ids,
+    exact_translate_ids,
+    normalize_sort,
+    order_articles,
+    relevance_score,
+)
 from dict.models import (
     Article,
     ArticleAddition,
@@ -18,15 +27,6 @@ from dict.models import (
     ArticleSemanticField,
     SemanticField,
     Tag,
-)
-from dict.ai.rank import (
-    SORT_ALPHA,
-    SORT_RELEVANCE,
-    exact_keyword_ids,
-    exact_translate_ids,
-    normalize_sort,
-    order_articles,
-    relevance_score,
 )
 from dict.search import (
     _query_tokens,
@@ -459,11 +459,26 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             other_tags = []
 
     # Empty after dialect/place AND: never dump all всг. when theme was asked.
+    # Browse only the primary/LLM theme ∩ dialect — not the enrich-widened pool
+    # (lemma «погода» also sits on Состояние/Эмоции → hundreds of всг. articles).
     if not main_ids:
         if has_theme:
-            if field_pool:
-                # Browse field ∩ dialect even if lemma ∩ field was empty.
-                main_ids = set(field_pool)
+            browse_names = list(llm_fields) or list(primary_theme)
+            browse_pool = _apply_and_filters(
+                _field_ids(browse_names, include_referrers=False),
+                place_ids,
+                dialect_ids,
+            )
+            if not browse_pool and primary_field_pool:
+                browse_pool = set(primary_field_pool)
+            if browse_pool:
+                main_ids = set(browse_pool)
+                # Rank/UI: stick to the browsed theme, not enrich neighbors.
+                if browse_names:
+                    fields = list(browse_names)
+                    field_pool = set(browse_pool)
+                    primary_theme = browse_names[:1]
+                    primary_field_pool = set(browse_pool)
             else:
                 # No hits in говор for this theme → drop dialect/place, keep theme.
                 dialect_relaxed = bool(dialect_ids)
@@ -585,15 +600,33 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     return groups, None
 
 
+def _fold_lemma(text):
+    return (text or "").casefold().replace("ё", "е")
+
+
 def check_benchmark_case(parsed, case):
     """Soft checks for one benchmark case. Returns (ok, detail)."""
     problems = []
+    lexical = list(parsed.get("lexical") or [])
+    lexical_folded = {_fold_lemma(x) for x in lexical}
     for needle in case.get("lexical_contains") or []:
-        if needle not in (parsed.get("lexical") or []):
+        if needle not in lexical:
             problems.append(f"lexical missing {needle!r}")
+    lexical_any = case.get("lexical_any") or []
+    if lexical_any and not lexical_folded.intersection(
+        _fold_lemma(x) for x in lexical_any
+    ):
+        problems.append(f"lexical_any none of {lexical_any}")
+    focus = list(parsed.get("focus") or [])
     for needle in case.get("focus_contains") or []:
-        if needle not in (parsed.get("focus") or []):
+        if needle not in focus:
             problems.append(f"focus missing {needle!r}")
+    tags = list(parsed.get("tags") or [])
+    for needle in case.get("tags_contains") or []:
+        if needle not in tags:
+            problems.append(f"tags missing {needle!r}")
+    if case.get("dialect") and parsed.get("dialect") != case["dialect"]:
+        problems.append(f"dialect {parsed.get('dialect')!r} != {case['dialect']!r}")
     tags_any = case.get("tags_any") or []
     if tags_any:
         have = set(parsed.get("tags") or [])
@@ -605,7 +638,7 @@ def check_benchmark_case(parsed, case):
         if n not in dropped and not any(n in d or d in n for d in dropped):
             problems.append(f"dropped missing {needle!r}")
     for forbidden in case.get("must_not_have_tags") or []:
-        if forbidden in (parsed.get("tags") or []):
+        if forbidden in tags:
             problems.append(f"unexpected tag {forbidden!r}")
     fields_any = case.get("fields_any") or []
     if fields_any:

@@ -181,5 +181,56 @@
     "focus_contains": [
       "бабочка"
     ]
+  },
+  {
+    "query": "приметы про животных",
+    "source": "page:ai-search",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "tags_contains": [
+      "примета"
+    ],
+    "fields_any": [
+      "Животный мир"
+    ],
+    "lexical_any": [
+      "животное",
+      "животные"
+    ],
+    "must_not_have_tags": [
+      "с.-х."
+    ],
+    "comment": "помета «примета» — фильтр, не тема; поле животных"
+  },
+  {
+    "query": "как варили пиво",
+    "source": "page:ai-search",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "lexical_any": [
+      "пиво",
+      "варить"
+    ],
+    "fields_any": [
+      "Пища и напитки"
+    ],
+    "must_not_have_tags": [
+      "с.-х."
+    ],
+    "comment": "тема пива; не предметная помета с.-х."
+  },
+  {
+    "query": "весьегонские слова про погоду",
+    "source": "page:ai-search",
+    "require_ok": true,
+    "require_parse_ok": true,
+    "dialect": "всг.",
+    "fields_any": [
+      "Природа и погода"
+    ],
+    "lexical_any": [
+      "погода"
+    ],
+    "comment": "говор всг. и тема погоды"
   }
 ]

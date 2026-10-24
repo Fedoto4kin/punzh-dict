@@ -19,16 +19,12 @@ from dict.ai.rerank_prompts import (
     SYSTEM_PROMPT_RERANK,
     build_rerank_user_prompt,
 )
-from dict.models import (
-    ArticleIndexTag,
-    ArticleIndexTranslate,
-    ArticleSemanticField,
-)
+from dict.models import ArticleIndexTag, ArticleIndexTranslate, ArticleSemanticField
 
 logger = logging.getLogger(__name__)
 
 RERANK_TOP_N = 30
-RERANK_TIMEOUT = 12
+RERANK_TIMEOUT = 25
 
 
 def rerank_enabled():
@@ -149,16 +145,22 @@ def _build_candidates(article_rows):
     return out
 
 
-def llm_rerank_head(query, candidates, *, tail_count=0, timeout=RERANK_TIMEOUT):
+def llm_rerank_head(
+    query, candidates, *, tail_count=0, timeout=RERANK_TIMEOUT, model=None
+):
     """
     Call LLM. Return {"order": [...], "keep_tail": bool} or None on failure.
     order is a full permutation of candidate ids.
+
+    model overrides TIMEWEB_AI_MODEL_RERANK (comparison runs).
     """
     if not candidates:
         return {"order": [], "keep_tail": True}
     expected = [c["id"] for c in candidates]
-    model = getattr(settings, "TIMEWEB_AI_MODEL_RERANK", "") or getattr(
-        settings, "TIMEWEB_AI_MODEL_QUERY", ""
+    model = (
+        model
+        or getattr(settings, "TIMEWEB_AI_MODEL_RERANK", "")
+        or getattr(settings, "TIMEWEB_AI_MODEL_QUERY", "")
     )
     if not model:
         return None

@@ -11,6 +11,8 @@ class NormalizeParsedTestCase(TestCase):
         self.field_defs = {
             "Животный мир": "животные",
             "Речь и звуки": "речь",
+            "Природа и погода": "осадки, ландшафт",
+            "Состояние и изменение": "состояние",
         }
         self.allowed_tags = ["бран.", "неодобр.", "всг.", "примета", "v", "s"]
         self.allowed_dialects = {"всг.": "весьегонский", "толм.": "толмачевский"}
@@ -85,6 +87,45 @@ class NormalizeParsedTestCase(TestCase):
         # focus is ranking-only — not echoed in axes_display
         self.assertNotIn("ответ:", (payload.get("axes_display") or "").lower())
         self.assertNotIn("нож", payload.get("axes_display") or "")
+
+    def test_refine_fields_by_lemma_label(self):
+        """«погода» → «Природа и погода», даже если LLM дал чужое поле."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["погода"],
+                "focus": [],
+                "related": [],
+                "fields": ["Животный мир", "Состояние и изменение"],
+                "tags": [],
+                "dialect": "всг.",
+                "dropped": ["весьегонские", "слова"],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+        )
+        self.assertEqual(payload["fields"], ["Природа и погода"])
+        self.assertIn("Природа и погода", payload["axes_display"])
+
+    def test_refine_fields_stem_animals(self):
+        """«животные» stem-match → «Животный мир»."""
+        payload = qp._normalize_parsed(
+            {
+                "lexical": ["животные"],
+                "focus": [],
+                "related": [],
+                "fields": ["Речь и звуки"],
+                "tags": [],
+                "dialect": None,
+                "dropped": [],
+                "display": "",
+            },
+            self.field_defs,
+            self.allowed_tags,
+            self.allowed_dialects,
+        )
+        self.assertEqual(payload["fields"], ["Животный мир"])
 
     def test_promote_pos_and_priemeta_into_tags(self):
         """«глаголы в приметах» free axes → tags примета + v."""

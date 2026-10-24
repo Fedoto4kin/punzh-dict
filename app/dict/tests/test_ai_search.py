@@ -527,6 +527,43 @@ class SearchByParsedTestCase(TestCase):
         self.assertNotIn("kaza-vsg", words)
         self.assertFalse(groups[0].get("dialect_relaxed"))
 
+    def test_dialect_browse_skips_enrich_neighbor_fields(self):
+        """
+        Empty lemma∩всг. must browse LLM theme∩всг., not enrich neighbors
+        (lemma «погода» often sits on Состояние/Эмоции too).
+        """
+        weather = SemanticField.objects.create(
+            name="Природа и погода", definition="погода", sorting=2
+        )
+        state = SemanticField.objects.create(
+            name="Состояние и изменение", definition="состояние", sorting=3
+        )
+        # Seed enrich: «погода» translation on a non-всг. state article
+        seed = Article.objects.create(word="seed-pogoda", article_html="<b>s</b>")
+        ArticleIndexTranslate.objects.create(article=seed, rus_word="погода")
+        ArticleSemanticField.objects.create(article=seed, field=state)
+        rain = Article.objects.create(word="vihma-vsg", article_html="<b>v</b>")
+        ArticleIndexTag.objects.create(article=rain, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=rain, field=weather)
+        mood = Article.objects.create(word="mood-vsg", article_html="<b>m</b>")
+        ArticleIndexTag.objects.create(article=mood, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=mood, field=state)
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="весьегонские слова про погоду",
+                lexical=["погода"],
+                fields=["Природа и погода"],
+                dialect="всг.",
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertIn("vihma-vsg", words)
+        self.assertNotIn("mood-vsg", words)
+        self.assertNotIn("kaza-vsg", words)
+        shown = [f["name"] for f in groups[0].get("fields") or []]
+        self.assertEqual(shown, ["Природа и погода"])
+
     def test_dialect_plus_field_relaxes_when_field_dialect_empty(self):
         """field∩всг. empty → show theme without dialect, not all всг."""
         weather = SemanticField.objects.create(
@@ -637,6 +674,24 @@ class BenchmarkCheckTestCase(TestCase):
             parsed, {"lexical_contains": ["слон"], "tags_any": ["xyz."]}
         )
         self.assertFalse(bad)
+
+        page_ok, page_detail = check_benchmark_case(
+            {
+                "ok": True,
+                "parse_ok": True,
+                "lexical": ["Животные"],
+                "tags": ["примета"],
+                "fields": ["Животный мир"],
+                "dialect": "всг.",
+            },
+            {
+                "lexical_any": ["животное", "животные"],
+                "tags_contains": ["примета"],
+                "dialect": "всг.",
+                "must_not_have_tags": ["с.-х."],
+            },
+        )
+        self.assertTrue(page_ok, page_detail)
 
 
 class LemmasWithExactTranslateTestCase(TestCase):

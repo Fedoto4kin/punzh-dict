@@ -25,7 +25,8 @@ from dict.ai.query_prompts import (
 
 logger = logging.getLogger(__name__)
 
-PARSE_TIMEOUT = 15
+# Cheaper/slower Timeweb models need more headroom than YandexGPT-class.
+PARSE_TIMEOUT = 30
 # Lite models sometimes repeat one lemma until the JSON is truncated.
 PARSE_MAX_TOKENS = 600
 MAX_QUERY_LEN = 300
@@ -94,6 +95,51 @@ DIALECT_META_LEMMAS = frozenset(
         "лексические параллели",
     }
 )
+
+
+def _normalize_yo(text):
+    return (text or "").translate(str.maketrans({"ё": "е"}))
+
+
+def _lemma_matches_field_label(lemma, name, definition=""):
+    """
+    True if a theme lemma appears in the ontology field name (or definition).
+
+    Used to refine LLM fields without a prompt change: «погода» →
+    «Природа и погода», «животные» → «Животный мир» (stem prefix).
+    """
+    lem = _normalize_yo(lemma).strip().lower()
+    if len(lem) < 3:
+        return False
+    blob = _normalize_yo(f"{name} {definition or ''}").lower()
+    if lem in blob:
+        return True
+    # RU inflection: животные / животный share «животн»
+    stem_len = 6 if len(lem) >= 6 else (5 if len(lem) >= 5 else 0)
+    return bool(stem_len and lem[:stem_len] in blob)
+
+
+def fields_matching_lemmas(lemmas, field_defs):
+    """
+    SemanticField names whose label/definition match any theme lemma.
+
+    field_defs: {name: definition}. Order follows field_defs insertion order.
+    """
+    seeds = []
+    seen = set()
+    for raw in lemmas or []:
+        lem = _normalize_yo(raw).strip()
+        key = lem.lower()
+        if lem and key not in seen:
+            seen.add(key)
+            seeds.append(lem)
+    if not seeds or not field_defs:
+        return []
+    out = []
+    for name, definition in field_defs.items():
+        if any(_lemma_matches_field_label(lem, name, definition) for lem in seeds):
+            out.append(name)
+    return out
 
 
 def looks_like_krl_query(query):
@@ -541,6 +587,12 @@ def _normalize_parsed(
         if not lexical and not focus:
             related = []
             fields = []
+
+    # Internal theme refine (no prompt): lemmas that literally match a field
+    # label win over speculative LLM fields («погода» ↛ «Животный мир»).
+    matched_fields = fields_matching_lemmas(list(lexical) + list(focus), field_defs)
+    if matched_fields:
+        fields = matched_fields
 
     # LLM sometimes puts the same lemma in lexical AND dropped («один два три»
     # → три in both). Keep the axis; strip contradictions from dropped.
