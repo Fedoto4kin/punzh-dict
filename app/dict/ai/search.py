@@ -361,9 +361,10 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     place = parsed.get("place")
     dialect = parsed.get("dialect")
     # Dialect/place + lemma in a field label («погода» → «Природа и погода»):
-    # keep LLM/label fields only — do not enrich-widen into neighbor fields.
-    # Do NOT browse the whole field when the model also gave concrete lemmas
-    # (дождь, снег…): those are the anchors; field is a contour, not a dump.
+    # keep LLM/label fields only (no enrich neighbors). Tiers:
+    #   1) lexical/focus hits that are in theme∩говор
+    #   2) then the rest of theme∩говор
+    # Relax говор only when theme∩говор is empty.
     field_defs = dict(SemanticField.objects.values_list("name", "definition"))
     matched_label_fields = fields_matching_lemmas(
         list(lexical) + list(focus), field_defs
@@ -452,7 +453,31 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     active_place_ids = place_ids
     active_dialect_ids = dialect_ids
 
-    if other_tags and other_ids:
+    # Lexical anchors in theme∩говор (translations/focus only — not KW illustrations).
+    lex_vsg = set()
+    if (dialect_ids or place_ids) and field_pool_raw and (lexical or focus):
+        lex_vsg = _content_from(
+            _apply_and_filters(lex_ids_raw, place_ids, dialect_ids),
+            _apply_and_filters(exact_translate_ids(focus), place_ids, dialect_ids),
+            _apply_and_filters(_lemma_hit_ids(focus), place_ids, dialect_ids),
+        )
+        lex_vsg &= field_pool_raw
+
+    if label_theme and not other_tags:
+        # Tier 1: lexical∩тема∩говор; tier 2: rest of тема∩говор.
+        theme_vsg = set(primary_field_pool or field_pool)
+        main_ids = set(lex_vsg) | theme_vsg
+        content_ids = set(lex_vsg)
+        if theme_vsg:
+            field_pool = theme_vsg
+            if primary_theme:
+                fields = (
+                    list(primary_theme) if len(primary_theme) == 1 else list(fields)
+                )
+        # Scoring: only dialect lexical anchors count as lex hits.
+        lex_ids = set(lex_vsg)
+        field_tr_ids = set(lex_vsg)
+    elif other_tags and other_ids:
         field_tag = (primary_field_pool & other_ids) if primary_field_pool else set()
         if field_tag:
             main_ids = set(field_tag)
@@ -470,38 +495,47 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
             main_ids = set(other_ids)
     else:
         main_ids = set(content_ids)
-        # Under dialect/place, keyword-only contour (illustrations) must not
-        # block relax-to-lemmas: «дождь» as KW on 3 всг. articles ≠ anchors.
         if field_tr_ids:
             main_ids |= field_tr_ids
-        if field_ids and (
-            content_ids or field_tr_ids or not (dialect_ids or place_ids)
-        ):
+        if field_ids:
             main_ids |= field_ids
         if other_tags and not other_ids:
             # Named hard mark with no articles — ignore mark, keep content.
             tags_hard_active = list(pos_tags)
             other_tags = []
 
-    # Empty after dialect/place AND.
-    # Prefer relaxing говор and keeping lexical anchors (дождь, снег…) over
-    # dumping the whole semantic field∩всг. (ландшафт + погода).
-    # Field∩говор browse only when there are no content lemmas to hang on.
+    # Empty after dialect/place AND: browse theme∩говор, else relax говор.
     if not main_ids:
         if has_theme:
-            has_content_lemmas = bool(lexical or focus or related)
-            if has_content_lemmas and (dialect_ids or place_ids):
+            browse_names = list(llm_fields) or list(primary_theme) or list(fields)
+            browse_pool = _apply_and_filters(
+                _field_ids(browse_names, include_referrers=False),
+                place_ids,
+                dialect_ids,
+            )
+            if not browse_pool and primary_field_pool:
+                browse_pool = set(primary_field_pool)
+            if browse_pool:
+                main_ids = set(browse_pool)
+                if browse_names:
+                    fields = list(browse_names)
+                    field_pool = set(browse_pool)
+                    primary_theme = browse_names[:1]
+                    primary_field_pool = set(browse_pool)
+            else:
+                # No hits in говор for this theme → drop dialect/place, keep lemmas.
                 dialect_relaxed = bool(dialect_ids)
                 place_relaxed = bool(place_ids)
                 active_place_ids = None
                 active_dialect_ids = None
-                # Contour against LLM/label fields only (no enrich neighbors).
                 browse_names = list(llm_fields) or list(primary_theme) or list(fields)
                 field_pool = _field_ids(browse_names, include_referrers=False)
-                primary_theme = browse_names[:1] if browse_names else primary_theme
-                primary_field_pool = _field_ids(primary_theme, include_referrers=False)
+                primary_field_pool = _field_ids(
+                    browse_names[:1] if browse_names else [], include_referrers=False
+                )
                 if browse_names:
                     fields = list(browse_names)
+                    primary_theme = browse_names[:1]
                 lex_ids = lex_ids_raw
                 theme_tr = theme_tr_raw
                 theme_kw = theme_kw_raw
@@ -521,65 +555,6 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
                 main_ids = set(content_ids)
                 if field_ids:
                     main_ids |= field_ids
-                if not main_ids and browse_names:
-                    # Lemmas miss the index entirely → field∩говор (not all dialect).
-                    browse_pool = _apply_and_filters(
-                        _field_ids(browse_names, include_referrers=False),
-                        place_ids,
-                        dialect_ids,
-                    )
-                    if browse_pool:
-                        main_ids = set(browse_pool)
-                        dialect_relaxed = False
-                        place_relaxed = False
-                        active_place_ids = place_ids
-                        active_dialect_ids = dialect_ids
-                        field_pool = set(browse_pool)
-                        primary_field_pool = set(browse_pool)
-            else:
-                browse_names = list(llm_fields) or list(primary_theme)
-                browse_pool = _apply_and_filters(
-                    _field_ids(browse_names, include_referrers=False),
-                    place_ids,
-                    dialect_ids,
-                )
-                if not browse_pool and primary_field_pool:
-                    browse_pool = set(primary_field_pool)
-                if browse_pool:
-                    main_ids = set(browse_pool)
-                    if browse_names:
-                        fields = list(browse_names)
-                        field_pool = set(browse_pool)
-                        primary_theme = browse_names[:1]
-                        primary_field_pool = set(browse_pool)
-                else:
-                    dialect_relaxed = bool(dialect_ids)
-                    place_relaxed = bool(place_ids)
-                    active_place_ids = None
-                    active_dialect_ids = None
-                    field_pool = field_pool_raw
-                    primary_field_pool = primary_field_pool_raw
-                    lex_ids = lex_ids_raw
-                    theme_tr = theme_tr_raw
-                    theme_kw = theme_kw_raw
-                    theme_ids = theme_ids_raw
-                    focus_exact = exact_translate_ids(focus)
-                    focus_soft = _lemma_hit_ids(focus)
-                    hard_tag_ids = hard_tag_ids_raw
-                    soft_tag_ids = soft_tag_ids_raw
-                    _, pos_tags, other_ids, pos_ids = _split_pos_tags(tags)
-                    other_ids = set(other_ids)
-                    pos_ids = set(pos_ids)
-                    tag_ids = set(hard_tag_ids) | set(soft_tag_ids)
-                    field_tr_ids, field_ids = _field_contour(
-                        field_pool, theme_tr, theme_kw
-                    )
-                    content_ids = _content_from(lex_ids, focus_exact, focus_soft)
-                    if fields and content_ids:
-                        content_ids &= field_pool
-                    main_ids = set(content_ids)
-                    if field_ids:
-                        main_ids |= field_ids
         elif dialect_ids:
             main_ids = set(dialect_ids)
         elif place_ids:
@@ -616,6 +591,14 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         active_dialect_ids,
     )
     demote_ids = main_ids - direct_ids
+    # No own translations (KW/illustration-only) → same demote tier as см./от.
+    if main_ids:
+        with_tr = set(
+            ArticleIndexTranslate.objects.filter(article_id__in=main_ids)
+            .values_list("article_id", flat=True)
+            .distinct()
+        )
+        demote_ids |= main_ids - with_tr
 
     def score(aid):
         return relevance_score(
