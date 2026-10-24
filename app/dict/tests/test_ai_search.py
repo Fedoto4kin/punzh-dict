@@ -564,6 +564,34 @@ class SearchByParsedTestCase(TestCase):
         shown = [f["name"] for f in groups[0].get("fields") or []]
         self.assertEqual(shown, ["Природа и погода"])
 
+    def test_dialect_label_theme_browses_full_field_not_sparse_lemma(self):
+        """
+        Lemma «погода» may hit a few всг. articles; thematic dialect query
+        must still browse the whole weather∩всг. field.
+        """
+        weather = SemanticField.objects.create(
+            name="Природа и погода", definition="погода", sorting=2
+        )
+        hit = Article.objects.create(word="pogoda-vsg", article_html="<b>p</b>")
+        ArticleIndexTranslate.objects.create(article=hit, rus_word="погода")
+        ArticleIndexTag.objects.create(article=hit, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=hit, field=weather)
+        rain = Article.objects.create(word="vihma-vsg", article_html="<b>v</b>")
+        ArticleIndexTag.objects.create(article=rain, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=rain, field=weather)
+        groups, fallback = search_by_parsed(
+            self._parsed(
+                query="весьегонские слова про погоду",
+                lexical=["погода"],
+                fields=["Природа и погода"],
+                dialect="всг.",
+            )
+        )
+        self.assertIsNone(fallback)
+        words = {a["word"] for a in groups[0]["articles"]}
+        self.assertEqual(words, {"pogoda-vsg", "vihma-vsg"})
+        self.assertNotIn("kaza-vsg", words)
+
     def test_dialect_plus_field_relaxes_when_field_dialect_empty(self):
         """field∩всг. empty → show theme without dialect, not all всг."""
         weather = SemanticField.objects.create(

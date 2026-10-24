@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from django.db.models import Count, Prefetch, Q
 
+from dict.ai.query_parse import fields_matching_lemmas
 from dict.ai.rank import (
     SORT_ALPHA,
     SORT_RELEVANCE,
@@ -357,11 +358,24 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     tags = list(parsed.get("tags") or [])
     tags_soft = list(parsed.get("tags_soft") or [])
     llm_fields = list(parsed.get("fields") or [])
-    # Theme for marks∩field: lexical/focus only (ignore related invented from «примета»).
-    theme_fields = _enrich_fields(llm_fields, focus, [], lexical)
-    fields = _enrich_fields(llm_fields, focus, related, lexical)
     place = parsed.get("place")
     dialect = parsed.get("dialect")
+    # Dialect/place + lemma that names a field («погода» → «Природа и погода»):
+    # thematic browse of that field∩говор — do not enrich-widen or thin-contour
+    # to the few articles that literally translate the theme word.
+    field_defs = dict(SemanticField.objects.values_list("name", "definition"))
+    matched_label_fields = fields_matching_lemmas(
+        list(lexical) + list(focus), field_defs
+    )
+    label_theme = bool((dialect or place) and matched_label_fields)
+    if label_theme:
+        # Prefer LLM fields when set; else ontology labels matched by lemmas.
+        fields = list(llm_fields) or list(matched_label_fields)
+        theme_fields = list(fields)
+    else:
+        # Theme for marks∩field: lexical/focus only (ignore related from «примета»).
+        theme_fields = _enrich_fields(llm_fields, focus, [], lexical)
+        fields = _enrich_fields(llm_fields, focus, related, lexical)
 
     focus_exact = exact_translate_ids(focus)
     focus_soft = _lemma_hit_ids(focus)
@@ -433,7 +447,12 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     active_place_ids = place_ids
     active_dialect_ids = dialect_ids
 
-    if other_tags and other_ids:
+    # «весьегонские слова про погоду»: browse field∩говор, not the handful of
+    # articles that translate «погода» (or enrich-neighbor contour hits).
+    if label_theme and (primary_field_pool or field_pool) and not other_tags:
+        main_ids = set(primary_field_pool or field_pool)
+        other_tags = []
+    elif other_tags and other_ids:
         field_tag = (primary_field_pool & other_ids) if primary_field_pool else set()
         if field_tag:
             main_ids = set(field_tag)
