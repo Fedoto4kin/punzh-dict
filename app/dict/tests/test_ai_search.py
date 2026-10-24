@@ -527,10 +527,10 @@ class SearchByParsedTestCase(TestCase):
         self.assertNotIn("kaza-vsg", words)
         self.assertFalse(groups[0].get("dialect_relaxed"))
 
-    def test_dialect_browse_skips_enrich_neighbor_fields(self):
+    def test_dialect_empty_lemma_relaxes_to_lexical_not_enrich_neighbors(self):
         """
-        Empty lemma∩всг. must browse LLM theme∩всг., not enrich neighbors
-        (lemma «погода» often sits on Состояние/Эмоции too).
+        Lemma∩всг. empty → relax dialect, keep lexical anchors ∩ LLM field.
+        Do not pull enrich-neighbor всг. articles (Состояние…).
         """
         weather = SemanticField.objects.create(
             name="Природа и погода", definition="погода", sorting=2
@@ -538,16 +538,13 @@ class SearchByParsedTestCase(TestCase):
         state = SemanticField.objects.create(
             name="Состояние и изменение", definition="состояние", sorting=3
         )
-        # Seed enrich: «погода» translation on a non-всг. state article
         seed = Article.objects.create(word="seed-pogoda", article_html="<b>s</b>")
         ArticleIndexTranslate.objects.create(article=seed, rus_word="погода")
-        ArticleSemanticField.objects.create(article=seed, field=state)
-        rain = Article.objects.create(word="vihma-vsg", article_html="<b>v</b>")
-        ArticleIndexTag.objects.create(article=rain, tag=self.tag_d)
-        ArticleSemanticField.objects.create(article=rain, field=weather)
+        ArticleSemanticField.objects.create(article=seed, field=weather)
         mood = Article.objects.create(word="mood-vsg", article_html="<b>m</b>")
         ArticleIndexTag.objects.create(article=mood, tag=self.tag_d)
         ArticleSemanticField.objects.create(article=mood, field=state)
+        ArticleIndexTranslate.objects.create(article=mood, rus_word="погода")
         groups, fallback = search_by_parsed(
             self._parsed(
                 query="весьегонские слова про погоду",
@@ -558,39 +555,45 @@ class SearchByParsedTestCase(TestCase):
         )
         self.assertIsNone(fallback)
         words = {a["word"] for a in groups[0]["articles"]}
-        self.assertIn("vihma-vsg", words)
+        self.assertIn("seed-pogoda", words)
         self.assertNotIn("mood-vsg", words)
         self.assertNotIn("kaza-vsg", words)
+        self.assertTrue(groups[0].get("dialect_relaxed"))
         shown = [f["name"] for f in groups[0].get("fields") or []]
         self.assertEqual(shown, ["Природа и погода"])
 
-    def test_dialect_label_theme_browses_full_field_not_sparse_lemma(self):
-        """
-        Lemma «погода» may hit a few всг. articles; thematic dialect query
-        must still browse the whole weather∩всг. field.
-        """
+    def test_dialect_rich_lexical_uses_lemmas_not_whole_field(self):
+        """Model anchors (дождь, снег…) → lemma hits, not dump of field∩всг."""
         weather = SemanticField.objects.create(
             name="Природа и погода", definition="погода", sorting=2
         )
-        hit = Article.objects.create(word="pogoda-vsg", article_html="<b>p</b>")
-        ArticleIndexTranslate.objects.create(article=hit, rus_word="погода")
-        ArticleIndexTag.objects.create(article=hit, tag=self.tag_d)
-        ArticleSemanticField.objects.create(article=hit, field=weather)
-        rain = Article.objects.create(word="vihma-vsg", article_html="<b>v</b>")
-        ArticleIndexTag.objects.create(article=rain, tag=self.tag_d)
+        rain = Article.objects.create(word="vihma", article_html="<b>v</b>")
+        ArticleIndexTranslate.objects.create(article=rain, rus_word="дождь")
         ArticleSemanticField.objects.create(article=rain, field=weather)
+        # всг. landscape in same field — must not appear via field dump
+        land = Article.objects.create(word="alava-vsg", article_html="<b>a</b>")
+        ArticleIndexTag.objects.create(article=land, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=land, field=weather)
+        ArticleIndexTranslate.objects.create(article=land, rus_word="низина")
+        # KW-only всг. hit must not block relax-to-lemmas
+        omen = Article.objects.create(word="omen-vsg", article_html="<b>o</b>")
+        ArticleIndexTag.objects.create(article=omen, tag=self.tag_d)
+        ArticleSemanticField.objects.create(article=omen, field=weather)
+        ArticleKeyword.objects.create(article=omen, word="дождь")
         groups, fallback = search_by_parsed(
             self._parsed(
                 query="весьегонские слова про погоду",
-                lexical=["погода"],
+                lexical=["погода", "дождь", "снег", "ветер"],
                 fields=["Природа и погода"],
                 dialect="всг.",
             )
         )
         self.assertIsNone(fallback)
         words = {a["word"] for a in groups[0]["articles"]}
-        self.assertEqual(words, {"pogoda-vsg", "vihma-vsg"})
+        self.assertIn("vihma", words)
+        self.assertNotIn("alava-vsg", words)
         self.assertNotIn("kaza-vsg", words)
+        self.assertTrue(groups[0].get("dialect_relaxed"))
 
     def test_dialect_plus_field_relaxes_when_field_dialect_empty(self):
         """field∩всг. empty → show theme without dialect, not all всг."""
