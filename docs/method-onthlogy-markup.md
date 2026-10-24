@@ -160,7 +160,7 @@ docker exec --user 1000:1000 -w /app/agents punzh_django \
   поля — подтягиваются на лету через входящий `ArticleLink` (на сайте:
   `article_ids_for_semantic_field` в `dict/search.py`). Поле в БД не копируется.
 
-Просмотр (закрытая бета, без ссылки в шапке): `/ontology/`, `/ontology/<id>/`.
+Просмотр: `/ontology/`, `/ontology/<id>/` (ссылка в шапке и на главной).
 Справочник и привязки в админке только читаются; правка — перезаливкой JSON.
 Выдача `/ontology/` **не** фильтрует по `from_translation`: статья во всех своих полях.
 
