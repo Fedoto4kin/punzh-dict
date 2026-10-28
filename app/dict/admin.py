@@ -49,11 +49,8 @@ from .translation_browser import (
     paginate_cards,
 )
 
-# CodeMirror 5 (CDN) — HTML source highlighting in admin, no WYSIWYG.
-CODEMIRROR_VERSION = "5.65.16"
-CODEMIRROR_CDN = (
-    f"https://cdnjs.cloudflare.com/ajax/libs/codemirror/{CODEMIRROR_VERSION}"
-)
+# CodeMirror 5 + js-beautify vendored under static/admin/vendor (no CDN).
+_CM = "admin/vendor/codemirror"
 
 
 class HtmlSourceWidget(Textarea):
@@ -71,17 +68,17 @@ class HtmlSourceWidget(Textarea):
     class Media:
         css = {
             "all": (
-                f"{CODEMIRROR_CDN}/codemirror.min.css",
+                f"{_CM}/codemirror.min.css",
                 "admin/css/article_html_editor.css",
             )
         }
         js = (
-            f"{CODEMIRROR_CDN}/codemirror.min.js",
-            f"{CODEMIRROR_CDN}/mode/xml/xml.min.js",
-            f"{CODEMIRROR_CDN}/mode/javascript/javascript.min.js",
-            f"{CODEMIRROR_CDN}/mode/css/css.min.js",
-            f"{CODEMIRROR_CDN}/mode/htmlmixed/htmlmixed.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.11/beautify-html.min.js",
+            f"{_CM}/codemirror.min.js",
+            f"{_CM}/mode/xml/xml.min.js",
+            f"{_CM}/mode/javascript/javascript.min.js",
+            f"{_CM}/mode/css/css.min.js",
+            f"{_CM}/mode/htmlmixed/htmlmixed.min.js",
+            "admin/vendor/js-beautify/beautify-html.min.js",
             "admin/js/article_html_editor.js",
         )
 

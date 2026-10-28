@@ -21,11 +21,12 @@ class ArticleHtmlEditorAdminTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn("article-html-source", html)
-        self.assertIn("codemirror.min.js", html)
-        self.assertIn("mode/htmlmixed/htmlmixed.min.js", html)
+        self.assertIn("admin/vendor/codemirror/codemirror.min.js", html)
+        self.assertIn("admin/vendor/codemirror/mode/htmlmixed/htmlmixed.min.js", html)
         self.assertIn("admin/js/article_html_editor.js", html)
         self.assertIn("admin/css/article_html_editor.css", html)
-        self.assertIn("beautify-html.min.js", html)
+        self.assertIn("admin/vendor/js-beautify/beautify-html.min.js", html)
+        self.assertNotIn("cdnjs.cloudflare.com", html)
         self.assertIn('id="id_article_html"', html)
 
     def test_change_form_renders_html_like_translation_browser(self):
@@ -46,4 +47,5 @@ class ArticleHtmlEditorAdminTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn("article-html-source", html)
-        self.assertIn("codemirror.min.js", html)
+        self.assertIn("admin/vendor/codemirror/codemirror.min.js", html)
+        self.assertNotIn("cdnjs.cloudflare.com", html)

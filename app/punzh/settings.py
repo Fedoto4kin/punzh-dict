@@ -36,6 +36,10 @@ DEBUG = env.bool("DEBUG", True)
 
 ALLOWED_HOSTS = ["punzhina.krc.karelia.ru", "punzh.local", "localhost", "127.0.0.1"]
 
+# Secure cookies on HTTPS prod (DEBUG=False). Override via env for mixed setups.
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
+
 # Required since Django 4.0 for HTTPS POSTs (admin, forms) behind TLS.
 CSRF_TRUSTED_ORIGINS = [
     "https://punzhina.krc.karelia.ru",

@@ -2,7 +2,9 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
-from django.http import HttpResponse, JsonResponse
+from django.conf import settings
+from django.core.cache import cache
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
 
@@ -25,6 +27,35 @@ from .search import (
     tag_filters_from_request,
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
+
+# Align with AI job bound (dict.ai.jobs.MAX_QUERY_LEN); caps ILIKE/token cost.
+MAX_SEARCH_QUERY_LEN = 300
+SEARCH_RATE_LIMIT_PER_MINUTE = 60
+
+
+def _client_ip(request):
+    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+    return forwarded or request.META.get("REMOTE_ADDR") or ""
+
+
+def _search_rate_limit_ok(request):
+    """Per-IP minute counter (locmem/default cache; per-worker). Off in DEBUG."""
+    if settings.DEBUG:
+        return True
+    ip = _client_ip(request)
+    if not ip:
+        return True
+    key = f"lex_search_rl:{ip}"
+    try:
+        n = cache.incr(key)
+    except ValueError:
+        cache.add(key, 1, timeout=60)
+        return True
+    return n <= SEARCH_RATE_LIMIT_PER_MINUTE
+
+
+def _clip_search_query(query):
+    return (query or "").strip()[:MAX_SEARCH_QUERY_LEN]
 
 
 class StaticView(TemplateView):
@@ -76,16 +107,23 @@ def index(request, letter=None, page=1):
 
 
 def search_proc(request):
+    if not _search_rate_limit_ok(request):
+        return HttpResponseBadRequest("Too many search requests")
     query = request.GET.get("query", "")
     if len(query.strip()):
         query = re.sub(r"[^\w\-\s\.\?]", "", query)
-        return redirect("/search/" + quote(query.strip()))
+        query = _clip_search_query(query)
+        if not query:
+            return render(request, "search.html", {"search": "true"})
+        return redirect("/search/" + quote(query))
     else:
         return render(request, "search.html", {"search": "true"})
 
 
 def search(request, query="", page=1):
-    query = query.strip()
+    if not _search_rate_limit_ok(request):
+        return HttpResponseBadRequest("Too many search requests")
+    query = _clip_search_query(query)
     direction = detect_direction(query)
     f = request.GET.get("f") or None
     active_label = None
