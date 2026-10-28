@@ -38,6 +38,8 @@
 
 ## Сделано (не трогать без регрессии)
 
+- Удалён устаревший `docker-compose-prod.yml` / `init-letsencrypt.sh`; из
+  Dockerfile убран `COPY ./.env` (секреты только mount в compose).
 - **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28.
 - **AI-поиск (prod 2026-10-24):** `/ai-search/` async + session isolation;
   hard/soft-пометы, POS сужает, dialect relax, см. только входящие;

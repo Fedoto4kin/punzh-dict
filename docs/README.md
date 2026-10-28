@@ -21,7 +21,7 @@
 | [ai-search.md](ai-search.md) | UX AI-поиска — **закрытая альфа на prod** |
 | [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL; фазы A–C на prod |
 | [plans/ai-search-async.md](plans/ai-search-async.md) | Async job+poll (сделано); SSE/worker — позже |
-| [plans/ai-search-llm-rerank.md](plans/ai-search-llm-rerank.md) | LLM re-rank: голова + `keep_tail` (prod: MiMo Flash) |
+| [plans/ai-search-llm-rerank.md](plans/ai-search-llm-rerank.md) | LLM re-rank выключен: гипотеза не подтвердилась, под удаление или переделку |
 | [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке (ещё не в коде) |
 
 ## Runbook
@@ -43,3 +43,4 @@
 |------|--------|
 | [context.md](context.md) | Черновик обзора, пути и стек расходятся с кодом. Актуальный обзор: `cursor_project_overview.md` |
 | [plans/krl-search-tag-filters.md](plans/krl-search-tag-filters.md) | Фильтры `?t=` / `?ph=` в KRL `/search/` — сделано |
+| ~~`docker-compose-prod.yml`~~ / ~~`init-letsencrypt.sh`~~ / bake `.env` в образе | **Удалены.** Prod = `docker-compose.internal.yml` (`punzh_web`, mount `.env`). См. `AGENTS.md` |

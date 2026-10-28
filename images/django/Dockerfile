@@ -21,8 +21,7 @@ RUN apt-get -y autoclean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # Upgrade pip and install requirements
 RUN pip install --upgrade pip --no-cache-dir
 COPY ./app/requirements.txt /tmp/
-# Fallback when the container has no mount. Compose files mount the host .env here.
-COPY ./.env /.env
+# Runtime secrets: compose bind-mounts ./.env:/.env:ro (not baked into the image).
 RUN pip install -q -Ur /tmp/requirements.txt
 
 WORKDIR /app

@@ -86,8 +86,9 @@ docker exec --user 1000:1000 -w /app punzh_django python -m black \
 (`TIMEWEB_AI_API_KEY`, `TIMEWEB_AI_MODEL_CLASSIFY`). Подробности:
 `docs/method-onthlogy-markup.md` §5.
 
-Имя контейнера: `punzh_django` (dev) или `punzh_web` (prod / internal compose) —
-подставьте своё. Канал: `manage.py test_timeweb`.
+Имя контейнера: `punzh_django` (dev, `docker-compose.yml`) или `punzh_web`
+(prod, `docker-compose.internal.yml`) — подставьте своё. Канал:
+`manage.py test_timeweb`.
 
 Сбой шлюза при classify → в БД ничего не пишется (`no_field` не ставится);
 повтор команды/кнопки нормален. Prod-деплой кода: `./deploy.sh` с рестартом

@@ -5,7 +5,7 @@ services:
     container_name: punzh_django
     volumes:
       - ./app:/app
-      # Host file shadows the copy baked into the image. runserver reloads on change.
+      # Runtime secrets for Django (not baked into the image). runserver reloads on change.
       - ./.env:/.env:ro
     build:
       context: ./

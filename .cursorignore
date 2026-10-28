@@ -22,8 +22,6 @@ dist/
 *.egg
 
 # === Docker / infra ===
-docker-compose-prod.yml
-init-letsencrypt.sh
 
 # === Static assets (Django admin, FontAwesome, etc.) ===
 static/

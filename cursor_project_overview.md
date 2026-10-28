@@ -17,7 +17,7 @@
 ## Tech stack
 - Python 3.12, Django 5.2 LTS, PostgreSQL 15 + pgvector (compose pin `pgvector/pgvector:0.8.7-pg15-bookworm`; `django.contrib.postgres`: FTS, триграммы), psycopg3
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
-- Docker: образ `images/django/Dockerfile` (`python:3.12-bookworm`); dev-контейнеры `punzh_django` + `punzh_db`. Тесты и `manage.py` — с `-w /app`.
+- Docker: образ `images/django/Dockerfile` (`python:3.12-bookworm`); **dev** — `docker-compose.yml` (`punzh_django` + `punzh_db`); **prod** — `docker-compose.internal.yml` (`punzh_web` + `punzh_db`, `.env` bind-mount). Секреты не копируются в образ при build. Тесты и `manage.py` — с `-w /app`.
 - Рантайм-AI: шлюз Timeweb, `app/dict/ai/`: parse + retrieval (hard/soft-пометы, POS сужает) + async `/ai-search/` (session-bound job) + LLM re-rank (`TIMEWEB_AI_MODEL_RERANK`). Закрытая альфа на prod. REPL: `ai_query`. См. `dict/ai/README.md`, `docs/ai-search.md`.
 - LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 
@@ -39,9 +39,9 @@
 Статика: исходники в `app/static` (`STATICFILES_DIRS`) и `app/dict/static`;
 сборка `collectstatic` → `app/staticfiles` (`STATIC_ROOT`, gitignore). Nginx
 отдаёт только `staticfiles` (`images/nginx/punzh.host.conf`, `punzh.ssl.conf`).
-Деплой (prod `karielan-hub`, `~/punzh-dict`, контейнер `punzh_web`): `./deploy.sh`
-(pull + migrate + collectstatic + **restart** контейнера — uwsgi без hot-reload).
-Подробнее: `AGENTS.md`.
+Деплой (prod `karielan-hub`, `~/punzh-dict`): `docker-compose.internal.yml`,
+контейнер `punzh_web`, `./deploy.sh` (pull + migrate + collectstatic + **restart** —
+uwsgi без hot-reload). Подробнее: `AGENTS.md`.
 
 ## Key models (`app/dict/models/`)
 - `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; шаги 1–4 закрыты, хвост — подсветка на сайте, см. `backlog.md` §1).

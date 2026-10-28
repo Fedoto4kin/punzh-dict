@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-# Baked into the image at build. Compose bind-mounts the host file over this path.
+# Compose bind-mounts the host .env here (docker-compose.yml / .internal.yml).
 DOTENV_PATH = Path("/.env")
 
 
