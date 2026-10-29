@@ -1,23 +1,16 @@
 import re
 
-from .orphography import new_orthography, normalization
+from .orphography import (
+    new_orthography,
+    normalization,
+    strip_krl_apostrophes,
+)
 
 KRL_ABC = "ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ"
 
 # Interior hyphen ≈ space: mul’l’in-mal’l’in ↔ mullin mallin.
 # Leading-hyphen lemmas («-raiska») are left alone.
 _INTERIOR_HYPHEN = re.compile(r"(?<=\w)-(?=\w)", re.UNICODE)
-
-# Typographic and keyboard apostrophes / palatalization marks (must match
-# query folding in dict.search._KRL_ILIKE_TRANS and see_audit.fold_lemma).
-_KRL_APOSTROPHES = ("’", "'", "`", "ʼ", "ʹ")
-
-
-def strip_krl_apostrophes(text):
-    out = text or ""
-    for ch in _KRL_APOSTROPHES:
-        out = out.replace(ch, "")
-    return out
 
 
 def fold_interior_hyphens(text):

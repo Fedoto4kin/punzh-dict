@@ -253,14 +253,15 @@ class WordSearchHttpTestCase(TestCase):
         Article.objects.create(word="val'l'ahat")
         response = self.client.get("/search/val'l'ahat")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "val'l'ahat")
+        # |clear canonicalizes ASCII ' → dictionary ’
+        self.assertContains(response, "val\u2019l\u2019ahat")
         self.assertNotContains(response, "Ничего не найдено")
 
     def test_search_plain_finds_ascii_apostrophe_headword(self):
         Article.objects.create(word="val'l'ahat")
         response = self.client.get("/search/vallahat")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "val'l'ahat")
+        self.assertContains(response, "val\u2019l\u2019ahat")
         self.assertNotContains(response, "Ничего не найдено")
 
     def test_word_search_paginator(self):

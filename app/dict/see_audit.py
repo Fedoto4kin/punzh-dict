@@ -2,9 +2,14 @@
 
 import re
 
+from dict.helpers import (
+    krl_apostrophes_class,
+    strip_krl_apostrophes,
+)
+
 # Одно «слово» заголовка (в т.ч. с дефисом). Пробельные двухсловные леммы —
 # отдельно: KARELIAN = слово + опциональные продолжения.
-KARELIAN_WORD = r"[A-Za-z’'ÜüÄäÖöŠšČčŽži̮\-]+"
+KARELIAN_WORD = rf"[A-Za-z{krl_apostrophes_class()}ÜüÄäÖöŠšČčŽži̮\-]+"
 # омоним после леммы: «mado 2», «šano I», «kappa I 2» — не часть ссылки
 # римский номер только UPPERCASE (I, II): строчная «i»/«v» — союз или начало иллюстрации
 # («см. X; har’jatešša i kuduos…»), не омоним
@@ -170,9 +175,7 @@ def fold_lemma(word):
     """
     if not word:
         return ""
-    w = word.lower().replace("||", "").replace("|", "")
-    for ch in "’'`ʼʹ":
-        w = w.replace(ch, "")
+    w = strip_krl_apostrophes(word.lower().replace("||", "").replace("|", ""))
     w = w.split(",", 1)[0].strip()
     w = _HOMONYM_TAIL.sub("", w).strip()
     w = w.replace("~", "")

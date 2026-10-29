@@ -22,6 +22,7 @@ from dict.ai.query_prompts import (
     build_query_parse_user_prompt,
     reference_data_for_parse,
 )
+from dict.helpers import krl_apostrophes_class
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ MAX_KRL_QUERY_LEN = 40
 # Cyrillic → treat as Russian NL (LLM path).
 _CYRILLIC_RE = re.compile(r"[а-яёА-ЯЁ]")
 # Latin + Karelian orthography letters / apostrophes.
-_KRL_SCRIPT_RE = re.compile(r"[a-zA-ZäöüÄÖÜčšžČŠŽ’'ʼ]")
+_KRL_SCRIPT_RE = re.compile(rf"[a-zA-ZäöüÄÖÜčšžČŠŽ{krl_apostrophes_class()}]")
 
 # Russian POS words → grammar Tag.tag (type 2 parents).
 POS_LEMMA_TO_TAG = {

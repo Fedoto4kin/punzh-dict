@@ -1,6 +1,32 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from ..helpers import *
+
+
+class KrlApostropheConstantTestCase(SimpleTestCase):
+    def test_constant_is_frozenset_with_known_marks(self):
+        self.assertIsInstance(KRL_APOSTROPHES, frozenset)
+        self.assertEqual(KRL_APOSTROPHE, "\u2019")
+        for ch in ("'", "’", "`", "ʼ", "ʹ", "´"):
+            self.assertIn(ch, KRL_APOSTROPHES)
+
+    def test_strip_removes_every_constant_member(self):
+        glued = "x" + "".join(sorted(KRL_APOSTROPHES)) + "y"
+        self.assertEqual(strip_krl_apostrophes(glued), "xy")
+
+    def test_canonicalize_maps_to_dictionary_mark(self):
+        for ch in KRL_APOSTROPHES:
+            self.assertEqual(
+                canonicalize_krl_apostrophes(f"a{ch}b"),
+                f"a{KRL_APOSTROPHE}b",
+            )
+
+    def test_regex_class_matches_every_member(self):
+        import re
+
+        cls = re.compile(rf"[{krl_apostrophes_class()}]")
+        for ch in KRL_APOSTROPHES:
+            self.assertTrue(cls.search(ch), msg=repr(ch))
 
 
 class KrlHelpersTestCase(TestCase):

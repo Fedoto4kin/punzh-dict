@@ -1,5 +1,41 @@
 import re
 
+# Canonical dictionary apostrophe (RIGHT SINGLE QUOTATION MARK).
+KRL_APOSTROPHE = "\u2019"
+
+# All apostrophe / palatalization lookalikes we fold or accept as the same mark.
+# Single source of truth — search index, query fold, see-audit, audits, agents.
+KRL_APOSTROPHES = frozenset(
+    {
+        KRL_APOSTROPHE,  # ’ U+2019
+        "'",  # ' U+0027 ASCII
+        "`",  # ` U+0060 grave
+        "\u02BC",  # ʼ modifier letter apostrophe
+        "\u02B9",  # ʹ modifier letter prime
+        "\u00B4",  # ´ acute accent
+    }
+)
+
+_STRIP_APOS = str.maketrans({ch: None for ch in KRL_APOSTROPHES})
+
+
+def krl_apostrophes_class():
+    """Characters for embedding inside a [...] regex class."""
+    return "".join(KRL_APOSTROPHES)
+
+
+def strip_krl_apostrophes(text):
+    return (text or "").translate(_STRIP_APOS)
+
+
+def canonicalize_krl_apostrophes(text):
+    """Map every lookalike to the dictionary mark U+2019."""
+    out = text or ""
+    for ch in KRL_APOSTROPHES:
+        if ch != KRL_APOSTROPHE:
+            out = out.replace(ch, KRL_APOSTROPHE)
+    return out
+
 
 def normalization(header):
 
@@ -31,8 +67,13 @@ def new_orthography(word):
     w = []
 
     def clear_pallat(word):
-        word = re.sub(r"(’)([^aou$])", r"\2", word)
-        return re.sub(r"([dlnrszt])(\w)’", r"\1’\2’", word)
+        word = canonicalize_krl_apostrophes(word)
+        word = re.sub(rf"({re.escape(KRL_APOSTROPHE)})([^aou$])", r"\2", word)
+        return re.sub(
+            rf"([dlnrszt])(\w){re.escape(KRL_APOSTROPHE)}",
+            rf"\1{KRL_APOSTROPHE}\2{KRL_APOSTROPHE}",
+            word,
+        )
 
     def part_proc(word):
 

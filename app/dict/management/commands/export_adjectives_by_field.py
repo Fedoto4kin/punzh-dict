@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-from dict.helpers import normalization, KRL_ABC
+from dict.helpers import KRL_ABC, normalization, strip_krl_apostrophes
 from dict.models import (
     Article,
     Tag,
@@ -89,7 +89,7 @@ class Command(BaseCommand):
         # Alphabetize by the base lemma only: strip translations (after ":")
         # and the header variant (after ","), lowercase, ignore palatalization.
         base = (line or "").split(":")[0].split(",")[0]
-        base = base.replace("’", "").replace("'", "").strip().lower()
+        base = strip_krl_apostrophes(base).strip().lower()
         big = len(self._order)
         return [self._order.get(ch, big) for ch in base]
 

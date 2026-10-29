@@ -541,7 +541,7 @@ def search_by_translate_linked(query: str, page=1, f=None):
 
 # Same mapping the public search form applies before ILIKE: '.' is one
 # character, '?' is any sequence; sibilants and ü/y fold like the word index.
-# Apostrophes are stripped via strip_krl_apostrophes (shared with indexing).
+# Apostrophes: KRL_APOSTROPHES via strip_krl_apostrophes (shared with indexing).
 _KRL_ILIKE_TRANS = str.maketrans(
     {
         ";": "",

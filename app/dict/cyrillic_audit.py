@@ -4,6 +4,7 @@ import re
 import unicodedata
 from collections import Counter
 
+from dict.helpers import KRL_APOSTROPHES
 from dict.models import Article
 
 # Visual lookalikes → Latin. import.py cleaned only а е о с р on headwords.
@@ -60,9 +61,9 @@ LATIN_TO_CYR = str.maketrans(
     }
 )
 
-# Keep | inside compounds; ’ is the dictionary apostrophe. Tilde is not a
+# Keep | inside compounds; apostrophes from KRL_APOSTROPHES. Tilde is not a
 # word char: ``~аlla`` is handled by after_tilde + mixed on ``аlla``.
-_WORD_EXTRA = set("’'`´|")
+_WORD_EXTRA = set(KRL_APOSTROPHES) | {"|"}
 
 _TAG_RE = re.compile(r"<[^>]+>")
 

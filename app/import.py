@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup as bs
 os.environ["DJANGO_SETTINGS_MODULE"] = "punzh.settings"
 django.setup()
 
+from dict.helpers import KRL_APOSTROPHE, canonicalize_krl_apostrophes
 from dict.models import Article
 
 
@@ -24,8 +25,8 @@ def filter(art):
         if len(x.get_text(strip=True)) == 0:
             x.extract()
 
-    # remove other trash
-    art = (
+    # remove other trash; fold every apostrophe lookalike to dictionary ’
+    art = canonicalize_krl_apostrophes(
         str(art)
         .replace("\t", " ")
         .replace("\n", " ")
@@ -36,9 +37,9 @@ def filter(art):
         .replace("</b> <b>", " ")
         .replace("</b><i>", "</b> <i>")
         .replace(" ;", ";")
-        .replace("ʼ", "’")
-        .replace("</b>’<b>", "’")
-        .replace("<b>’</b>", "’")
+    )
+    art = art.replace(f"</b>{KRL_APOSTROPHE}<b>", KRL_APOSTROPHE).replace(
+        f"<b>{KRL_APOSTROPHE}</b>", KRL_APOSTROPHE
     )
 
     art = " ".join(art.split())

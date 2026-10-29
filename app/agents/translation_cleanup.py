@@ -10,16 +10,17 @@ See backlog.md §2, agents/AGENTS.md.
 import json
 import re
 
+from dict.helpers import krl_apostrophes_class
 from dict.models import ArticleIndexTranslate, Tag
 
 TAG_RE = re.compile(r"<[^>]+>")
-# Karelian/Latin tokens (extended Latin + typographic apostrophe U+2019).
+# Karelian/Latin tokens (extended Latin + shared apostrophe set).
 _KRL_LETTER = r"A-Za-z\u00C0-\u024F"
-_KRL_APOS = r"'\u2019\u02BC"
+_KRL_APOS = krl_apostrophes_class()
 _LATIN_WORD_RE = re.compile(rf"[{_KRL_LETTER}][{_KRL_LETTER}{_KRL_APOS}\-]*")
-# Headword inflection glued to tilde: «~an'e ухо» / «~än’e» (U+2019).
+# Headword inflection glued to tilde: «~an'e ухо» / «~än’e».
 # Not «~ keldan'e жёлтая краска» (space after ~ → Karelian example word).
-# Outside [], {_KRL_APOS} would mean three chars in a row — use a character class.
+# Outside [], {_KRL_APOS} would mean chars in a row — use a character class.
 _HEADWORD_SLOT_RE = re.compile(
     rf"^~[{_KRL_LETTER}{_KRL_APOS}\-]*[{_KRL_APOS}][{_KRL_LETTER}{_KRL_APOS}\-]*\s+[а-яё]",
     re.I,
