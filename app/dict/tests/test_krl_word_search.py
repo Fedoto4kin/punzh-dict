@@ -44,6 +44,8 @@ class KrlArticleIdsTestCase(TestCase):
         self.old_u = Article.objects.create(word="hüčkäht’||iä")
         self.new_y = Article.objects.create(word="hyčkäht’iä")
         self.ellipsis = Article.objects.create(word="šiksi… što")
+        # Keyboard ASCII apostrophe (U+0027), not the dictionary ’ (U+2019).
+        self.ascii_apos = Article.objects.create(word="val'l'ahat")
 
     def _ids(self, query):
         return set(krl_article_ids(query))
@@ -158,6 +160,19 @@ class KrlArticleIdsTestCase(TestCase):
         self.assertEqual(self._ids("siksi"), {self.ellipsis.id})
         self.assertEqual(self._ids("što"), {self.ellipsis.id})
 
+    def test_ascii_apostrophe_headword_indexes_folded(self):
+        indexed = set(
+            ArticleIndexWord.objects.filter(article=self.ascii_apos).values_list(
+                "word", flat=True
+            )
+        )
+        self.assertEqual(indexed, {"vallahat"})
+
+    def test_ascii_apostrophe_headword_searchable_without_marks(self):
+        self.assertEqual(self._ids("vallahat"), {self.ascii_apos.id})
+        self.assertEqual(self._ids("val'l'ahat"), {self.ascii_apos.id})
+        self.assertEqual(self._ids("val’l’ahat"), {self.ascii_apos.id})
+
 
 class SeeHyphenLinkTestCase(SimpleTestCase):
     def test_link_keeps_hyphenated_lemma(self):
@@ -233,6 +248,20 @@ class WordSearchHttpTestCase(TestCase):
         response = self.client.get("/search/mallin")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "mullin mallin")
+
+    def test_search_ascii_apostrophe_path_does_not_500(self):
+        Article.objects.create(word="val'l'ahat")
+        response = self.client.get("/search/val'l'ahat")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "val'l'ahat")
+        self.assertNotContains(response, "Ничего не найдено")
+
+    def test_search_plain_finds_ascii_apostrophe_headword(self):
+        Article.objects.create(word="val'l'ahat")
+        response = self.client.get("/search/vallahat")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "val'l'ahat")
+        self.assertNotContains(response, "Ничего не найдено")
 
     def test_word_search_paginator(self):
         page_obj, found_count, *_ = word_search("aiga", 1)

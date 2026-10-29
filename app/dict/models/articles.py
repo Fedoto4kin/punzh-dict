@@ -14,6 +14,7 @@ from ..helpers import (
     normalization,
     r_gen_word_variants,
     split_alt_forms,
+    strip_krl_apostrophes,
 )
 from .source import Source
 
@@ -94,7 +95,7 @@ class Article(ArticleBase):
 
         tokens = set()
         for w in split_alt_forms(normalization(word)):
-            part = fold_interior_hyphens(w.strip().replace("’", ""))
+            part = fold_interior_hyphens(strip_krl_apostrophes(w.strip()))
             for tok in part.split():
                 if tok:
                     tokens.add(tok)

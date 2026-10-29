@@ -8,6 +8,17 @@ KRL_ABC = "ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ"
 # Leading-hyphen lemmas («-raiska») are left alone.
 _INTERIOR_HYPHEN = re.compile(r"(?<=\w)-(?=\w)", re.UNICODE)
 
+# Typographic and keyboard apostrophes / palatalization marks (must match
+# query folding in dict.search._KRL_ILIKE_TRANS and see_audit.fold_lemma).
+_KRL_APOSTROPHES = ("’", "'", "`", "ʼ", "ʹ")
+
+
+def strip_krl_apostrophes(text):
+    out = text or ""
+    for ch in _KRL_APOSTROPHES:
+        out = out.replace(ch, "")
+    return out
+
 
 def fold_interior_hyphens(text):
     return _INTERIOR_HYPHEN.sub(" ", text or "")
@@ -136,8 +147,7 @@ def r_gen_word_variants(word, _word) -> ():
 
     return set(
         [
-            i.strip()
-            .replace("’", "")
+            strip_krl_apostrophes(i.strip())
             .replace("||", "")
             .replace("|", "")
             .replace("š", "s")
@@ -202,8 +212,7 @@ def gen_word_variants(word) -> ():
 
     return set(
         [
-            i.strip()
-            .replace("’", "")
+            strip_krl_apostrophes(i.strip())
             .replace("||", "")
             .replace("|", "")
             .replace("š", "s")
@@ -216,7 +225,7 @@ def gen_word_variants(word) -> ():
 
 def create_ngram(word, n):
 
-    word = normalization(word.lower().replace("’", ""))
+    word = normalization(strip_krl_apostrophes(word.lower()))
     word = re.split(r"\s|,", word, maxsplit=1)
     return word[0][:n]
 

@@ -12,6 +12,7 @@ from .helpers import (
     fold_interior_hyphens,
     normalization,
     sorted_by_krl,
+    strip_krl_apostrophes,
 )
 from .models import (
     Article,
@@ -540,12 +541,10 @@ def search_by_translate_linked(query: str, page=1, f=None):
 
 # Same mapping the public search form applies before ILIKE: '.' is one
 # character, '?' is any sequence; sibilants and ü/y fold like the word index.
+# Apostrophes are stripped via strip_krl_apostrophes (shared with indexing).
 _KRL_ILIKE_TRANS = str.maketrans(
     {
         ";": "",
-        "’": "",
-        "'": "",
-        "ʼ": "",
         ",": "",
         "š": "s",
         "č": "c",
@@ -560,7 +559,9 @@ _KRL_ILIKE_TRANS = str.maketrans(
 
 
 def prepare_krl_ilike_query(query: str) -> str:
-    return fold_interior_hyphens(query.translate(_KRL_ILIKE_TRANS))
+    return fold_interior_hyphens(
+        strip_krl_apostrophes(query).translate(_KRL_ILIKE_TRANS)
+    )
 
 
 def krl_article_ids(query: str):
@@ -927,30 +928,32 @@ def word_search(query: str, page: int, tag_ids=None, phrase=False):
 
 
 def search_possible(query: str) -> set:
+    # Fold like the word index; strip ?/. so they are not ILIKE wildcards here.
+    folded = prepare_krl_ilike_query(re.sub(r"[?.]", "", query or "")).lower()
 
-    def search_levenshtein(query: str):
+    def search_levenshtein(q: str):
         return (
             ArticleIndexWordNormalization.objects.annotate(
-                lev_dist=Levenshtein(F("word"), query)
+                lev_dist=Levenshtein(F("word"), q)
             )
             .filter(lev_dist__lte=2)
             .order_by("-lev_dist", Length("word").asc())
         )
 
-    def search_trigram(query: str):
+    def search_trigram(q: str):
         return (
             ArticleIndexWordNormalization.objects.annotate(
-                similarity=TrigramSimilarity("word", query),
+                similarity=TrigramSimilarity("word", q),
             )
             .filter(similarity__gt=0.2)
             .order_by("-similarity", Length("word").asc())
         )
 
+    if not folded:
+        return set()
+
     return set(
-        w.word
-        for w in (
-            set(search_trigram(query.lower())) & set(search_levenshtein(query.lower()))
-        )
+        w.word for w in (set(search_trigram(folded)) & set(search_levenshtein(folded)))
     )
 
 
