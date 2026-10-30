@@ -19,7 +19,7 @@
 - Шаблоны Django + Bootstrap 4, Django Admin, uWSGI
 - Docker: образ `images/django/Dockerfile` (`python:3.12-bookworm`); **dev** — `docker-compose.yml` (`punzh_django` + `punzh_db`); **prod** — `docker-compose.internal.yml` (`punzh_web` + `punzh_db`, `.env` bind-mount). Секреты не копируются в образ при build. Тесты и `manage.py` — с `-w /app`.
 - Рантайм-AI: шлюз Timeweb, `app/dict/ai/`: parse + retrieval (hard/soft-пометы, POS сужает) + async `/ai-search/` (session-bound job) + LLM re-rank (`TIMEWEB_AI_MODEL_RERANK`). Закрытая альфа на prod. REPL: `ai_query`. См. `dict/ai/README.md`, `docs/ai-search.md`.
-- LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-v4-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
+- LLM: рантайм (разбор запроса / классификация нового слова) → Timeweb (`TIMEWEB_AI_MODEL_QUERY` = yandexgpt-lite, `TIMEWEB_AI_MODEL_CLASSIFY` = deepseek-flash). Пакетная разметка и очистка переводов → DeepSeek напрямую (`app/agents/`, `.env`). Недоступность API не должна ронять сайт — fallback на лексический поиск.
 
 ## Structure
 - `app/dict/` — основное приложение (models, views, search, templates, admin, tests, management commands, `ai/`).

@@ -61,7 +61,7 @@ TIMEWEB_AI_BASE_URL = env("TIMEWEB_AI_BASE_URL", default="https://api.timeweb.ai
 # DeepSeek (консистентно с пакетной разметкой 16k).
 TIMEWEB_AI_MODEL_QUERY = env("TIMEWEB_AI_MODEL_QUERY", default="yandex/yandexgpt-lite")
 TIMEWEB_AI_MODEL_CLASSIFY = env(
-    "TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-v4-flash"
+    "TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-flash"
 )
 # Soft re-rank of AI search tops (same gateway; default = query model).
 TIMEWEB_AI_MODEL_RERANK = env("TIMEWEB_AI_MODEL_RERANK", default=TIMEWEB_AI_MODEL_QUERY)

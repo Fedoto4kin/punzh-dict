@@ -54,7 +54,7 @@ def is_available():
 def chat_json(system, user, model, timeout=10, max_tokens=None):
     """
     Один запрос к УКАЗАННОЙ модели, ожидающий JSON-ответ.
-    model — строка вида 'yandex/yandexgpt-lite' или 'deepseek/deepseek-v4-flash'
+    model — строка вида 'yandex/yandexgpt-lite' или 'deepseek/deepseek-flash'
     (берётся вызывающим из settings: TIMEWEB_AI_MODEL_QUERY для разбора запроса,
     TIMEWEB_AI_MODEL_CLASSIFY для классификации слова).
     max_tokens ограничивает ответ: у lite-модели список лемм иногда зацикливается.
