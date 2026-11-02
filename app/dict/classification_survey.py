@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import random
 from typing import Iterable
+from urllib.parse import quote
 
 from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.utils.html import strip_tags
 
 from dict.ai.prompts import build_article_input
+from dict.helpers import normalization
 from dict.models import (
     Article,
     ArticleIndexTag,
@@ -130,6 +132,14 @@ def pick_task_article_ids(
     return picked[:n]
 
 
+def article_display_word(article: Article) -> str:
+    """Same surface form as public word cards (приведённая орфография)."""
+    corrected = (article.word_normalized or "").strip()
+    if corrected:
+        return corrected
+    return normalization(article.word)
+
+
 def article_payload(article: Article) -> dict:
     inp = build_article_input(article)
     pos = [
@@ -137,9 +147,13 @@ def article_payload(article: Article) -> dict:
         for t in article.articleindextag_set.all()
         if t.tag.tag in CONTENT_POS_TAGS
     ]
+    display = article_display_word(article)
     return {
         "article_id": article.id,
-        "word": article.word,
+        "word": display,
+        "word_original": article.word,
+        # Link uses the same form as the visible lemma (приведённая орфография).
+        "url": "/search/" + quote(display, safe=""),
         "translations": inp["translations"],
         "illustrations_ru": inp["illustrations_ru"],
         "pos": pos,

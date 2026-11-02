@@ -123,7 +123,22 @@
 
     var title = document.createElement("h6");
     title.className = "mb-1";
-    title.textContent = art.word || "#" + art.article_id;
+    var wordText = art.word || "#" + art.article_id;
+    var href =
+      art.url ||
+      "/search/" + encodeURIComponent(art.word || String(art.article_id));
+    var link = document.createElement("a");
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.className = "text-dark";
+    link.title = "Открыть статью в новой вкладке";
+    link.appendChild(document.createTextNode(wordText + " "));
+    var ext = document.createElement("i");
+    ext.className = "fas fa-external-link-alt small text-muted";
+    ext.setAttribute("aria-hidden", "true");
+    link.appendChild(ext);
+    title.appendChild(link);
     qblock.appendChild(title);
 
     var tr = document.createElement("p");

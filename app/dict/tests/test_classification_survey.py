@@ -91,6 +91,7 @@ class ClassificationSurveyTestCase(TestCase):
         self.assertGreaterEqual(len(data["fields"]), 3)
         for art in data["articles"]:
             self.assertTrue(art["translations"])
+            self.assertTrue(art["url"].startswith("/search/"))
             self.assertTrue(set(art["pos"]) & set(CONTENT_POS_TAGS))
         words = {a["word"] for a in data["articles"]}
         self.assertNotIn("tyhja", words)
