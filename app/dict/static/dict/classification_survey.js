@@ -341,14 +341,72 @@
     return "не отнесла ни к одному полю";
   }
 
+  function sortedUnique(arr) {
+    var seen = {};
+    var out = [];
+    (arr || []).forEach(function (x) {
+      if (!x || seen[x]) return;
+      seen[x] = true;
+      out.push(x);
+    });
+    out.sort();
+    return out;
+  }
+
+  function setsEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
+  function sharedFields(a, b) {
+    var setB = {};
+    b.forEach(function (x) {
+      setB[x] = true;
+    });
+    return a.filter(function (x) {
+      return setB[x];
+    });
+  }
+
+  function formatFieldList(fields, matchSet) {
+    if (!fields.length) return "";
+    return fields
+      .map(function (name) {
+        var safe = escapeHtml(name);
+        if (matchSet[name]) {
+          return '<span class="cls-field-match">' + safe + "</span>";
+        }
+        return safe;
+      })
+      .join(", ");
+  }
+
   function recordComparison(modelFields) {
     var art = currentArticle();
     if (!art) return;
+    var decision = state.current.decision;
+    var humanFields =
+      decision === "fields" ? sortedUnique(state.current.fields || []) : [];
+    var model = sortedUnique(modelFields || []);
+    var fullMatch = false;
+    if (decision === "fields") {
+      fullMatch = setsEqual(humanFields, model);
+    } else if (decision === "no_field") {
+      fullMatch = model.length === 0;
+    }
     state.comparisons.push({
       word: art.word || "#" + art.article_id,
       url: art.url || "",
-      human: humanAnswerLabel(state.current.decision, state.current.fields),
-      model: modelAnswerLabel(modelFields),
+      decision: decision,
+      humanFields: humanFields,
+      modelFields: model,
+      humanLabel: humanAnswerLabel(decision, humanFields),
+      modelLabel: modelAnswerLabel(model),
+      fullMatch: fullMatch,
+      shared: sharedFields(humanFields, model),
     });
   }
 
@@ -361,12 +419,14 @@
     var intro = document.createElement("p");
     intro.className = "small mb-2";
     intro.textContent =
-      "Как вы ответили и как разметила автоматическая классификация 🤖:";
+      "Как вы ответили и как разметила автоматическая классификация 🤖.";
     host.appendChild(intro);
 
     state.comparisons.forEach(function (row, i) {
       var card = document.createElement("div");
-      card.className = "cls-final-compare mb-2";
+      card.className =
+        "cls-final-compare mb-2" +
+        (row.fullMatch ? " cls-final-compare-match" : "");
 
       var head = document.createElement("div");
       head.className = "font-weight-bold mb-1";
@@ -382,22 +442,56 @@
       }
       card.appendChild(head);
 
+      var matchSet = {};
+      (row.shared || []).forEach(function (n) {
+        matchSet[n] = true;
+      });
+      // Full no_field match: highlight both special labels.
+      if (row.fullMatch && row.decision === "no_field") {
+        matchSet.__special__ = true;
+      }
+
       var you = document.createElement("div");
       you.className = "small";
+      var youBody;
+      if (row.decision === "fields" && row.humanFields.length) {
+        youBody = formatFieldList(row.humanFields, matchSet);
+      } else if (row.fullMatch && row.decision === "no_field") {
+        youBody =
+          '<span class="cls-field-match">' +
+          escapeHtml(row.humanLabel) +
+          "</span>";
+      } else {
+        youBody = escapeHtml(row.humanLabel);
+      }
       you.innerHTML =
-        "<span class=\"cls-compare-human\">Вы:</span> " +
-        escapeHtml(row.human);
+        '<span class="cls-compare-human">Вы:</span> ' + youBody;
       card.appendChild(you);
 
       var bot = document.createElement("div");
       bot.className = "small";
+      var botBody;
+      if (row.modelFields.length) {
+        botBody = formatFieldList(row.modelFields, matchSet);
+      } else if (row.fullMatch && row.decision === "no_field") {
+        botBody =
+          '<span class="cls-field-match">' +
+          escapeHtml(row.modelLabel) +
+          "</span>";
+      } else {
+        botBody = escapeHtml(row.modelLabel);
+      }
       bot.innerHTML =
-        "<span class=\"cls-compare-model\">🤖 авто:</span> " +
-        escapeHtml(row.model);
+        '<span class="cls-compare-model">🤖 авто:</span> ' + botBody;
       card.appendChild(bot);
 
       host.appendChild(card);
     });
+
+    var note = document.createElement("p");
+    note.className = "small text-muted mb-0 mt-2";
+    note.textContent = "Совпадения выделены зелёным.";
+    host.appendChild(note);
   }
 
   function escapeHtml(s) {
