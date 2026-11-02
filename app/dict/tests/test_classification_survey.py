@@ -4,6 +4,8 @@ from django.test import Client, TestCase, override_settings
 
 from dict.classification_survey import (
     CONTENT_POS_TAGS,
+    article_payload,
+    article_search_query,
     pick_task_article_ids,
     validate_and_store_answers,
 )
@@ -69,6 +71,21 @@ class ClassificationSurveyTestCase(TestCase):
             article_html="<b>ei</b> без перевода но тело есть достаточно",
         )
         ArticleIndexTag.objects.create(article=no_tr, tag=self.pos["s"])
+
+    def test_search_query_strips_homonym_and_variants(self):
+        self.assertEqual(article_search_query("dara II"), "dara")
+        self.assertEqual(article_search_query("dara, darane I"), "dara")
+        self.assertEqual(article_search_query("kur’iin mur’iin"), "kur’iin mur’iin")
+        art = Article.objects.create(
+            word="babo II",
+            first_letter="B",
+            article_html="<b>babo II</b> <i>s</i> бабушка; пример текста",
+        )
+        ArticleIndexTranslate.objects.create(article=art, rus_word="бабушка")
+        ArticleIndexTag.objects.create(article=art, tag=self.pos["s"])
+        payload = article_payload(art)
+        self.assertEqual(payload["word"], "babo II")
+        self.assertEqual(payload["url"], "/search/babo")
 
     def test_status_enabled(self):
         r = self.client.get("/research/classification-survey/status/")

@@ -7,6 +7,7 @@ Eligible articles: POS in {s, v, a, adv}, own translations, non-empty HTML body.
 from __future__ import annotations
 
 import random
+import re
 from typing import Iterable
 from urllib.parse import quote
 
@@ -27,6 +28,9 @@ from dict.models import (
 CONTENT_POS_TAGS = ("s", "v", "a", "adv")
 TASK_SIZE = 3
 MAX_FIELDS_PER_ARTICLE = 3
+
+# Homonym index after lemma: «dara II», «mado 2» (same idea as see_audit).
+_HOMONYM_TAIL = re.compile(r"(?:\s+(?:\d+|[IVXivx]{1,5}))+$")
 
 
 def survey_enabled() -> bool:
@@ -140,6 +144,12 @@ def article_display_word(article: Article) -> str:
     return normalization(article.word)
 
 
+def article_search_query(display: str) -> str:
+    """Lemma for /search/: first variant, without trailing homonym number."""
+    w = (display or "").split(",", 1)[0].strip()
+    return _HOMONYM_TAIL.sub("", w).strip()
+
+
 def article_payload(article: Article) -> dict:
     inp = build_article_input(article)
     pos = [
@@ -148,12 +158,13 @@ def article_payload(article: Article) -> dict:
         if t.tag.tag in CONTENT_POS_TAGS
     ]
     display = article_display_word(article)
+    query = article_search_query(display) or display
     return {
         "article_id": article.id,
         "word": display,
         "word_original": article.word,
-        # Link uses the same form as the visible lemma (приведённая орфография).
-        "url": "/search/" + quote(display, safe=""),
+        # Visible lemma may keep «II»; search index uses the bare word.
+        "url": "/search/" + quote(query, safe=""),
         "translations": inp["translations"],
         "illustrations_ru": inp["illustrations_ru"],
         "pos": pos,
