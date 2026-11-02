@@ -273,7 +273,7 @@
 
   function setInviteTitle() {
     var title = $("clsSurveyTitle");
-    if (title) title.textContent = "Помогите развитию словаря!";
+    if (title) title.textContent = "Помогите развитию словаря";
   }
 
   function resetToInvite() {
