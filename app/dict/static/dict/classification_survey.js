@@ -95,12 +95,11 @@
     if (!btn) return;
     show(btn);
     btn.disabled = state.saving || !state.current.decision;
-    btn.className = "btn btn-success mt-3";
+    btn.className = "btn btn-primary";
     btn.innerHTML =
-      '<i class="fas fa-check" aria-hidden="true"></i>' +
-      '<span class="sr-only">Ответить</span>';
-    btn.setAttribute("aria-label", "Ответить");
-    btn.setAttribute("title", "Ответить");
+      'Далее <i class="fas fa-arrow-right" aria-hidden="true"></i>';
+    btn.setAttribute("aria-label", "Далее");
+    btn.setAttribute("title", "Далее");
   }
 
   function renderCurrentCard() {
@@ -311,6 +310,7 @@
   function resetToInvite() {
     setInviteTitle();
     hide($("clsSurveyForm"));
+    hide($("clsSurveyFooter"));
     hide($("clsSurveyThanks"));
     show($("clsSurveyInvite"));
     setError("");
@@ -527,6 +527,7 @@
     }
     renderFinalComparison();
     hide($("clsSurveyForm"));
+    hide($("clsSurveyFooter"));
     show($("clsSurveyThanks"));
     scrollSurveyTop();
   }
@@ -598,7 +599,9 @@
     var url = modal.getAttribute("data-task-url");
     setError("");
     hide($("clsSurveyInvite"));
+    hide($("clsSurveyThanks"));
     show($("clsSurveyForm"));
+    show($("clsSurveyFooter"));
     $("clsSurveyCards").innerHTML = "<p class='text-muted'>Загрузка…</p>";
     var btn = $("clsSurveyNext");
     if (btn) btn.disabled = true;
@@ -628,6 +631,7 @@
       })
       .catch(function (err) {
         hide($("clsSurveyForm"));
+        hide($("clsSurveyFooter"));
         show($("clsSurveyInvite"));
         setError(err.message || String(err));
       });

@@ -53,11 +53,6 @@
             <div id="clsSurveyQuestion"></div>
           </div>
           <div id="clsSurveyCards" class="cls-survey-fields"></div>
-          <button type="button" class="btn btn-success mt-3" id="clsSurveyNext"
-                  disabled aria-label="Ответить" title="Ответить">
-            <i class="fas fa-check" aria-hidden="true"></i>
-            <span class="sr-only">Ответить</span>
-          </button>
         </div>
         <div id="clsSurveyThanks" class="d-none">
           <p class="mb-3">
@@ -68,6 +63,12 @@
           <div id="clsSurveyCompare"></div>
         </div>
         <div id="clsSurveyError" class="alert alert-warning d-none mt-2 mb-0" role="alert"></div>
+      </div>
+      <div class="modal-footer d-none" id="clsSurveyFooter">
+        <button type="button" class="btn btn-primary" id="clsSurveyNext"
+                disabled aria-label="Далее" title="Далее">
+          Далее <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -105,6 +106,13 @@
   #clsSurveyModal .cls-survey-fields .form-check {
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
+  }
+  #clsSurveyModal .cls-survey-fields {
+    padding-bottom: 0.75rem;
+  }
+  #clsSurveyModal .modal-footer {
+    justify-content: flex-start;
+    background: #fff;
   }
   #clsSurveyModal .cls-final-compare {
     background: #f8f9fa;
