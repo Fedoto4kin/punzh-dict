@@ -76,6 +76,22 @@ management-команды в `dict/` (`load_semantic_*`, `load_keywords`,
 
 ### Данные словаря
 
+#### `verification_export.py` — выгрузки для верификации классификации
+Без LLM. Snapshot полей/counts, инвентарь+whitelist предметных помет,
+пилотная выборка id, карточки разметчика (без LLM-полей) и отдельный baseline.
+Выход по умолчанию: `agents/data/verification/` → копировать в
+`research/classification-verification/data/`.
+
+```bash
+docker exec --user 1000:1000 -w /app/agents punzh_django \\
+  python verification_export.py --all --out data/verification
+```
+
+#### `score_pilot.py` — метрики пилота (author vs baseline)
+Сравнивает `labels-pilot-author.jsonl|tsv` с `baseline-llm-pilot.json`.
+Micro-P/R/F1, macro-F1, Jaccard; `insufficient` в ошибку модели не входит.
+`--allow-incomplete` — частичная сдача.
+
 #### `build_ontology.py` — онтология смысловых полей + классификация
 Три режима (подробности внутри файла и в `docs/method-onthlogy-markup.md`):
 - `--design-only --runs N --sample K` — N прогонов проектирования онтологии

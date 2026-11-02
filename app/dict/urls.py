@@ -54,6 +54,21 @@ urlpatterns = [
         views.ai_search_feedback,
         name="ai_search_feedback",
     ),
+    path(
+        "research/classification-survey/status/",
+        views.classification_survey_status,
+        name="classification_survey_status",
+    ),
+    path(
+        "research/classification-survey/task/",
+        views.classification_survey_task,
+        name="classification_survey_task",
+    ),
+    path(
+        "research/classification-survey/submit/",
+        views.classification_survey_submit,
+        name="classification_survey_submit",
+    ),
     path("tags/", views.tag_search, name="tags"),
     path("tags/compatible/<str:tags>", views.tags_compatible, name="tags_compatible"),
     path("tags/<str:tags>", views.tag_search, name="tags"),

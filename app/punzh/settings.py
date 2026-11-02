@@ -70,6 +70,8 @@ AI_SEARCH_LLM_RERANK = env.bool("AI_SEARCH_LLM_RERANK", default=DEBUG)
 # Alpha telemetry: durable AiSearchLog on every finished job; 👍/👎 UI on results.
 AI_SEARCH_LOG_QUERIES = env.bool("AI_SEARCH_LOG_QUERIES", default=True)
 AI_SEARCH_FEEDBACK = env.bool("AI_SEARCH_FEEDBACK", default=True)
+# Visitor thematic-classification survey (control channel; not expert gold).
+CLASSIFICATION_SURVEY = env.bool("CLASSIFICATION_SURVEY", default=DEBUG)
 
 # Application definition
 INSTALLED_APPS = [
@@ -111,6 +113,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "dict.context_processors.classification_survey",
             ],
         },
     },

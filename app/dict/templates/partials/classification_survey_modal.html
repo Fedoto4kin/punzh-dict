@@ -1,0 +1,72 @@
+{% load static %}
+{% if classification_survey_enabled %}
+{# Control-channel survey: consent → 3 articles → submit. Not expert gold. #}
+<div class="modal fade" id="clsSurveyModal" tabindex="-1" role="dialog"
+     aria-labelledby="clsSurveyTitle" aria-hidden="true"
+     data-task-url="{% url 'classification_survey_task' %}"
+     data-submit-url="{% url 'classification_survey_submit' %}">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="clsSurveyTitle">Помогите развитию словаря!</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="clsSurveyInvite">
+          <p class="mb-2">
+            Помогите нам исследовать тематическую структуру словаря
+            А.&nbsp;В.&nbsp;Пунжиной.
+          </p>
+          <p class="mb-2">
+            Это займёт всего 1–3&nbsp;минуты. Специальных знаний не требуется —
+            нам интересен именно ваш взгляд.
+          </p>
+          <p class="mb-3">
+            Ваше участие поможет сравнить автоматическую классификацию
+            с человеческим восприятием.
+          </p>
+          <div class="d-flex flex-wrap">
+            <button type="button" class="btn btn-primary mr-2 mb-2" id="clsSurveyYes">
+              Да, участвовать
+            </button>
+            <button type="button" class="btn btn-outline-secondary mb-2" id="clsSurveyNo">
+              Нет, спасибо
+            </button>
+          </div>
+        </div>
+        <div id="clsSurveyForm" class="d-none">
+          <div id="clsSurveyInstruction" class="mb-3">
+            <p class="mb-2">
+              Как мы воспринимаем слова?<br>
+              Какие понятия объединяем между собой, а какие относим к разным темам?
+            </p>
+            <p class="mb-0">
+              Статьи показываются по одной. Отметьте смысловые темы
+              (не больше трёх).<br>
+              Если ни одна тема не подходит или данных мало — укажите это ниже списка.
+              Ответ сохраняется при переходе дальше.
+            </p>
+          </div>
+          <p class="small text-muted" id="clsSurveyProgress"></p>
+          <div id="clsSurveyCards"></div>
+          <button type="button" class="btn btn-primary mt-2" id="clsSurveyNext" disabled>
+            Далее
+          </button>
+        </div>
+        <div id="clsSurveyThanks" class="d-none">
+          <p class="mb-0">
+            Ваши ответы сохранены и помогут нам лучше понять, как люди
+            воспринимают тематические связи между словами — и сопоставить это
+            с тем, как делают нейросети.
+          </p>
+        </div>
+        <div id="clsSurveyError" class="alert alert-warning d-none mt-2 mb-0" role="alert"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% csrf_token %}
+<script src="{% static 'dict/classification_survey.js' %}" defer></script>
+{% endif %}

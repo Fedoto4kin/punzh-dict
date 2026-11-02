@@ -3,6 +3,9 @@
 
 # Article draft (Studia Nordica) — keep local, do not commit
 research/studia-nordica/article-draft.md
+research/studia-nordica/node_modules/
+research/studia-nordica/package-lock.json
+research/studia-nordica/_preview/
 
 *.log
 *.pot
@@ -20,3 +23,4 @@ app/agents/data/
 app/adjectives_by_field.md
 
 db
+backups/

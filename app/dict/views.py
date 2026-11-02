@@ -634,3 +634,52 @@ def page_not_found(request, exception=None):
         "ABC": KRL_ABC,
     }
     return render(request, "404.html", context, status=404)
+
+
+def classification_survey_status(request):
+    """GET — whether the visitor survey is enabled."""
+    from dict.classification_survey import survey_enabled
+
+    return JsonResponse({"enabled": survey_enabled()})
+
+
+def classification_survey_task(request):
+    """GET — three eligible articles + field catalog for one respondent."""
+    from dict.classification_survey import build_task_payload, survey_enabled
+
+    if request.method != "GET":
+        return JsonResponse({"error": "method_not_allowed"}, status=405)
+    if not survey_enabled():
+        return JsonResponse({"error": "disabled"}, status=404)
+    key = (request.GET.get("key") or "").strip()
+    if len(key) < 8 or len(key) > 64:
+        return JsonResponse({"error": "bad_key"}, status=400)
+    payload = build_task_payload(key)
+    if len(payload["articles"]) < 1:
+        return JsonResponse({"error": "no_articles"}, status=503)
+    return JsonResponse(payload)
+
+
+def classification_survey_submit(request):
+    """POST JSON — store up to three control answers for a respondent."""
+    import json
+
+    from dict.classification_survey import survey_enabled, validate_and_store_answers
+
+    if request.method != "POST":
+        return JsonResponse({"error": "method_not_allowed"}, status=405)
+    if not survey_enabled():
+        return JsonResponse({"error": "disabled"}, status=404)
+    try:
+        body = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "bad_json"}, status=400)
+    key = (body.get("key") or "").strip()
+    if len(key) < 8 or len(key) > 64:
+        return JsonResponse({"error": "bad_key"}, status=400)
+    answers = body.get("answers")
+    try:
+        n = validate_and_store_answers(key, answers)
+    except (ValueError, TypeError, KeyError) as exc:
+        return JsonResponse({"error": "bad_answers", "detail": str(exc)}, status=400)
+    return JsonResponse({"ok": True, "stored": n})
