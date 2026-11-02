@@ -750,10 +750,13 @@ _DICT_MODEL_ORDER = {
     "articleindextranslate": 1,
 }
 
-_ONTOLOGY_SIDEBAR_MODELS = frozenset({"semanticfield", "ontologyqueuearticle"})
+_ONTOLOGY_SIDEBAR_MODELS = frozenset(
+    {"semanticfield", "ontologyqueuearticle", "classificationsurveyresponse"}
+)
 _ONTOLOGY_SIDEBAR_ORDER = {
     "semanticfield": 0,
     "ontologyqueuearticle": 1,
+    "classificationsurveyresponse": 2,
 }
 
 
