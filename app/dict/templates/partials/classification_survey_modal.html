@@ -8,7 +8,7 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="clsSurveyTitle">Помогите развитию словаря</h5>
+        <h5 class="modal-title" id="clsSurveyTitle"><i class="fas fa-flask" aria-hidden="true"></i> Помогите развитию словаря</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -46,12 +46,14 @@
               Статьи показываются по одной. Отметьте смысловые темы
               (не больше трёх).<br>
               Если ни одна тема не подходит или данных мало — укажите это ниже списка.
-              Ответ сохраняется при переходе дальше.
             </p>
           </div>
-          <p class="small text-muted" id="clsSurveyProgress"></p>
-          <div id="clsSurveyCards"></div>
-          <button type="button" class="btn btn-primary mt-2" id="clsSurveyNext" disabled>
+          <div class="cls-survey-sticky" id="clsSurveyStickyQ">
+            <p class="small text-muted mb-1" id="clsSurveyProgress"></p>
+            <div id="clsSurveyQuestion"></div>
+          </div>
+          <div id="clsSurveyCards" class="cls-survey-fields"></div>
+          <button type="button" class="btn btn-primary mt-3" id="clsSurveyNext" disabled>
             Далее
           </button>
         </div>
@@ -67,6 +69,41 @@
     </div>
   </div>
 </div>
+<style>
+  /* No top padding on scrollport: otherwise checkboxes show in the gap
+     above the sticky question (between modal header and sticky bar). */
+  #clsSurveyModal .modal-body {
+    padding-top: 0;
+  }
+  #clsSurveyModal #clsSurveyInvite,
+  #clsSurveyModal #clsSurveyThanks,
+  #clsSurveyModal #clsSurveyError {
+    padding-top: 1rem;
+  }
+  #clsSurveyModal #clsSurveyInstruction {
+    padding-top: 1rem;
+  }
+  #clsSurveyModal .cls-survey-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+    margin: 0 -1rem 0.75rem;
+    padding: 0.65rem 1rem 0.7rem;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  }
+  #clsSurveyModal .cls-survey-sticky h6 {
+    margin-bottom: 0.35rem;
+  }
+  #clsSurveyModal .cls-survey-sticky p {
+    margin-bottom: 0.25rem;
+  }
+  #clsSurveyModal .cls-survey-fields .form-check {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+  }
+</style>
 {% csrf_token %}
 <script src="{% static 'dict/classification_survey.js' %}" defer></script>
 {% endif %}

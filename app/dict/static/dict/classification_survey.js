@@ -98,6 +98,7 @@
 
   function renderCurrentCard() {
     var host = $("clsSurveyCards");
+    var qhost = $("clsSurveyQuestion");
     var progress = $("clsSurveyProgress");
     var instr = $("clsSurveyInstruction");
     var art = currentArticle();
@@ -113,16 +114,17 @@
     }
 
     host.innerHTML = "";
+    if (qhost) qhost.innerHTML = "";
     state.current = { decision: "", fields: [] };
 
-    var card = document.createElement("div");
-    card.className = "border rounded p-3 mb-2";
-    card.dataset.articleId = String(art.article_id);
+    var qblock = document.createElement("div");
+    qblock.className = "mb-0";
+    qblock.dataset.articleId = String(art.article_id);
 
     var title = document.createElement("h6");
-    title.className = "mb-2";
+    title.className = "mb-1";
     title.textContent = art.word || "#" + art.article_id;
-    card.appendChild(title);
+    qblock.appendChild(title);
 
     var tr = document.createElement("p");
     tr.className = "mb-1 small";
@@ -131,16 +133,21 @@
       (art.translations && art.translations.length
         ? art.translations.join(" · ")
         : "—");
-    card.appendChild(tr);
+    qblock.appendChild(tr);
 
     if (art.illustrations_ru && art.illustrations_ru.length) {
       var ill = document.createElement("p");
-      ill.className = "mb-2 small text-muted";
+      ill.className = "mb-0 small text-muted";
       ill.innerHTML =
         "<strong>Примеры:</strong> " +
         art.illustrations_ru.slice(0, 8).join(" · ");
-      card.appendChild(ill);
+      qblock.appendChild(ill);
     }
+    if (qhost) qhost.appendChild(qblock);
+
+    var card = document.createElement("div");
+    card.className = "mb-2";
+    card.dataset.articleId = String(art.article_id);
 
     var opts = document.createElement("div");
     opts.className = "mb-2";
@@ -273,7 +280,10 @@
 
   function setInviteTitle() {
     var title = $("clsSurveyTitle");
-    if (title) title.textContent = "Помогите развитию словаря";
+    if (title) {
+      title.innerHTML =
+        '<i class="fas fa-flask" aria-hidden="true"></i> Помогите развитию словаря';
+    }
   }
 
   function resetToInvite() {
