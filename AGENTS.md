@@ -31,6 +31,12 @@ restart целевого контейнера. Статика: исходник�
 отдача Nginx — только `app/staticfiles` (хостовый Nginx, не контейнер из
 устаревшего compose).
 
+**Агентский flow «коммит / пуш / деплой»:** перед `git push` и remote
+`./deploy.sh` **обязательно** прогнать локально в `punzh_django`
+`python manage.py test dict` (и black по затронутому Python). Красные тесты —
+не пушить и не деплоить. Тесты на prod (`punzh_web`) вместо локальных не
+заменяют этот шаг. Skill: `.cursor/skills/django-test`.
+
 Удалённый устаревший стек: `docker-compose-prod.yml`, `init-letsencrypt.sh`,
 и bake `COPY ./.env` в образе. Актуальный prod — только
 `docker-compose.internal.yml` + mount `.env`.
@@ -45,3 +51,4 @@ restart целевого контейнера. Статика: исходник�
 - Явный читаемый Python. Чат — русский; комментарии в коде — английские.
 - В коммитах не указывать агента / Cursor / модель; без `Co-authored-by`. Автор — git config человека.
 - После правок Python: black и тесты **только** `dict` (см. `.cursor/skills/django-test` и `app/README.md`). Скрипты в `agents/` не называть `test_*.py`.
+- Перед деплоем / push на prod: снова `test dict` локально; при падении — стоп.

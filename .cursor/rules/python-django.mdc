@@ -7,6 +7,7 @@ alwaysApply: false
 # Python / Django (сайт)
 
 - После правок: `black` и `python manage.py test dict` в контейнере `punzh_django`, **`-w /app`**. Не запускать `manage.py test` без ярлыка `dict`.
+- Перед push/деплоем на prod: снова `test dict` локально; красные — стоп (skill `django-test`).
 - Команды: `app/README.md`. Процедура: skill `django-test`.
 - Не менять форму `Article`, индексов (`ArticleIndex*`) и semantic-моделей без явной задачи.
 - Лексический `/search/` и смысловые поля / `dict/ai/` — разные контуры.

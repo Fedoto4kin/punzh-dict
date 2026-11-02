@@ -1,0 +1,13 @@
+---
+description: Перед push/деплоем на prod — локальный test dict; красные тесты стоп
+alwaysApply: true
+---
+
+# Деплой
+
+Когда пользователь просит деплой, push на prod или «коммит и деплой»:
+
+1. Локально в `punzh_django`: `python manage.py test dict` (`-w /app`). Skill: `django-test`.
+2. Красные тесты → не пушить, не вызывать remote `./deploy.sh`.
+3. Зелёные → commit (если просили) → `git push` → `ssh krl@karielan-hub 'cd ~/punzh-dict && ./deploy.sh'`.
+4. Не считать прогон на `punzh_web` заменой локальных тестов.
