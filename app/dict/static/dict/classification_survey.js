@@ -79,6 +79,7 @@
     index: 0,
     current: { decision: "", fields: [] },
     saving: false,
+    comparisons: [],
   };
 
   function currentArticle() {
@@ -92,8 +93,14 @@
   function updateNextEnabled() {
     var btn = $("clsSurveyNext");
     if (!btn) return;
+    show(btn);
     btn.disabled = state.saving || !state.current.decision;
-    btn.textContent = isLast() ? "Готово" : "Далее";
+    btn.className = "btn btn-success mt-3";
+    btn.innerHTML =
+      '<i class="fas fa-check" aria-hidden="true"></i>' +
+      '<span class="sr-only">Ответить</span>';
+    btn.setAttribute("aria-label", "Ответить");
+    btn.setAttribute("title", "Ответить");
   }
 
   function renderCurrentCard() {
@@ -320,14 +327,97 @@
     loadTask();
   }
 
+  function humanAnswerLabel(decision, fields) {
+    if (decision === "fields" && fields && fields.length) {
+      return fields.join(", ");
+    }
+    if (decision === "no_field") return "Ни одно поле не подходит";
+    if (decision === "insufficient") return "Недостаточно информации";
+    return "—";
+  }
+
+  function modelAnswerLabel(modelFields) {
+    if (modelFields && modelFields.length) return modelFields.join(", ");
+    return "не отнесла ни к одному полю";
+  }
+
+  function recordComparison(modelFields) {
+    var art = currentArticle();
+    if (!art) return;
+    state.comparisons.push({
+      word: art.word || "#" + art.article_id,
+      url: art.url || "",
+      human: humanAnswerLabel(state.current.decision, state.current.fields),
+      model: modelAnswerLabel(modelFields),
+    });
+  }
+
+  function renderFinalComparison() {
+    var host = $("clsSurveyCompare");
+    if (!host) return;
+    host.innerHTML = "";
+    if (!state.comparisons.length) return;
+
+    var intro = document.createElement("p");
+    intro.className = "small mb-2";
+    intro.textContent =
+      "Как вы ответили и как разметила автоматическая классификация 🤖:";
+    host.appendChild(intro);
+
+    state.comparisons.forEach(function (row, i) {
+      var card = document.createElement("div");
+      card.className = "cls-final-compare mb-2";
+
+      var head = document.createElement("div");
+      head.className = "font-weight-bold mb-1";
+      if (row.url) {
+        var a = document.createElement("a");
+        a.href = row.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = i + 1 + ". " + row.word;
+        head.appendChild(a);
+      } else {
+        head.textContent = i + 1 + ". " + row.word;
+      }
+      card.appendChild(head);
+
+      var you = document.createElement("div");
+      you.className = "small";
+      you.innerHTML =
+        "<span class=\"cls-compare-human\">Вы:</span> " +
+        escapeHtml(row.human);
+      card.appendChild(you);
+
+      var bot = document.createElement("div");
+      bot.className = "small";
+      bot.innerHTML =
+        "<span class=\"cls-compare-model\">🤖 авто:</span> " +
+        escapeHtml(row.model);
+      card.appendChild(bot);
+
+      host.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function finishSurvey() {
     markDone();
     var title = $("clsSurveyTitle");
     if (title) {
       title.textContent = "Спасибо, что стали частью исследования!";
     }
+    renderFinalComparison();
     hide($("clsSurveyForm"));
     show($("clsSurveyThanks"));
+    scrollSurveyTop();
   }
 
   function saveCurrentAnswer() {
@@ -370,18 +460,18 @@
 
   function onNext() {
     if (state.saving || !state.current.decision) return;
-    var btn = $("clsSurveyNext");
     state.saving = true;
     updateNextEnabled();
     setError("");
     saveCurrentAnswer()
-      .then(function () {
+      .then(function (data) {
+        recordComparison((data && data.model_fields) || []);
+        state.saving = false;
         if (isLast()) {
           finishSurvey();
           return;
         }
         state.index += 1;
-        state.saving = false;
         renderCurrentCard();
         scrollSurveyTop();
       })
@@ -419,6 +509,7 @@
         state.fields = res.data.fields || [];
         state.articles = res.data.articles || [];
         state.index = 0;
+        state.comparisons = [];
         if (!state.articles.length) {
           throw new Error("Нет доступных статей для опроса");
         }

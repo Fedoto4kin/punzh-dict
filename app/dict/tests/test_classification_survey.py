@@ -13,6 +13,7 @@ from dict.models import (
     Article,
     ArticleIndexTag,
     ArticleIndexTranslate,
+    ArticleSemanticField,
     ClassificationSurveyResponse,
     SemanticField,
     Tag,
@@ -146,7 +147,9 @@ class ClassificationSurveyTestCase(TestCase):
             HTTP_X_CSRFTOKEN=csrf.value,
         )
         self.assertEqual(r.status_code, 200, r.content)
-        self.assertEqual(r.json()["stored"], 3)
+        body = r.json()
+        self.assertEqual(body["stored"], 3)
+        self.assertEqual(body["model_fields"], [])
         self.assertEqual(
             ClassificationSurveyResponse.objects.filter(
                 respondent_key="test-key-02"
@@ -162,6 +165,37 @@ class ClassificationSurveyTestCase(TestCase):
         )
         ids = pick_task_article_ids("rep-a", n=3)
         self.assertNotIn(aid, ids)
+
+    def test_submit_returns_model_fields(self):
+        art = self.articles[0]
+        ArticleSemanticField.objects.create(article=art, field=self.fields[0])
+        ArticleSemanticField.objects.create(article=art, field=self.fields[1])
+        self.client.get("/")
+        csrf = self.client.cookies["csrftoken"].value
+        r = self.client.post(
+            "/research/classification-survey/submit/",
+            data=json.dumps(
+                {
+                    "key": "model-reveal-01",
+                    "answers": [
+                        {
+                            "article_id": art.id,
+                            "decision": "fields",
+                            "fields": ["Речь и звуки"],
+                        }
+                    ],
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf,
+        )
+        self.assertEqual(r.status_code, 200, r.content)
+        body = r.json()
+        self.assertEqual(body["stored"], 1)
+        self.assertEqual(
+            body["model_fields"],
+            ["Пища и напитки", "Животный мир"],
+        )
 
     def test_submit_one_answer_at_a_time(self):
         """Step-by-step UI saves each card immediately."""
@@ -191,6 +225,7 @@ class ClassificationSurveyTestCase(TestCase):
             )
             self.assertEqual(r.status_code, 200, r.content)
             self.assertEqual(r.json()["stored"], 1)
+            self.assertEqual(r.json()["model_fields"], [])
         self.assertEqual(
             ClassificationSurveyResponse.objects.filter(
                 respondent_key="step-key-01"

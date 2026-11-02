@@ -21,6 +21,7 @@ from dict.models import (
     Article,
     ArticleIndexTag,
     ArticleIndexTranslate,
+    ArticleSemanticField,
     ClassificationSurveyResponse,
     SemanticField,
 )
@@ -195,9 +196,19 @@ def build_task_payload(respondent_key: str) -> dict:
     }
 
 
-def validate_and_store_answers(respondent_key: str, answers: list[dict]) -> int:
+def model_fields_for_article(article_id: int) -> list[str]:
+    """Automatic ontology labels already stored for this article (any source)."""
+    return list(
+        ArticleSemanticField.objects.filter(article_id=article_id)
+        .order_by("field__sorting", "field__name")
+        .values_list("field__name", flat=True)
+    )
+
+
+def validate_and_store_answers(respondent_key: str, answers: list[dict]) -> dict:
     """
-    Persist answers. Returns number stored.
+    Persist answers. Returns {stored, model_fields}.
+    model_fields — labels for the last answer's article (UI submits one at a time).
     Each answer: {article_id, decision, fields: [str, ...]}.
     """
     if not respondent_key or not isinstance(answers, list):
@@ -212,6 +223,7 @@ def validate_and_store_answers(respondent_key: str, answers: list[dict]) -> int:
         ClassificationSurveyResponse.DECISION_INSUFFICIENT,
     }
     stored = 0
+    last_aid = None
     for raw in answers:
         aid = int(raw["article_id"])
         decision = (raw.get("decision") or "").strip()
@@ -239,7 +251,11 @@ def validate_and_store_answers(respondent_key: str, answers: list[dict]) -> int:
             defaults={"decision": decision, "fields": fields},
         )
         stored += 1
-    return stored
+        last_aid = aid
+    return {
+        "stored": stored,
+        "model_fields": model_fields_for_article(last_aid) if last_aid else [],
+    }
 
 
 def pool_stats() -> dict:

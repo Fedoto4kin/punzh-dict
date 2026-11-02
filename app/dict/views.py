@@ -679,7 +679,13 @@ def classification_survey_submit(request):
         return JsonResponse({"error": "bad_key"}, status=400)
     answers = body.get("answers")
     try:
-        n = validate_and_store_answers(key, answers)
+        result = validate_and_store_answers(key, answers)
     except (ValueError, TypeError, KeyError) as exc:
         return JsonResponse({"error": "bad_answers", "detail": str(exc)}, status=400)
-    return JsonResponse({"ok": True, "stored": n})
+    return JsonResponse(
+        {
+            "ok": True,
+            "stored": result["stored"],
+            "model_fields": result.get("model_fields") or [],
+        }
+    )
