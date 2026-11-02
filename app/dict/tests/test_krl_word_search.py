@@ -31,6 +31,12 @@ class PrepareKrlIlikeQueryPublicTestCase(SimpleTestCase):
     def test_leading_hyphen_kept(self):
         self.assertEqual("-raiska", prepare_krl_ilike_query("-raiska"))
 
+    def test_optional_paren_ending_keeps_contents(self):
+        # Indexing and see-links drop parentheses; path search must match.
+        self.assertEqual("igävähköne", prepare_krl_ilike_query("igävähkö(ne)"))
+        self.assertEqual("igävähköne", prepare_krl_ilike_query("igävähkö(n’e)"))
+        self.assertEqual("kurpat", prepare_krl_ilike_query("kurpa(t)"))
+
 
 class KrlArticleIdsTestCase(TestCase):
     def setUp(self):
@@ -46,6 +52,7 @@ class KrlArticleIdsTestCase(TestCase):
         self.ellipsis = Article.objects.create(word="šiksi… što")
         # Keyboard ASCII apostrophe (U+0027), not the dictionary ’ (U+2019).
         self.ascii_apos = Article.objects.create(word="val'l'ahat")
+        self.opt_paren = Article.objects.create(word="igävähkö(n’e)")
 
     def _ids(self, query):
         return set(krl_article_ids(query))
@@ -173,6 +180,18 @@ class KrlArticleIdsTestCase(TestCase):
         self.assertEqual(self._ids("val'l'ahat"), {self.ascii_apos.id})
         self.assertEqual(self._ids("val’l’ahat"), {self.ascii_apos.id})
 
+    def test_optional_paren_headword_searchable(self):
+        indexed = set(
+            ArticleIndexWord.objects.filter(article=self.opt_paren).values_list(
+                "word", flat=True
+            )
+        )
+        self.assertEqual(indexed, {"igävähkö", "igävähköne"})
+        self.assertEqual(self._ids("igävähkö(ne)"), {self.opt_paren.id})
+        self.assertEqual(self._ids("igävähkö(n’e)"), {self.opt_paren.id})
+        self.assertEqual(self._ids("igävähköne"), {self.opt_paren.id})
+        self.assertEqual(self._ids("igävähkö"), {self.opt_paren.id})
+
 
 class SeeHyphenLinkTestCase(SimpleTestCase):
     def test_link_keeps_hyphenated_lemma(self):
@@ -262,6 +281,13 @@ class WordSearchHttpTestCase(TestCase):
         response = self.client.get("/search/vallahat")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "val\u2019l\u2019ahat")
+        self.assertNotContains(response, "Ничего не найдено")
+
+    def test_search_path_with_optional_parens_shows_article(self):
+        Article.objects.create(word="igävähkö(n’e)")
+        response = self.client.get("/search/ig%C3%A4v%C3%A4hk%C3%B6(ne)")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "igävähkö")
         self.assertNotContains(response, "Ничего не найдено")
 
     def test_word_search_paginator(self):

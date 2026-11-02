@@ -542,10 +542,14 @@ def search_by_translate_linked(query: str, page=1, f=None):
 # Same mapping the public search form applies before ILIKE: '.' is one
 # character, '?' is any sequence; sibilants and ü/y fold like the word index.
 # Apostrophes: KRL_APOSTROPHES via strip_krl_apostrophes (shared with indexing).
+# Parentheses: optional endings like igävähkö(n’e) / kurpa(t) — drop marks,
+# keep contents (same as gen_word_variants and see-link hrefs).
 _KRL_ILIKE_TRANS = str.maketrans(
     {
         ";": "",
         ",": "",
+        "(": "",
+        ")": "",
         "š": "s",
         "č": "c",
         "ž": "z",
