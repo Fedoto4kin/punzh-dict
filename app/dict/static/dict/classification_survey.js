@@ -341,10 +341,18 @@
     return "не отнесла ни к одному полю";
   }
 
+  function normField(name) {
+    return String(name || "")
+      .replace(/\u00a0/g, " ")
+      .trim()
+      .normalize("NFC");
+  }
+
   function sortedUnique(arr) {
     var seen = {};
     var out = [];
     (arr || []).forEach(function (x) {
+      x = normField(x);
       if (!x || seen[x]) return;
       seen[x] = true;
       out.push(x);
@@ -363,21 +371,22 @@
 
   function sharedFields(a, b) {
     var setB = {};
-    b.forEach(function (x) {
-      setB[x] = true;
+    (b || []).forEach(function (x) {
+      setB[normField(x)] = true;
     });
-    return a.filter(function (x) {
-      return setB[x];
+    return (a || []).filter(function (x) {
+      return setB[normField(x)];
     });
   }
 
   function formatFieldList(fields, matchSet) {
-    if (!fields.length) return "";
+    if (!fields || !fields.length) return "";
     return fields
       .map(function (name) {
-        var safe = escapeHtml(name);
-        if (matchSet[name]) {
-          return '<span class="cls-field-match">' + safe + "</span>";
+        var raw = normField(name);
+        var safe = escapeHtml(raw);
+        if (matchSet[raw]) {
+          return '<mark class="cls-field-match">' + safe + "</mark>";
         }
         return safe;
       })
@@ -391,9 +400,10 @@
     var humanFields =
       decision === "fields" ? sortedUnique(state.current.fields || []) : [];
     var model = sortedUnique(modelFields || []);
+    var shared = sharedFields(humanFields, model);
     var fullMatch = false;
     if (decision === "fields") {
-      fullMatch = setsEqual(humanFields, model);
+      fullMatch = humanFields.length > 0 && setsEqual(humanFields, model);
     } else if (decision === "no_field") {
       fullMatch = model.length === 0;
     }
@@ -406,7 +416,7 @@
       humanLabel: humanAnswerLabel(decision, humanFields),
       modelLabel: modelAnswerLabel(model),
       fullMatch: fullMatch,
-      shared: sharedFields(humanFields, model),
+      shared: shared,
     });
   }
 
@@ -423,10 +433,21 @@
     host.appendChild(intro);
 
     state.comparisons.forEach(function (row, i) {
+      // Recompute at render time (defensive against stale/odd strings).
+      var humanFields = sortedUnique(row.humanFields || []);
+      var modelFields = sortedUnique(row.modelFields || []);
+      var shared = sharedFields(humanFields, modelFields);
+      var fullMatch = false;
+      if (row.decision === "fields") {
+        fullMatch = humanFields.length > 0 && setsEqual(humanFields, modelFields);
+      } else if (row.decision === "no_field") {
+        fullMatch = modelFields.length === 0;
+      }
+
       var card = document.createElement("div");
       card.className =
         "cls-final-compare mb-2" +
-        (row.fullMatch ? " cls-final-compare-match" : "");
+        (fullMatch ? " cls-final-compare-match" : "");
 
       var head = document.createElement("div");
       head.className = "font-weight-bold mb-1";
@@ -443,24 +464,20 @@
       card.appendChild(head);
 
       var matchSet = {};
-      (row.shared || []).forEach(function (n) {
+      shared.forEach(function (n) {
         matchSet[n] = true;
       });
-      // Full no_field match: highlight both special labels.
-      if (row.fullMatch && row.decision === "no_field") {
-        matchSet.__special__ = true;
-      }
 
       var you = document.createElement("div");
       you.className = "small";
       var youBody;
-      if (row.decision === "fields" && row.humanFields.length) {
-        youBody = formatFieldList(row.humanFields, matchSet);
-      } else if (row.fullMatch && row.decision === "no_field") {
+      if (row.decision === "fields" && humanFields.length) {
+        youBody = formatFieldList(humanFields, matchSet);
+      } else if (fullMatch && row.decision === "no_field") {
         youBody =
-          '<span class="cls-field-match">' +
+          '<mark class="cls-field-match">' +
           escapeHtml(row.humanLabel) +
-          "</span>";
+          "</mark>";
       } else {
         youBody = escapeHtml(row.humanLabel);
       }
@@ -471,18 +488,18 @@
       var bot = document.createElement("div");
       bot.className = "small";
       var botBody;
-      if (row.modelFields.length) {
-        botBody = formatFieldList(row.modelFields, matchSet);
-      } else if (row.fullMatch && row.decision === "no_field") {
+      if (modelFields.length) {
+        botBody = formatFieldList(modelFields, matchSet);
+      } else if (fullMatch && row.decision === "no_field") {
         botBody =
-          '<span class="cls-field-match">' +
+          '<mark class="cls-field-match">' +
           escapeHtml(row.modelLabel) +
-          "</span>";
+          "</mark>";
       } else {
         botBody = escapeHtml(row.modelLabel);
       }
       bot.innerHTML =
-        '<span class="cls-compare-model">🤖 авто:</span> ' + botBody;
+        '<span class="cls-compare-model">🤖 :</span> ' + botBody;
       card.appendChild(bot);
 
       host.appendChild(card);
