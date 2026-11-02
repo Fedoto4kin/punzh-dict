@@ -310,14 +310,12 @@
   }
 
   function openSurveyPrompt() {
-    // Flask / «Участвовать»: skip consent, go straight to articles.
+    // Flask / «Исследовать вместе»: show invite, then load on consent.
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {}
-    setInviteTitle();
-    hide($("clsSurveyThanks"));
+    resetToInvite();
     openModal();
-    loadTask();
   }
 
   function finishSurvey() {
