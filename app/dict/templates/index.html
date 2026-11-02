@@ -12,7 +12,34 @@
 <div class="row mt-5">
     <div class="col-sm-12">
 
-        <div class="card mb-3 home-hero">
+        <div class="card mb-3 home-hero position-relative">
+            {% if classification_survey_enabled %}
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm rounded-circle cls-survey-corner"
+                    id="clsSurveyCorner"
+                    data-cls-survey-open
+                    title="Исследование: тематическая классификация"
+                    aria-label="Исследование: тематическая классификация">
+                <i class="fas fa-flask" aria-hidden="true"></i>
+            </button>
+            <style>
+              .home-hero .cls-survey-corner {
+                position: absolute;
+                top: 0.6rem;
+                right: 0.6rem;
+                z-index: 2;
+                width: 2.1rem;
+                height: 2.1rem;
+                padding: 0;
+                line-height: 2.1rem;
+                opacity: 0.7;
+              }
+              .home-hero .cls-survey-corner:hover,
+              .home-hero .cls-survey-corner:focus {
+                opacity: 1;
+              }
+            </style>
+            {% endif %}
             <div class="row no-gutters">
                 <div class="col-md-4 home-hero-cover-col">
                     <img class="home-hero-cover" src="{% static 'images/book_front.jpg' %}" alt="Обложка словаря">

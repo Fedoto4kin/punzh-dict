@@ -271,6 +271,27 @@
     }
   }
 
+  function setInviteTitle() {
+    var title = $("clsSurveyTitle");
+    if (title) title.textContent = "Помогите развитию словаря!";
+  }
+
+  function resetToInvite() {
+    setInviteTitle();
+    hide($("clsSurveyForm"));
+    hide($("clsSurveyThanks"));
+    show($("clsSurveyInvite"));
+    setError("");
+  }
+
+  function openSurveyPrompt() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+    resetToInvite();
+    openModal();
+  }
+
   function finishSurvey() {
     markDone();
     var title = $("clsSurveyTitle");
@@ -384,7 +405,7 @@
 
   function init() {
     var modal = $("clsSurveyModal");
-    if (!modal || alreadyDone()) return;
+    if (!modal) return;
 
     var yes = $("clsSurveyYes");
     var no = $("clsSurveyNo");
@@ -398,13 +419,22 @@
     var next = $("clsSurveyNext");
     if (next) next.addEventListener("click", onNext);
 
+    document.querySelectorAll("[data-cls-survey-open]").forEach(function (el) {
+      el.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        openSurveyPrompt();
+      });
+    });
+
     if (window.jQuery) {
       jQuery(modal).on("hide.bs.modal", function () {
         markDone();
       });
     }
 
-    setTimeout(openModal, 800);
+    if (!alreadyDone()) {
+      setTimeout(openModal, 800);
+    }
   }
 
   if (document.readyState === "loading") {
