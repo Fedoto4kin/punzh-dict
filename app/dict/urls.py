@@ -3,6 +3,7 @@ from django.urls import path
 from django.views.static import serve
 
 from . import views
+from . import views_ai_search
 
 urlpatterns = [
     # Before <letter>/ — otherwise /robots.txt redirects to /robots.txt/ (letter page).
@@ -36,22 +37,26 @@ urlpatterns = [
     path("search/", views.search_proc, name="search_proc"),
     path("search/<str:query>", views.search, name="search"),
     path("search/<str:query>/<int:page>", views.search, name="search"),
-    path("ai-search", views.ai_search, name="ai_search"),
-    path("ai-search/", views.ai_search, name="ai_search"),
-    path("ai-search/jobs/", views.ai_search_job_create, name="ai_search_job_create"),
+    path("ai-search", views_ai_search.ai_search, name="ai_search"),
+    path("ai-search/", views_ai_search.ai_search, name="ai_search"),
+    path(
+        "ai-search/jobs/",
+        views_ai_search.ai_search_job_create,
+        name="ai_search_job_create",
+    ),
     path(
         "ai-search/jobs/<uuid:job_id>/",
-        views.ai_search_job_status,
+        views_ai_search.ai_search_job_status,
         name="ai_search_job_status",
     ),
     path(
         "ai-search/jobs/<uuid:job_id>/partial/",
-        views.ai_search_job_partial,
+        views_ai_search.ai_search_job_partial,
         name="ai_search_job_partial",
     ),
     path(
         "ai-search/feedback/",
-        views.ai_search_feedback,
+        views_ai_search.ai_search_feedback,
         name="ai_search_feedback",
     ),
     path(

@@ -364,3 +364,124 @@ class AiSearchLogFeedbackTestCase(TestCase):
         )
         self.assertEqual(resp.status_code, 404)
         self.assertFalse(AiSearchFeedback.objects.filter(log=log).exists())
+
+    def test_feedback_bad_vote_rejected(self):
+        job_id = self._run_job()
+        log = AiSearchLog.objects.get(job_id=job_id)
+        resp = self.client.post(
+            reverse("ai_search_feedback"),
+            data=json.dumps({"log_id": str(log.id), "vote": "meh"}),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()["error"], "bad_vote")
+
+    @override_settings(AI_SEARCH_FEEDBACK=False)
+    def test_feedback_disabled(self):
+        job_id = self._run_job()
+        log = AiSearchLog.objects.get(job_id=job_id)
+        resp = self.client.post(
+            reverse("ai_search_feedback"),
+            data=json.dumps({"log_id": str(log.id), "vote": "up"}),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.json()["error"], "disabled")
+
+
+class AiSearchJobEdgeCasesTestCase(TestCase):
+    """HTTP edge cases that must survive a views → views_ai_search move."""
+
+    def setUp(self):
+        self.field = SemanticField.objects.create(
+            name="Животный мир", definition="животные", sorting=1
+        )
+        self.art = Article.objects.create(word="kaza", article_html="<b>kaza</b>")
+        ArticleIndexTranslate.objects.create(article=self.art, rus_word="коза")
+        ArticleSemanticField.objects.create(article=self.art, field=self.field)
+
+    def test_create_get_not_allowed(self):
+        resp = self.client.get(reverse("ai_search_job_create"))
+        self.assertEqual(resp.status_code, 405)
+
+    def test_create_bad_json(self):
+        resp = self.client.post(
+            reverse("ai_search_job_create"),
+            data="{not-json",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()["error"], "bad_json")
+
+    def test_create_form_post_accepted(self):
+        with patch("dict.ai.jobs.schedule_ai_search_job", return_value=True):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data={"query": "коза", "sort": "relevance"},
+            )
+        self.assertEqual(resp.status_code, 202)
+        self.assertTrue(resp.json()["id"])
+
+    def test_create_rate_limited(self):
+        with patch("dict.ai.jobs.rate_limit_ok", return_value=False):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data=json.dumps({"query": "коза"}),
+                content_type="application/json",
+            )
+        self.assertEqual(resp.status_code, 429)
+        self.assertEqual(resp.json()["error"], "rate_limited")
+
+    def test_partial_not_ready_while_queued(self):
+        with patch("dict.ai.jobs.schedule_ai_search_job", return_value=True):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data=json.dumps({"query": "коза"}),
+                content_type="application/json",
+            )
+        job_id = resp.json()["id"]
+        partial = self.client.get(reverse("ai_search_job_partial", args=[job_id]))
+        self.assertEqual(partial.status_code, 409)
+
+    def test_status_error_payload(self):
+        from dict.ai.jobs import run_job
+
+        with patch("dict.ai.jobs.schedule_ai_search_job", return_value=True):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data=json.dumps({"query": "коза"}),
+                content_type="application/json",
+            )
+        job_id = resp.json()["id"]
+        with patch("dict.ai.query_parse.parse_query", side_effect=RuntimeError("boom")):
+            run_job(job_id)
+        st = self.client.get(reverse("ai_search_job_status", args=[job_id]))
+        self.assertEqual(st.status_code, 200)
+        body = st.json()
+        self.assertEqual(body["status"], "error")
+        self.assertIn("boom", body["error"] or "")
+
+    def test_expired_job_hidden(self):
+        with patch("dict.ai.jobs.schedule_ai_search_job", return_value=True):
+            resp = self.client.post(
+                reverse("ai_search_job_create"),
+                data=json.dumps({"query": "коза"}),
+                content_type="application/json",
+            )
+        job_id = resp.json()["id"]
+        job = AiSearchJob.objects.get(pk=job_id)
+        job.status = AiSearchJob.STATUS_EXPIRED
+        job.save(update_fields=["status"])
+        self.assertEqual(
+            self.client.get(reverse("ai_search_job_status", args=[job_id])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse("ai_search_job_partial", args=[job_id])
+            ).status_code,
+            404,
+        )
+        page = self.client.get(reverse("ai_search"), {"job": job_id})
+        self.assertEqual(page.status_code, 200)
+        self.assertTrue(page.context["job_missing"])
