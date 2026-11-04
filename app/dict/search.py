@@ -8,11 +8,19 @@ from django.db.models import Count, F, Prefetch, Q
 from django.db.models.functions import Length
 
 from .helpers import (
+    FUZZY_TOKEN_MIN_LEN,
+    STOP_1A,
+    STOP_1B,
+    STOPWORDS,
+    TOKEN_RE,
     build_pagination_hints,
     fold_interior_hyphens,
     normalization,
+    query_tokens,
     sorted_by_krl,
     strip_krl_apostrophes,
+    token_boundary_fuzzy_regex,
+    token_boundary_regex,
 )
 from .models import (
     Article,
@@ -165,108 +173,28 @@ def get_sorted_articles(ids: [], page: int) -> Paginator:
 #  Поиск по русскому переводу
 # ------------------------------------------------------------
 
-_TOKEN_RE = re.compile(r"[а-яё\-]+", re.IGNORECASE)
-
-# Stop-words for the narrowing split (SPEC v2 §5): corpus buckets 1a (len<=2)
-# and 1b (dictionary abbreviations ending in -л). Static list.
-_STOP_1A = {
-    "в",
-    "с",
-    "на",
-    "и",
-    "из",
-    "по",
-    "от",
-    "к",
-    "со",
-    "о",
-    "за",
-    "до",
-    "во",
-    "не",
-    "у",
-    "то",
-    "же",
-    "ее",
-    "ни",
-    "да",
-    "но",
-    "ко",
-    "а",
-    "бы",
-    "ли",
-    "их",
-    "им",
-    "та",
-    "вы",
-    "об",
-    "ле",
-    "те",
-    "он",
-    "мы",
-}
-_STOP_1B = {
-    "что-л",
-    "чем-л",
-    "чего-л",
-    "кого-л",
-    "чему-л",
-    "куда-л",
-    "кем-л",
-    "где-л",
-    "кому-л",
-    "какое-л",
-    "какого-л",
-    "каком-л",
-    "откуда-л",
-    "каким-л",
-    "какую-л",
-    "каких-л",
-    "какой-л",
-    "какие-л",
-    "чью-л",
-    "чьего-л",
-    "какая-л",
-}
-STOPWORDS = _STOP_1A | _STOP_1B
+# Token/stopword primitives: dict.helpers.rus_tokens (shared with AI / audits).
+# Compat aliases for callers that still import private names from search.
+_TOKEN_RE = TOKEN_RE
+_STOP_1A = STOP_1A
+_STOP_1B = STOP_1B
+_query_tokens = query_tokens
+_token_boundary_regex = token_boundary_regex
+_token_boundary_fuzzy_regex = token_boundary_fuzzy_regex
+_FUZZY_TOKEN_MIN_LEN = FUZZY_TOKEN_MIN_LEN
 
 # Anchor queries where token-OR hits are huge: narrowing candidates only from
 # ILIKE-exact articles (backlog §2 prio-filter «быть»).
 HIGH_FREQ_ANCHOR_QUERIES = frozenset({"быть"})
 
-# Short-prefix fuzzy token match (backlog P3 surrogate): «корова» → «корове».
-_FUZZY_TOKEN_MIN_LEN = 5
-# One inflection letter (корова/корове); not derivational siblings (понизу/понизить).
-_FUZZY_SUFFIX = r"[а-яё]"
 
-# Token boundary for rus_word: same alphabet as _TOKEN_RE ([а-яё\-] tokens).
-_TOKEN_BOUNDARY_BEFORE = r"(?:^|[^а-яё\-])"
-_TOKEN_BOUNDARY_AFTER = r"(?:$|[^а-яё\-])"
-
-
-def _query_tokens(query):
-    return _TOKEN_RE.findall(query.lower())
-
-
-def _token_boundary_regex(token):
-    return _TOKEN_BOUNDARY_BEFORE + re.escape(token) + _TOKEN_BOUNDARY_AFTER
-
-
-def _token_boundary_fuzzy_regex(token):
-    """Stem = token minus last letter; matches inflection variants (корова/корове)."""
-    stem = token[:-1]
-    return (
-        _TOKEN_BOUNDARY_BEFORE + re.escape(stem) + _FUZZY_SUFFIX + _TOKEN_BOUNDARY_AFTER
-    )
-
-
-def _translate_q_any_query_token(query_tokens):
+def _translate_q_any_query_token(tokens):
     """OR: rus_word contains at least one query token as a whole word."""
     combined = Q()
-    for tok in query_tokens:
-        combined |= Q(rus_word__iregex=_token_boundary_regex(tok))
-        if len(tok) >= _FUZZY_TOKEN_MIN_LEN:
-            combined |= Q(rus_word__iregex=_token_boundary_fuzzy_regex(tok))
+    for tok in tokens:
+        combined |= Q(rus_word__iregex=token_boundary_regex(tok))
+        if len(tok) >= FUZZY_TOKEN_MIN_LEN:
+            combined |= Q(rus_word__iregex=token_boundary_fuzzy_regex(tok))
     return combined
 
 

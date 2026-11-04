@@ -9,12 +9,14 @@ from typing import List, Optional, Set
 
 from django.db.models import Q
 
-from .helpers import prepare_rus_query
+from .helpers import (
+    FUZZY_TOKEN_MIN_LEN,
+    prepare_rus_query,
+    token_boundary_fuzzy_regex,
+    token_boundary_regex,
+)
 from .models import Article, ArticleLink
 from .search import (
-    _FUZZY_TOKEN_MIN_LEN,
-    _token_boundary_fuzzy_regex,
-    _token_boundary_regex,
     get_sorted_articles,
     rus_search_core,
 )
@@ -97,11 +99,11 @@ def _token_match_info(rus_words, query_tokens):
         exact_hit = False
         fuzzy_hit = False
         for tok in query_tokens:
-            if re.search(_token_boundary_regex(tok), rw, flags=re.IGNORECASE):
+            if re.search(token_boundary_regex(tok), rw, flags=re.IGNORECASE):
                 exact_hit = True
                 break
-            if len(tok) >= _FUZZY_TOKEN_MIN_LEN and re.search(
-                _token_boundary_fuzzy_regex(tok), rw, flags=re.IGNORECASE
+            if len(tok) >= FUZZY_TOKEN_MIN_LEN and re.search(
+                token_boundary_fuzzy_regex(tok), rw, flags=re.IGNORECASE
             ):
                 fuzzy_hit = True
         if exact_hit or fuzzy_hit:

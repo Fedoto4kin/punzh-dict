@@ -29,10 +29,8 @@ from dict.models import (
     SemanticField,
     Tag,
 )
-from dict.helpers import normalize_yo
+from dict.helpers import normalize_yo, query_tokens, token_boundary_regex
 from dict.search import (
-    _query_tokens,
-    _token_boundary_regex,
     article_ids_for_semantic_field,
     expand_by_links,
     krl_article_ids,
@@ -52,12 +50,12 @@ def _multiword_lemma_ids(lemma):
     Avoids token-OR false friends: «родственные связи» must not rank
     «половую связь» as a focus/lexical hit via the lone token «связи».
     """
-    toks = _query_tokens(normalize_yo(lemma))
+    toks = query_tokens(normalize_yo(lemma))
     if len(toks) < 2:
         return set()
     q = Q()
     for tok in toks:
-        q &= Q(rus_word__iregex=_token_boundary_regex(tok))
+        q &= Q(rus_word__iregex=token_boundary_regex(tok))
     return set(
         ArticleIndexTranslate.objects.filter(q).values_list("article_id", flat=True)
     )
@@ -81,7 +79,7 @@ def _lemma_hit_ids(lemmas, *, expand_links=False):
         lem = normalize_yo((raw or "").strip())
         if not lem:
             continue
-        toks = _query_tokens(lem)
+        toks = query_tokens(lem)
         if len(toks) >= 2:
             ids |= _multiword_lemma_ids(lem)
         else:
