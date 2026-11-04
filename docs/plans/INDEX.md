@@ -32,7 +32,7 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| R1 | бэклог | Распил `dict/search.py` → rus / krl+facets / ontology; только с контрактом тестов, отдельный PR | `plans/search-module-split.md` |
+| R1 | **сделано** | Распил `dict/search.py` → пакет `dict/search/` (common / rus / krl / ontology); публичный API через `__init__`; `test dict` зелёный | `plans/search-module-split.md` |
 
 ## Лексический `/search/` — baseline готов
 
