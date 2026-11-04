@@ -22,7 +22,7 @@ from dict.ai.query_prompts import (
     build_query_parse_user_prompt,
     reference_data_for_parse,
 )
-from dict.helpers import krl_apostrophes_class
+from dict.helpers import MAX_SEARCH_QUERY_LEN, krl_apostrophes_class, normalize_yo
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,8 @@ PARSE_TIMEOUT = 30
 # Output cap. Haiku spends part of this budget before the JSON, so 600
 # came back empty (finish_reason=length). 2000 still stops a repeat loop.
 PARSE_MAX_TOKENS = 2000
-MAX_QUERY_LEN = 300
+# Alias: tests and callers read query_parse.MAX_QUERY_LEN.
+MAX_QUERY_LEN = MAX_SEARCH_QUERY_LEN
 MAX_LIST_ITEMS = 10
 MAX_RELATED_ITEMS = 12
 MAX_FOCUS_ITEMS = 5
@@ -99,10 +100,6 @@ DIALECT_META_LEMMAS = frozenset(
 )
 
 
-def _normalize_yo(text):
-    return (text or "").translate(str.maketrans({"ё": "е"}))
-
-
 def _lemma_matches_field_label(lemma, name, definition=""):
     """
     True if a theme lemma appears in the ontology field name (or definition).
@@ -110,10 +107,10 @@ def _lemma_matches_field_label(lemma, name, definition=""):
     Used to refine LLM fields without a prompt change: «погода» →
     «Природа и погода», «животные» → «Животный мир» (stem prefix).
     """
-    lem = _normalize_yo(lemma).strip().lower()
+    lem = normalize_yo(lemma).strip().lower()
     if len(lem) < 3:
         return False
-    blob = _normalize_yo(f"{name} {definition or ''}").lower()
+    blob = normalize_yo(f"{name} {definition or ''}").lower()
     if lem in blob:
         return True
     # RU inflection: животные / животный share «животн»
@@ -130,7 +127,7 @@ def fields_matching_lemmas(lemmas, field_defs):
     seeds = []
     seen = set()
     for raw in lemmas or []:
-        lem = _normalize_yo(raw).strip()
+        lem = normalize_yo(raw).strip()
         key = lem.lower()
         if lem and key not in seen:
             seen.add(key)

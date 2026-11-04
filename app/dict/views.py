@@ -8,7 +8,12 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
 
-from .helpers import KRL_ABC, build_pagination_hints
+from .helpers import (
+    KRL_ABC,
+    MAX_SEARCH_QUERY_LEN,
+    build_pagination_hints,
+    prepare_rus_query,
+)
 from .search import (
     Content,
     get_tags_by_ids_distinct,
@@ -28,8 +33,6 @@ from .search import (
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
 
-# Align with AI job bound (dict.ai.jobs.MAX_QUERY_LEN); caps ILIKE/token cost.
-MAX_SEARCH_QUERY_LEN = 300
 SEARCH_RATE_LIMIT_PER_MINUTE = 60
 
 
@@ -131,9 +134,8 @@ def search(request, query="", page=1):
     phrase_filter = None
     t_query = ""
     if direction == "rus":
-        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
         page_obj, found_count, narrowing, direct_ids, related_queries = (
-            search_by_translate_linked(query.translate(translation_table), page, f)
+            search_by_translate_linked(prepare_rus_query(query), page, f)
         )
         possible = []
         # подпись активного фильтра для badge в заголовке
@@ -370,9 +372,8 @@ def _ai_search_shell_context(request, *, query="", sort="relevance", job=None):
             ctx["fallback_count"] = job.fallback_count
             ctx["ontology_fields"] = _field_meta(list(parsed.get("fields") or []))
             if job.fallback_count is not None and job.fallback_count > 0:
-                translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
                 page_obj, found_count, *_rest = search_by_translate_linked(
-                    (job.query or "").translate(translation_table), 1
+                    prepare_rus_query(job.query or ""), 1
                 )
                 ctx["fallback_page"] = page_obj
                 ctx["fallback_found"] = found_count
@@ -519,9 +520,8 @@ def ai_search_job_partial(request, job_id):
     fallback_page = None
     fallback_found = 0
     if job.fallback_count is not None and job.fallback_count > 0:
-        translation_table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
         fallback_page, fallback_found, *_rest = search_by_translate_linked(
-            (job.query or "").translate(translation_table), 1
+            prepare_rus_query(job.query or ""), 1
         )
 
     ctx = {

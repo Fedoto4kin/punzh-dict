@@ -9,6 +9,7 @@ from typing import List, Optional, Set
 
 from django.db.models import Q
 
+from .helpers import prepare_rus_query
 from .models import Article, ArticleLink
 from .search import (
     _FUZZY_TOKEN_MIN_LEN,
@@ -80,8 +81,7 @@ class SearchDebugResult:
 
 def prepare_rus_debug_query(raw_query: str) -> str:
     """Same prep as views.search for the Russian branch (ё→е, ?/. wildcards)."""
-    table = str.maketrans({"ё": "е", "?": "%", ".": "_"})
-    return (raw_query or "").strip().translate(table)
+    return prepare_rus_query(raw_query)
 
 
 def _token_match_info(rus_words, query_tokens):

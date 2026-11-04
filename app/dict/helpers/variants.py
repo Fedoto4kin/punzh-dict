@@ -12,9 +12,18 @@ KRL_ABC = "ABCČDEFGHIJKLMNOPRSŠZŽTUVYÄÖ"
 # Leading-hyphen lemmas («-raiska») are left alone.
 _INTERIOR_HYPHEN = re.compile(r"(?<=\w)-(?=\w)", re.UNICODE)
 
+# Dictionary sibilants → ASCII (word index / see-audit fold; not ILIKE wildcards).
+_KRL_SIBILANT_TRANS = str.maketrans(
+    {"š": "s", "č": "c", "ž": "z", "Š": "S", "Č": "C", "Ž": "Z"}
+)
+
 
 def fold_interior_hyphens(text):
     return _INTERIOR_HYPHEN.sub(" ", text or "")
+
+
+def fold_krl_sibilants(text):
+    return (text or "").translate(_KRL_SIBILANT_TRANS)
 
 
 # «šiksi… što» ≈ «šiksi, što»: alternative forms, not a phrase.

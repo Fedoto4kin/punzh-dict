@@ -10,7 +10,7 @@ See backlog.md §2, agents/AGENTS.md.
 import json
 import re
 
-from dict.helpers import krl_apostrophes_class
+from dict.helpers import krl_apostrophes_class, normalize_yo
 from dict.models import ArticleIndexTranslate, Tag
 
 TAG_RE = re.compile(r"<[^>]+>")
@@ -80,8 +80,6 @@ _SCOPE_PAREN_RE = re.compile(
     r"\s*\((?:о|об|про)\s+каком(?:-л)?\.?[^)]*\)\s*",
     re.I,
 )
-
-_YO_TO_E = str.maketrans({"ё": "е", "Ё": "Е"})
 
 # Expanded Latin POS lemmas that appear in gloss HTML / names (not only Tag.tag).
 _LATIN_POS_PREFIX_ALTS = (
@@ -514,7 +512,7 @@ def _is_attributive_comma_phrase(text):
 
 def _normalize_yo_to_e(text):
     """Match search query normalization (views.search: ё→е before ILIKE/FTS)."""
-    return (text or "").translate(_YO_TO_E)
+    return normalize_yo(text)
 
 
 def _russian_text_after_spaced_tilde(part):

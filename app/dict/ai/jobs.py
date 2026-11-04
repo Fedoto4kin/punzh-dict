@@ -12,6 +12,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from dict.helpers import MAX_SEARCH_QUERY_LEN
 from dict.models import AiSearchJob
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ _inflight: set[str] = set()
 STALE_RUNNING_SECONDS = 120
 JOB_TTL_HOURS = 24
 RATE_LIMIT_PER_MINUTE = 20
-MAX_QUERY_LEN = 300
+# Alias: callers/tests may read jobs.MAX_QUERY_LEN.
+MAX_QUERY_LEN = MAX_SEARCH_QUERY_LEN
 
 
 def serialize_groups_for_job(groups):

@@ -3,6 +3,8 @@
 import re
 
 from dict.helpers import (
+    fold_interior_hyphens,
+    fold_krl_sibilants,
     krl_apostrophes_class,
     strip_krl_apostrophes,
 )
@@ -179,9 +181,8 @@ def fold_lemma(word):
     w = w.split(",", 1)[0].strip()
     w = _HOMONYM_TAIL.sub("", w).strip()
     w = w.replace("~", "")
-    # дефис внутри леммы ≈ пробел (mul’l’in-mal’l’in ↔ mul’l’in mal’l’in)
-    w = re.sub(r"(?<=\w)-(?=\w)", " ", w)
-    return w.replace("š", "s").replace("č", "c").replace("ž", "z")
+    # Interior hyphen ≈ space (shared with word index / prepare_krl_ilike_query).
+    return fold_krl_sibilants(fold_interior_hyphens(w))
 
 
 def html_see_mentions(html, target_words):

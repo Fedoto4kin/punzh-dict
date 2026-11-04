@@ -29,6 +29,7 @@ from dict.models import (
     SemanticField,
     Tag,
 )
+from dict.helpers import normalize_yo
 from dict.search import (
     _query_tokens,
     _token_boundary_regex,
@@ -44,10 +45,6 @@ FIELD_TOP_N = None
 KIND_ORDER = ("lexical", "tag")  # field merged into lexical/main
 
 
-def _normalize_yo(text):
-    return (text or "").translate(str.maketrans({"ё": "е"}))
-
-
 def _multiword_lemma_ids(lemma):
     """
     Multi-word lemma → same rus_word must contain every token (AND).
@@ -55,7 +52,7 @@ def _multiword_lemma_ids(lemma):
     Avoids token-OR false friends: «родственные связи» must not rank
     «половую связь» as a focus/lexical hit via the lone token «связи».
     """
-    toks = _query_tokens(_normalize_yo(lemma))
+    toks = _query_tokens(normalize_yo(lemma))
     if len(toks) < 2:
         return set()
     q = Q()
@@ -81,7 +78,7 @@ def _lemma_hit_ids(lemmas, *, expand_links=False):
         return set()
     ids = set()
     for raw in lemmas:
-        lem = _normalize_yo((raw or "").strip())
+        lem = normalize_yo((raw or "").strip())
         if not lem:
             continue
         toks = _query_tokens(lem)
@@ -191,7 +188,7 @@ def _apply_and_filters(ids, *filter_sets):
 
 
 def _fallback_count(query):
-    q = _normalize_yo((query or "").strip())
+    q = normalize_yo((query or "").strip())
     if not q:
         return 0
     core = rus_search_core(q)

@@ -7,7 +7,7 @@ then exact lexical, then broader axis hits. Tie-break: Karelian alphabet.
 
 from __future__ import annotations
 
-from dict.helpers import sorted_by_krl
+from dict.helpers import normalize_yo, sorted_by_krl
 from dict.models import Article, ArticleIndexTranslate, ArticleKeyword
 
 SORT_RELEVANCE = "relevance"
@@ -38,10 +38,6 @@ def normalize_sort(raw):
     return SORT_RELEVANCE
 
 
-def _normalize_yo(text):
-    return (text or "").translate(str.maketrans({"ё": "е"}))
-
-
 def exact_translate_ids(lemmas):
     """Article ids with rus_word iexact any lemma (ё→е)."""
     if not lemmas:
@@ -50,7 +46,7 @@ def exact_translate_ids(lemmas):
     from django.db.models import Q
 
     for lem in lemmas:
-        lem = _normalize_yo((lem or "").strip())
+        lem = normalize_yo((lem or "").strip())
         if not lem:
             continue
         clause = Q(rus_word__iexact=lem)
@@ -78,10 +74,10 @@ def lemmas_with_exact_translate(lemmas):
 
     q = None
     for lem in cleaned:
-        clause = Q(rus_word__iexact=_normalize_yo(lem))
+        clause = Q(rus_word__iexact=normalize_yo(lem))
         q = clause if q is None else (q | clause)
     hit_keys = {
-        _normalize_yo(w).lower()
+        normalize_yo(w).lower()
         for w in ArticleIndexTranslate.objects.filter(q)
         .values_list("rus_word", flat=True)
         .distinct()
@@ -89,7 +85,7 @@ def lemmas_with_exact_translate(lemmas):
     out = []
     seen = set()
     for lem in cleaned:
-        key = _normalize_yo(lem).lower()
+        key = normalize_yo(lem).lower()
         if key in hit_keys and key not in seen:
             out.append(lem)
             seen.add(key)
