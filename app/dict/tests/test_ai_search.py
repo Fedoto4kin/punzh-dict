@@ -792,3 +792,71 @@ class LemmasWithExactTranslateTestCase(TestCase):
             lemmas_with_exact_translate(["дрожжи", "хмель", "сусло", "пиво", "хмель"]),
             ["хмель", "пиво"],
         )
+
+
+class SoftTagAndRelaxTestCase(TestCase):
+    """Moved from retired test_ai_rerank (retrieval rules, not LLM re-rank)."""
+
+    def test_soft_tag_does_not_and_filter_beer(self):
+        Tag.objects.create(tag="с.-х.", name="сельское хозяйство", type=3, sorting=1)
+        field = SemanticField.objects.create(
+            name="Пища и напитки", definition="еда", sorting=1
+        )
+        beer = Article.objects.create(word="olut", article_html="<b>olut</b>")
+        ArticleIndexTranslate.objects.create(article=beer, rus_word="пиво")
+        ArticleSemanticField.objects.create(article=beer, field=field)
+        farm = Article.objects.create(word="beika", article_html="<b>beika</b>")
+        ArticleIndexTranslate.objects.create(article=farm, rus_word="борона")
+        ArticleIndexTag.objects.create(article=farm, tag=Tag.objects.get(tag="с.-х."))
+
+        groups, fb = search_by_parsed(
+            {
+                "ok": True,
+                "parse_ok": True,
+                "query": "как варили пиво",
+                "lexical": ["варить", "пиво"],
+                "focus": [],
+                "related": [],
+                "fields": ["Пища и напитки"],
+                "tags": [],
+                "tags_soft": ["с.-х."],
+                "place": None,
+                "dialect": None,
+            }
+        )
+        self.assertIsNone(fb)
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertIn("olut", words)
+        # Soft mark must not require ∩ — beer stays without с.-х.
+        # farm is с.-х. but not in food field → soft∩field must not pull it.
+        self.assertNotIn("beika", words)
+
+    def test_relax_hard_tag_when_intersection_empty(self):
+        tag = Tag.objects.create(
+            tag="с.-х.", name="сельское хозяйство", type=3, sorting=1
+        )
+        beer = Article.objects.create(word="olut2", article_html="<b>olut2</b>")
+        ArticleIndexTranslate.objects.create(article=beer, rus_word="пиво")
+        # Some с.-х. article exists so hard_tag_ids is non-empty, but not on beer.
+        other = Article.objects.create(word="beika2", article_html="<b>b</b>")
+        ArticleIndexTag.objects.create(article=other, tag=tag)
+        groups, fb = search_by_parsed(
+            {
+                "ok": True,
+                "parse_ok": True,
+                "query": "пиво",
+                "lexical": ["пиво"],
+                "focus": [],
+                "related": [],
+                "fields": [],
+                "tags": ["с.-х."],  # hard but ∩ lexical empty → relax
+                "tags_soft": [],
+                "place": None,
+                "dialect": None,
+            }
+        )
+        self.assertIsNone(fb)
+        words = [a["word"] for a in groups[0]["articles"]]
+        self.assertIn("olut2", words)
+        self.assertNotIn("beika2", words)
+        self.assertEqual(groups[0].get("tags"), None)

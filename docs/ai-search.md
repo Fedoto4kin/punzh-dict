@@ -3,9 +3,8 @@
 **Статус (2026-10-24):** **закрытая альфа на prod.** Разбор (промпт 1.15),
 retrieval (hard/soft-пометы, POS сужает, говор+тема, см. входящие), async
 job+poll (job привязан к сессии), REPL `manage.py ai_query`. LLM re-rank
-выключен (`AI_SEARCH_LLM_RERANK=0` локально и на prod): гипотеза не подтвердилась, код под
-удаление или переделку.
-([`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md)).
+снят (2026-11): гипотеза не подтвердилась —
+[`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md).
 Вход только по прямой ссылке `/ai-search/` (в шапке нет).
 Спека async: [`plans/ai-search-async.md`](plans/ai-search-async.md). Контракт
 разбора: [`SPEC_ai_query_parse.md`](SPEC_ai_query_parse.md). Очередь:
@@ -111,9 +110,8 @@ Jobs: create пишет `client_key` (= session); status / partial / `?job=` т�
 ## Ранжирование
 
 Детерминированный score (`dict/ai/rank.py`: focus exact ≫ lexical ≫ field-tr ≫
-KW). LLM re-rank топ-30 в коде есть и выключен: на эталонах не поднял точный
-перевод выше SQL
-([`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md)).  
+KW). LLM re-rank удалён (гипотеза не подтвердилась) —
+[`plans/ai-search-llm-rerank.md`](plans/ai-search-llm-rerank.md).
 `?sort=relevance|alpha`.
 
 ---

@@ -21,7 +21,7 @@
 | [ai-search.md](ai-search.md) | UX AI-поиска — **закрытая альфа на prod** |
 | [SPEC_ai_query_parse.md](SPEC_ai_query_parse.md) | Контракт разбора, REPL; фазы A–C на prod |
 | [plans/ai-search-async.md](plans/ai-search-async.md) | Async job+poll (сделано); SSE/worker — позже |
-| [plans/ai-search-llm-rerank.md](plans/ai-search-llm-rerank.md) | LLM re-rank выключен: гипотеза не подтвердилась, под удаление или переделку |
+| [plans/ai-search-llm-rerank.md](plans/ai-search-llm-rerank.md) | LLM re-rank: гипотеза не подтвердилась, код удалён |
 | [SPEC_article_form_validator.md](SPEC_article_form_validator.md) | Валидатор формы статьи в админке (ещё не в коде) |
 
 ## Runbook
@@ -36,6 +36,7 @@
 |------|--------|
 | [searching_upgrade.md](searching_upgrade.md) | Реализованные подсказки русского поиска, эталон «быстро»; staff: Переводы + Отладка (§0.2) |
 | [method-onthlogy-markup.md](method-onthlogy-markup.md) | Как строили онтологию и разметку |
+| [method-ai-search-retrieval.md](method-ai-search-retrieval.md) | Retrieval AI-поиска: схемы, эталоны, **журнал отказов** |
 
 ## Архив (не источник истины)
 

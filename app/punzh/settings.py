@@ -63,10 +63,6 @@ TIMEWEB_AI_MODEL_QUERY = env("TIMEWEB_AI_MODEL_QUERY", default="yandex/yandexgpt
 TIMEWEB_AI_MODEL_CLASSIFY = env(
     "TIMEWEB_AI_MODEL_CLASSIFY", default="deepseek/deepseek-flash"
 )
-# Soft re-rank of AI search tops (same gateway; default = query model).
-TIMEWEB_AI_MODEL_RERANK = env("TIMEWEB_AI_MODEL_RERANK", default=TIMEWEB_AI_MODEL_QUERY)
-# Second LLM pass after SQL. On in DEBUG; set AI_SEARCH_LLM_RERANK=0 to disable.
-AI_SEARCH_LLM_RERANK = env.bool("AI_SEARCH_LLM_RERANK", default=DEBUG)
 # Alpha telemetry: durable AiSearchLog on every finished job; 👍/👎 UI on results.
 AI_SEARCH_LOG_QUERIES = env.bool("AI_SEARCH_LOG_QUERIES", default=True)
 AI_SEARCH_FEEDBACK = env.bool("AI_SEARCH_FEEDBACK", default=True)

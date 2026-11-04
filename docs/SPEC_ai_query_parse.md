@@ -32,8 +32,8 @@ AI-поиск — **отдельный контур** (`/ai-search/`), не ра
          fallback → /search/…
 ```
 
-LLM re-rank после retrieval выключен (`AI_SEARCH_LLM_RERANK=0`, гипотеза не подтвердилась) — `docs/plans/ai-search-llm-rerank.md`
-(голова: order-префикс; хвост: `keep_tail`; модель `TIMEWEB_AI_MODEL_RERANK`).
+LLM re-rank после retrieval удалён (гипотеза не подтвердилась) —
+`docs/plans/ai-search-llm-rerank.md`.
 Пометы: hard (`tags`, AND) vs soft (`tags_soft`, union∩field + ранг);
 POS сужает; relax-on-empty если hard ∩ lexical пуст.
 

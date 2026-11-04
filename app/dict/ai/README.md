@@ -15,7 +15,6 @@
 | `query_prompts.py` / `query_parse.py` | Разбор → оси; hard/soft-пометы; `display` + `axes_display`. |
 | `rank.py` | Релевантность (focus exact ≫ lexical ≫ field-tr ≫ слабые KW). |
 | `search.py` | Retrieval: hard AND / soft∩field, POS сужает, dialect+тема, см. входящие. |
-| `rerank_prompts.py` / `rerank.py` | LLM: permute топ-30 + `keep_tail`. Флаг `AI_SEARCH_LLM_RERANK` выключен: гипотеза не подтвердилась, код под удаление или переделку. |
 | `jobs.py` | Async job: thread + PG; `client_key` = session (изоляция poll). |
 | `telemetry.py` | Событие разбора → JSONL (REPL) и `AiSearchLog` (альфа). |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 _lock = threading.Lock()
 _inflight: set[str] = set()
 
-# Parse (30s) + optional re-rank (25s) + SQL slack; must exceed UI maxWaitMs.
+# Parse (30s) + SQL slack; must exceed UI maxWaitMs.
 STALE_RUNNING_SECONDS = 120
 JOB_TTL_HOURS = 24
 RATE_LIMIT_PER_MINUTE = 20
@@ -186,10 +186,9 @@ def schedule_ai_search_job(job_id: str) -> bool:
 
 
 def run_job(job_id: str):
-    """parse_query + search_by_parsed (+ optional LLM re-rank) → persist JSON."""
+    """parse_query + search_by_parsed → persist JSON."""
     from dict.ai.query_parse import parse_query
-    from dict.ai.rank import SORT_RELEVANCE, normalize_sort
-    from dict.ai.rerank import apply_rerank_to_groups, rerank_enabled
+    from dict.ai.rank import normalize_sort
     from dict.ai.search import search_by_parsed
 
     try:
@@ -213,17 +212,6 @@ def run_job(job_id: str):
         groups, fallback_count = search_by_parsed(parsed, sort=sort)
         job.parsed = serialize_parsed_for_job(parsed)
         job.fallback_count = fallback_count
-
-        if (
-            sort == SORT_RELEVANCE
-            and rerank_enabled()
-            and groups
-            and fallback_count is None
-        ):
-            job.status = AiSearchJob.STATUS_RANKING
-            job.save(update_fields=["parsed", "fallback_count", "status", "updated_at"])
-            groups = apply_rerank_to_groups(job.query, groups, sort=sort)
-
         job.groups = serialize_groups_for_job(groups)
         job.status = AiSearchJob.STATUS_DONE
         job.error = ""
