@@ -190,7 +190,7 @@ class OntologyQueueAdminTestCase(TestCase):
         other = Article.objects.create(word="pending2")
         ArticleIndexTranslate.objects.create(article=other, rus_word="молоко")
         with patch(
-            "dict.admin.schedule_classify_article", return_value=True
+            "dict.ai.classify_bg.schedule_classify_article", return_value=True
         ) as schedule:
             response = self.client.post(
                 self.queue_url + f"?ontology={BUCKET_PENDING}",
@@ -267,7 +267,7 @@ class ArticleOntologyAdminTestCase(TestCase):
     def test_classify_post_schedules(self):
         url = reverse("admin:dict_article_classify", args=[self.pending.pk])
         with patch(
-            "dict.admin.schedule_classify_article", return_value=True
+            "dict.ai.classify_bg.schedule_classify_article", return_value=True
         ) as schedule:
             response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
@@ -303,7 +303,7 @@ class ArticleOntologyAdminTestCase(TestCase):
             data[f"{prefix}-MIN_NUM_FORMS"] = "0"
             data[f"{prefix}-MAX_NUM_FORMS"] = "1000"
         with patch(
-            "dict.admin.schedule_classify_article", return_value=True
+            "dict.ai.classify_bg.schedule_classify_article", return_value=True
         ) as schedule:
             response = self.client.post(reverse("admin:dict_article_add"), data)
         self.assertEqual(response.status_code, 302)
