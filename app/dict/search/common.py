@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from django.core.paginator import Paginator
 from django.db.models import Count, Prefetch, Q
 
-from dict.helpers import build_pagination_hints, sorted_by_krl
+from dict.helpers import build_pagination_hints, normalization, sorted_by_krl
 from dict.models import Article, ArticleAddition, ArticleLink
 
 num_by_page = 18
