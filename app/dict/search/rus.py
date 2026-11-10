@@ -265,10 +265,11 @@ def rus_search_core(query: str, f=None, expand_links=True) -> RusSearchCore:
     # Фильтр применяется ПОСЛЕ вычисления тегов/прямых (они всегда от полного
     # якоря) и ДО пагинации, чтобы номера страниц и n-граммы совпадали с
     # отфильтрованным набором.
+    # f=None / f=all → полная выдача; f=exact → точные; иначе ключ тега.
     filtered_ids = result_ids
     if f == "exact":
         filtered_ids = set(result_ids) & direct_ids
-    elif f:
+    elif f and f != "all":
         # f — ключ тега: все токены ключа должны быть в блобе переводов (AND).
         f_tokens = _TOKEN_RE.findall(f.lower())
         kept = set()

@@ -133,21 +133,27 @@ def search(request, query="", page=1):
     tag_filter_groups = []
     phrase_filter = None
     t_query = ""
+    refine_clickable = True
     if direction == "rus":
         page_obj, found_count, narrowing, direct_ids, related_queries = (
             search_by_translate_linked(prepare_rus_query(query), page, f)
         )
         possible = []
-        # подпись активного фильтра для badge в заголовке
-        if f == "exact":
-            active_label = "точные соответствия"
-        elif f:
+        has_direct = bool(direct_ids)
+        # Explicit ?f=: bare URL redirects to exact (if any) or all.
+        if f is None:
+            target = "exact" if has_direct else "all"
+            return redirect("/search/%s/1?f=%s" % (quote(query), target))
+        # Badge in refine heading: only for an active narrowing tag.
+        if f not in ("exact", "all"):
             for tag in narrowing:
                 if tag["key"] == f:
                     active_label = tag["label"]
                     break
             if active_label is None:
                 active_label = f
+        refine_clickable = f != "exact"
+        t_query = "?f=%s" % quote(f)
     else:
         direction = "krl"
         tag_ids, phrase = tag_filters_from_request(request)
@@ -178,6 +184,7 @@ def search(request, query="", page=1):
         "related_queries": related_queries,
         "active_f": f,
         "active_label": active_label,
+        "refine_clickable": refine_clickable,
         "found_count": found_count,
         "direction": direction,
         "trigrams": trigrams,

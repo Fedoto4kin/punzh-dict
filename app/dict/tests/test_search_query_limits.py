@@ -18,8 +18,9 @@ class SearchQueryLimitTests(TestCase):
 
     def test_search_path_clips_oversized_query(self):
         # Keep URL moderate: only slightly over the cap (very long paths → 400).
+        # Rus bare URL redirects to ?f=exact|all; follow to read clipped query.
         long_q = "к" * (views.MAX_SEARCH_QUERY_LEN + 10)
-        response = self.client.get(f"/search/{long_q}")
+        response = self.client.get(f"/search/{long_q}", follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["query"]), views.MAX_SEARCH_QUERY_LEN)
 

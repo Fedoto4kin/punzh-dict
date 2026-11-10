@@ -82,3 +82,22 @@ class SearchFilterTestCase(TestCase):
         )
         self.assertNotIn(self.linkedown.id, set(direct_ids))
         self.assertNotIn("linkedown", {a.word for a in page_obj.object_list})
+
+    def test_all_filter_matches_no_filter(self):
+        none_page, none_count, none_narrow, none_direct, none_rel = (
+            search_by_translate_linked("быстро", 1, None)
+        )
+        all_page, all_count, all_narrow, all_direct, all_rel = (
+            search_by_translate_linked("быстро", 1, "all")
+        )
+        self.assertEqual(none_count, all_count)
+        self.assertEqual(
+            {a.word for a in none_page.object_list},
+            {a.word for a in all_page.object_list},
+        )
+        self.assertEqual(none_direct, all_direct)
+        self.assertEqual(none_rel, all_rel)
+        self.assertEqual(
+            {t["key"] for t in none_narrow},
+            {t["key"] for t in all_narrow},
+        )

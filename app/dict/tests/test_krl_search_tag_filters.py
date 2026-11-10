@@ -250,6 +250,7 @@ class KrlSearchTagFiltersTestCase(TestCase):
 
     def test_russian_search_unaffected(self):
         client = Client()
-        resp = client.get("/search/%D0%BA%D0%BE%D1%88%D0%BA%D0%B0/1")
+        # Bare rus URL redirects to ?f=exact|all; follow to assert no KRL filters.
+        resp = client.get("/search/%D0%BA%D0%BE%D1%88%D0%BA%D0%B0/1", follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertNotContains(resp, 'id="krlTagFilters"')

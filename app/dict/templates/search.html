@@ -39,30 +39,6 @@
     </div>
 </div>
 
-{% if page_obj.has_other_pages %}
-<nav class="navbar navbar-expand navbar-light row">
-    <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}{{ t_query }}">&laquo;</a></li>
-        {% else %}
-        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
-        {% endif %}
-        {% for i in page_obj.paginator.page_range %}
-        {% if page_obj.number == i %}
-        <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}{{ t_query }}">{{ trigrams|get_item:i }}</a></li>
-        {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}{{ t_query }}">&raquo;</a></li>
-        {% else %}
-        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
-
 {% if found_count %}
 <div class="row">
     <div class="col-12 text-center">
@@ -105,15 +81,23 @@
     </p>
 </div>
 {% endif %}
-{% if narrowing %}
+{% if has_direct %}
+<p class="mb-2 search-refine">
+    <a href="/search/{{ query|urlencode }}/1?f=exact"
+       class="btn btn-sm m-1 {% if active_f == 'exact' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Точные результаты</a>
+    <a href="/search/{{ query|urlencode }}/1?f=all"
+       class="btn btn-sm m-1 {% if active_f == 'all' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Все результаты</a>
+</p>
+{% endif %}
+{% if narrowing and refine_clickable %}
 <div class="mt-1 alert alert-info search-refine" role="alert">
-    <h5 class="alert-heading mb-0 collapse-toggle d-flex justify-content-between align-items-center collapsed"
+    <h5 class="alert-heading mb-0 collapse-toggle d-flex justify-content-between align-items-center"
         data-toggle="collapse" data-target="#narrowingBox"
-        aria-expanded="false" aria-controls="narrowingBox" role="button">
+        aria-expanded="true" aria-controls="narrowingBox" role="button">
         <span>
             Уточнить запрос
             {% if active_label %}
-            <a href="/search/{{ query|urlencode }}/1" class="badge badge-primary align-middle text-white"
+            <a href="/search/{{ query|urlencode }}/1?f=all" class="badge badge-primary align-middle text-white"
                style="text-decoration:none" title="Снять фильтр"
                onclick="event.stopPropagation()">
                 {{ active_label }} &times;
@@ -122,12 +106,8 @@
         </span>
         <span class="tgl"><span class="when-open">свернуть</span><span class="when-closed">развернуть</span></span>
     </h5>
-    <div class="collapse" id="narrowingBox">
+    <div class="collapse show" id="narrowingBox">
         <p class="mt-2 mb-0">
-            {% if has_direct %}
-            <a href="/search/{{ query|urlencode }}/1{% if active_f != 'exact' %}?f=exact{% endif %}"
-               class="btn btn-sm btn-info m-1 {% if active_f == 'exact' %}active border-dark{% endif %}">Точные соответствия (без уточнений)</a>
-            {% endif %}
             {% for tag in narrowing %}
             <a href="/search/{{ query|urlencode }}/1?f={{ tag.key|urlencode }}"
                class="btn btn-sm m-1 {% if active_f == tag.key %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ tag.label }}</a>
@@ -146,6 +126,30 @@
     </p>
 </div>
 {% endif %}
+{% endif %}
+
+{% if page_obj.has_other_pages %}
+<nav class="navbar navbar-expand navbar-light row">
+    <ul class="pagination flex-wrap mt-1 mx-auto justify-content-center small">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ page_obj.previous_page_number }}{{ t_query }}">&laquo;</a></li>
+        {% else %}
+        <li class="disabled page-item"><a class="page-link disabled">&laquo;</a></li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item active"><a class="page-link active">{{ trigrams|get_item:i }} <span class="sr-only">(current)</span></a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode }}/{{ i }}{{ t_query }}">{{ trigrams|get_item:i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="/search/{{ query | urlencode}}/{{ page_obj.next_page_number }}{{ t_query }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item"><a class="page-link disabled">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
 {% endif %}
 
 <div class="row mt-4">
