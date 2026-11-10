@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from ..models import Article, ArticleIndexTag, Tag
 from ..search import search_by_tags_smart
@@ -107,3 +107,9 @@ class TagSearchTestCase(TestCase):
             page=1,
         )
         self.assertEqual({"art_d"}, self._words(content))
+
+    def test_view_shows_found_count(self):
+        response = Client().get("/tags/%s" % self.l1.id)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(3, response.context["found_count"])
+        self.assertContains(response, "<b>3</b> слова")

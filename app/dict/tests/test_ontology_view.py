@@ -77,6 +77,8 @@ class OntologyViewTestCase(TestCase):
     def test_default_lists_translation_only(self):
         response = self.c.get("/ontology/%s/" % self.animals.id)
         self.assertEqual(200, response.status_code)
+        self.assertEqual(1, response.context["found_count"])
+        self.assertContains(response, "<b>1</b> слово")
         words = [a.word for a in response.context["page_obj"].object_list]
         self.assertEqual(["aiga"], words)
         self.assertFalse(response.context["include_all"])

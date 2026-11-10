@@ -213,6 +213,7 @@ def tag_search(request, tags="", page=1):
     other_tags = get_tags_by_type(5)
 
     tags_selected = get_tags_by_ids_distinct(tag_ids)
+    found_count = 0
 
     if len(tag_ids):
         content = search_by_tags_smart(
@@ -227,6 +228,8 @@ def tag_search(request, tags="", page=1):
             by_other=list(set(other_tags.values_list("pk", flat=True)) & set(tag_ids)),
             page=page,
         )
+        if content.page_obj is not None:
+            found_count = content.page_obj.paginator.count
 
     context = {
         "ABC": KRL_ABC,
@@ -243,6 +246,7 @@ def tag_search(request, tags="", page=1):
         "query": ",".join(map(str, tag_ids)),
         "page_obj": content.page_obj,
         "trigrams": content.trigrams_dict,
+        "found_count": found_count,
     }
     return render(request, "tags.html", context)
 
@@ -277,6 +281,9 @@ def ontology_view(request, field_id, page=1):
     content = search_by_semantic_field(
         field.id, page, tag_ids, phrase, include_all=include_all
     )
+    found_count = (
+        content.page_obj.paginator.count if content.page_obj is not None else 0
+    )
     context = {
         "ABC": KRL_ABC,
         "field": field,
@@ -292,6 +299,7 @@ def ontology_view(request, field_id, page=1):
         "mode_query": format_krl_filter_query([], False, include_all=include_all),
         "mode_tr_query": format_krl_filter_query(tag_ids, phrase, include_all=False),
         "mode_all_query": format_krl_filter_query(tag_ids, phrase, include_all=True),
+        "found_count": found_count,
         "ontology": "true",
     }
     return render(request, "ontology_view.html", context)
