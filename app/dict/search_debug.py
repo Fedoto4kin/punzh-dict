@@ -3,17 +3,16 @@ Staff explain for the Russian lexical search pipeline.
 Reuses rus_search_core — no second copy of match logic.
 """
 
-import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Set
 
 from django.db.models import Q
 
 from .helpers import (
-    FUZZY_TOKEN_MIN_LEN,
+    lemma_token,
+    lemmas_of_phrase,
     prepare_rus_query,
-    token_boundary_fuzzy_regex,
-    token_boundary_regex,
+    query_tokens,
 )
 from .models import Article, ArticleLink
 from .search import (
@@ -35,15 +34,20 @@ class DebugReason:
     code: str  # ilike | token | link | exact
     detail: str = ""
     matched: List[str] = field(default_factory=list)
-    fuzzy: bool = False
+    lemma: bool = False
     inherited: bool = False
     via: List[dict] = field(default_factory=list)  # {word, kind_label}
 
     @property
+    def fuzzy(self):
+        # Compat for templates/tests that still read .fuzzy (P3: lemma match).
+        return self.lemma
+
+    @property
     def label(self):
         base = REASON_LABELS.get(self.code, self.code)
-        if self.code == "token" and self.fuzzy:
-            return base + "≈"
+        if self.code == "token" and self.lemma:
+            return base + "≅"
         if self.code == "exact" and self.inherited:
             return base + "↓"
         return base
@@ -70,6 +74,7 @@ class SearchDebugResult:
     raw_query: str
     query: str
     query_tokens: List[str]
+    query_lemmas: List[str]
     high_freq_anchor: bool
     f: Optional[str]
     counts: dict
@@ -86,31 +91,27 @@ def prepare_rus_debug_query(raw_query: str) -> str:
     return prepare_rus_query(raw_query)
 
 
-def _token_match_info(rus_words, query_tokens):
+def _token_match_info(rus_words, query_lemma_list):
     """
-    Among rus_words, which phrases match any query token as a whole word,
-    and whether any match needed the fuzzy one-letter suffix.
+    Phrases whose token lemmas overlap query lemmas.
+    `by_lemma` is True when at least one hit uses an inflected surface
+    (surface token ≠ its lemma), not a bare dictionary-form equality.
     """
+    q_lemmas = {lem for lem in (query_lemma_list or []) if lem}
     matched = []
-    any_fuzzy = False
+    by_lemma = False
     for rw in rus_words:
         if not rw:
             continue
-        exact_hit = False
-        fuzzy_hit = False
-        for tok in query_tokens:
-            if re.search(token_boundary_regex(tok), rw, flags=re.IGNORECASE):
-                exact_hit = True
+        if not (set(lemmas_of_phrase(rw)) & q_lemmas):
+            continue
+        matched.append(rw)
+        for tok in query_tokens(rw):
+            lem = lemma_token(tok)
+            if lem in q_lemmas and tok != lem:
+                by_lemma = True
                 break
-            if len(tok) >= FUZZY_TOKEN_MIN_LEN and re.search(
-                token_boundary_fuzzy_regex(tok), rw, flags=re.IGNORECASE
-            ):
-                fuzzy_hit = True
-        if exact_hit or fuzzy_hit:
-            matched.append(rw)
-            if fuzzy_hit and not exact_hit:
-                any_fuzzy = True
-    return matched, any_fuzzy
+    return matched, by_lemma
 
 
 def _link_via(aid, seed_ids, articles_by_id):
@@ -161,16 +162,17 @@ def _build_reasons(aid, core, articles_by_id):
         )
 
     if aid in core.token_match_ids:
-        matched, fuzzy = _token_match_info(translations, core.query_tokens)
+        matched, by_lemma = _token_match_info(translations, core.query_lemmas)
         reasons.append(
             DebugReason(
                 code="token",
                 detail=(
-                    "слово запроса целиком в фразе перевода"
-                    + (" (одна буква на конце)" if fuzzy else "")
+                    "лемма слова запроса в фразе перевода"
+                    if by_lemma
+                    else "слово запроса целиком в фразе перевода"
                 ),
                 matched=matched,
-                fuzzy=fuzzy,
+                lemma=by_lemma,
             )
         )
 
@@ -208,6 +210,7 @@ def explain_rus_search(raw_query: str, f=None, page=1) -> SearchDebugResult:
             raw_query=raw_query or "",
             query="",
             query_tokens=[],
+            query_lemmas=[],
             high_freq_anchor=False,
             f=f,
             counts={},
@@ -257,6 +260,7 @@ def explain_rus_search(raw_query: str, f=None, page=1) -> SearchDebugResult:
         raw_query=raw_query or "",
         query=query,
         query_tokens=core.query_tokens,
+        query_lemmas=core.query_lemmas,
         high_freq_anchor=core.high_freq_anchor,
         f=f,
         counts=counts,

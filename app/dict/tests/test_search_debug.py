@@ -102,7 +102,7 @@ class ExplainRusSearchTestCase(TestCase):
         words = {c.article.word for c in result.cards}
         self.assertEqual(words, {"ruttoh", "rutoldi", "maihahtua"})
 
-    def test_fuzzy_token_reason(self):
+    def test_lemma_token_reason(self):
         enzi = Article.objects.create(word="enzi|kandon'e")
         ArticleIndexTranslate.objects.create(
             article=enzi, rus_word="первотельная (о корове)"
@@ -112,7 +112,8 @@ class ExplainRusSearchTestCase(TestCase):
         self.assertIn("enzi|kandon'e", cards)
         token = [r for r in cards["enzi|kandon'e"].reasons if r.code == "token"]
         self.assertTrue(token)
-        self.assertTrue(token[0].fuzzy)
+        self.assertTrue(token[0].lemma)
+        self.assertTrue(token[0].fuzzy)  # compat alias
 
 
 class SearchDebugAdminViewTestCase(TestCase):

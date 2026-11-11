@@ -149,7 +149,20 @@ class SplitByCoverageTestCase(SimpleTestCase):
             ),
         )
 
-    def test_query_form_variant_needs_full_key_tokens_in_blob(self):
+    def test_query_form_same_lemma_stripped_from_key(self):
+        # P3: «корове» shares lemma with query «корова» → dropped from key.
+        self.assertEqual(
+            [{"label": "дойная корове", "key": "дойная", "coverage": 1}],
+            split_by_coverage(
+                ["дойная корове"],
+                ["дойная корове", "бык"],
+                {"корова"},
+                STOPS,
+            ),
+        )
+
+    def test_adv_adj_form_still_leaks_into_key_v1(self):
+        # Intentional: no ADV↔ADJF bridge; быстро ≠ быстрый.
         self.assertEqual(
             [
                 {

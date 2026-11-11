@@ -1,24 +1,23 @@
 """Russian translation search pipeline (ILIKE, tokens, ?f=, related)."""
 
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 
 from django.db.models import Q
 
 from dict.helpers import (
-    FUZZY_TOKEN_MIN_LEN,
     STOP_1A,
     STOP_1B,
     STOPWORDS,
     TOKEN_RE,
+    lemma_token,
     query_tokens,
-    token_boundary_fuzzy_regex,
     token_boundary_regex,
+    tokens_for_token_or,
 )
-from dict.models import Article, ArticleIndexTranslate, ArticleLink
+from dict.models import ArticleIndexTranslate, ArticleLink
 
-from .common import Content, expand_by_links, get_sorted_articles
+from .common import expand_by_links, get_sorted_articles
 
 
 # Token/stopword primitives: dict.helpers.rus_tokens (shared with AI / audits).
@@ -28,22 +27,17 @@ _STOP_1A = STOP_1A
 _STOP_1B = STOP_1B
 _query_tokens = query_tokens
 _token_boundary_regex = token_boundary_regex
-_token_boundary_fuzzy_regex = token_boundary_fuzzy_regex
-_FUZZY_TOKEN_MIN_LEN = FUZZY_TOKEN_MIN_LEN
 
 # Anchor queries where token-OR hits are huge: narrowing candidates only from
 # ILIKE-exact articles (backlog §2 prio-filter «быть»).
 HIGH_FREQ_ANCHOR_QUERIES = frozenset({"быть"})
 
 
-def _translate_q_any_query_token(tokens):
-    """OR: rus_word contains at least one query token as a whole word."""
-    combined = Q()
-    for tok in tokens:
-        combined |= Q(rus_word__iregex=token_boundary_regex(tok))
-        if len(tok) >= FUZZY_TOKEN_MIN_LEN:
-            combined |= Q(rus_word__iregex=token_boundary_fuzzy_regex(tok))
-    return combined
+def _translate_q_lemma_overlap(lemmas):
+    """Any query lemma appears in rus_lemmas (ArrayField overlap)."""
+    if not lemmas:
+        return Q(pk=-1)
+    return Q(rus_lemmas__overlap=list(lemmas))
 
 
 def _strip_parens_for_key(phrase):
@@ -59,16 +53,19 @@ def _paren_gloss_tokens(phrase):
     return _TOKEN_RE.findall(gloss.lower())
 
 
-def _label_and_key_tokens(phrase, query_words, stopwords):
+def _label_and_key_tokens(phrase, query_lemma_set, stopwords):
     key_source = _strip_parens_for_key(phrase)
     toks = _TOKEN_RE.findall(key_source.lower())
-    label_toks = [t for t in toks if t not in query_words]
+    # Drop tokens whose lemma matches any query lemma (P3).
+    label_toks = [t for t in toks if lemma_token(t) not in query_lemma_set]
     key_toks = [t for t in label_toks if t not in stopwords]
     if not key_toks:
         # «случаться (о домашних животных)»: distinguisher lives only in parens.
         paren_toks = _paren_gloss_tokens(phrase)
         key_toks = [
-            t for t in paren_toks if t not in query_words and t not in stopwords
+            t
+            for t in paren_toks
+            if lemma_token(t) not in query_lemma_set and t not in stopwords
         ]
     return label_toks, key_toks
 
@@ -88,11 +85,12 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
 
     candidates : suggestion phrases (rus_word), e.g. "быстро ехать".
     page_blobs : per-card joined lowercase translations of the result set.
-    query_words: set of the query's own tokens, dropped from KEY by EXACT match.
+    query_words: set/list of the query's own tokens OR lemmas; each is folded
+      to a lemma for subtraction from KEY (P3). Surface tokens still work.
     stopwords  : tokens dropped from the KEY only (kept in the label).
 
     LABEL = full candidate phrase (shown on the button).
-    KEY   = phrase minus parens, query words, stopwords -> matched by ?f= (AND).
+    KEY   = phrase minus parens, query lemmas, stopwords -> matched by ?f= (AND).
       If that yields an empty key, tokens from (…) are used instead
       («случаться (о домашних животных)» -> key «домашних животных»).
     COVERAGE = cards whose blob contains every key token as a substring.
@@ -104,12 +102,14 @@ def split_by_coverage(candidates, page_blobs, query_words, stopwords):
     """
     blobs = [b.lower() for b in page_blobs]
     N = len(blobs)
+    query_lemma_set = {lemma_token(w) for w in query_words if w}
+    query_lemma_set.discard("")
 
     seen_keys = set()
     narrowing = []
 
     for phrase in candidates:
-        label_toks, key_toks = _label_and_key_tokens(phrase, query_words, stopwords)
+        label_toks, key_toks = _label_and_key_tokens(phrase, query_lemma_set, stopwords)
         if not key_toks:
             continue
         key = " ".join(key_toks)
@@ -175,6 +175,7 @@ class RusSearchCore:
 
     query: str
     query_tokens: list
+    query_lemmas: list
     ids_ilike: set
     token_match_ids: set
     seed_ids: set
@@ -204,9 +205,16 @@ def rus_search_core(query: str, f=None, expand_links=True) -> RusSearchCore:
         )
     )
 
-    # 2. Token match (OR): any query token as a whole word in rus_word (no stemmer).
-    query_tokens = _query_tokens(query)
-    token_q = _translate_q_any_query_token(query_tokens) if query_tokens else Q(pk=-1)
+    # 2. Token match (OR): query lemmas in rus_lemmas (P3).
+    # P1: multi-word queries drop STOPWORDS from the OR seed.
+    q_tokens = _query_tokens(query)
+    or_tokens = tokens_for_token_or(q_tokens, STOPWORDS)
+    q_lemmas = []
+    for tok in or_tokens:
+        lem = lemma_token(tok)
+        if lem and lem not in q_lemmas:
+            q_lemmas.append(lem)
+    token_q = _translate_q_lemma_overlap(q_lemmas)
 
     token_match_ids = (
         set(
@@ -281,7 +289,8 @@ def rus_search_core(query: str, f=None, expand_links=True) -> RusSearchCore:
 
     return RusSearchCore(
         query=query,
-        query_tokens=query_tokens,
+        query_tokens=q_tokens,
+        query_lemmas=q_lemmas,
         ids_ilike=ids_ilike,
         token_match_ids=token_match_ids,
         seed_ids=seed_ids,

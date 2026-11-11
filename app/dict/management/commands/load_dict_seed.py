@@ -107,6 +107,7 @@ class Command(BaseCommand):
             search_vector=SearchVector("rus_word", config="simple")
         )
         self.stdout.write(f"search_vector: {n}")
+        call_command("rebuild_translate_lemmas", verbosity=1)
 
     def handle(self, *args, **options):
         path = self._resolve_path(options["file"])

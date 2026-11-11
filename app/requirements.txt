@@ -13,6 +13,8 @@ packaging==25.0
 pathspec==0.12.1
 platformdirs==4.3.6
 psycopg[binary]==3.2.9
+pymorphy3==2.0.6
+pymorphy3-dicts-ru>=2.4.417150.4580142
 slugify==0.0.1
 soupsieve==2.6
 sqlparse==0.5.3

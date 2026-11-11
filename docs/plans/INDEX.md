@@ -24,7 +24,8 @@
 | 4 | спека | Валидатор формы: сначала В2 (автокомплит «см.»), затем В1 | `docs/SPEC_article_form_validator.md` |
 | 5 | бэклог | Поиск неразмеченных помет | `backlog.md` §3 |
 | 6 | план | Аудит индекса переводов после cleanup (read-only) | `plans/translation_index_audit.md` |
-| 6 | бэклог | **Стоп-токены в token-OR** (вариант A: «о корове» без раздува от «о») | `docs/plans/search-query-stopwords.md` |
+| 6 | **сделано** | **Стоп-токены в token-OR** (вариант A + `STOP_1C`) | `plans/search-query-stopwords.md` |
+| 6a | **сделано** | **Леммы RU-поиска (P3):** pymorphy3, `rus_lemmas`, снят fuzzy | `plans/search-rus-lemmas.md` |
 | 7 | бэклог | KRL в русской транслитерации → формальные правила → «возможно вы искали» | `docs/ai-search.md` §Перспектива (Метрика) |
 | 8 | бэклог AI | Пункт «умный поиск» в навигации; SSE/worker — по нагрузке | `plans/ai-search-async.md` |
 
@@ -37,9 +38,9 @@
 ## Лексический `/search/` — baseline готов
 
 Основная ветка **не блокирует** AI-поиск. Доработки по желанию:
-`docs/backlog-search.md` (**P1-stop** стоп-токены; **P3 леммы** запроса и
-перевода вместо fuzzy; P4 keywords в индекс). Русский trigram (бывший P2)
-**не делаем**. Не возвращаемся к Postgres FTS / `search_vector` ради морфологии.
+`docs/backlog-search.md` (**P1-stop — сделано**; **P3 леммы — сделано**;
+P4 keywords в индекс). Русский trigram (бывший P2) **не делаем**.
+Не возвращаемся к Postgres FTS / `search_vector` ради морфологии.
 
 ## Сделано (не трогать без регрессии)
 
@@ -56,9 +57,9 @@
 - Очистка переводов LLM + `--write` на prod, канон **е** в индексе (`translation_cleanup.md`).
 - Русский поиск: ILIKE + **токенный OR** (не FTS `russian`), ё→е, `expand_by_links` только **см.+от**.
 - Русский UX: дефолт `?f=exact`, `?f=all`, сужающие теги; чипы «Точные результаты» / «Расширенный поиск»; «Уточнить запрос» активен только вне exact.
-- «Связанные запросы», prio «быть», эталон «корова»/1717 (тесты + fuzzy одна буква как временный суррогат, key без скобок, `?f=` AND).
+- «Связанные запросы», prio «быть», эталон «корова»/1717 (тесты; key без скобок, `?f=` AND).
 - `kind` на `ArticleLink`, инвентаризация, автосоздание однозначных `deriv`, админка kind — `backlog.md` §1.
 - Админка: браузер **Переводы** (карточки по `rus_word`) + **Отладка** русского поиска (`rus_search_core`) — `docs/searching_upgrade.md` §0.2.
-- Решение (2026-09): морфология русского поиска — леммы токенов с обеих сторон; не FTS; без русского trigram — `backlog-search.md` (принятое решение + P3).
+- **P3 леммы (2026-11):** pymorphy3, `ArticleIndexTranslate.rus_lemmas`, token-OR по overlap; one-letter fuzzy снят; `?f=exact` по поверхности — `plans/search-rus-lemmas.md`.
 
 Подробно: `docs/searching_upgrade.md`, `docs/backlog-search.md`.

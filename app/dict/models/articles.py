@@ -1,4 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.urls import reverse
@@ -11,6 +13,7 @@ from ..helpers import (
     expand_index_variants,
     fold_interior_hyphens,
     gen_word_variants,
+    lemmas_of_phrase,
     normalization,
     r_gen_word_variants,
     split_alt_forms,
@@ -187,6 +190,13 @@ class ArticleIndexTranslate(models.Model):
     rus_word = models.CharField(
         max_length=255, default=None, blank=True, null=True, verbose_name="Перевод"
     )
+    # Lemmas of rus_word tokens (ё→е); used by Russian token-OR (P3).
+    rus_lemmas = ArrayField(
+        models.CharField(max_length=64),
+        default=list,
+        blank=True,
+        verbose_name="Леммы перевода",
+    )
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     search_vector = SearchVectorField(null=True, blank=True)
 
@@ -197,6 +207,7 @@ class ArticleIndexTranslate(models.Model):
         if self.rus_word is not None:
             self.rus_word = canonical_rus_word(self.rus_word)
         if self.rus_word:
+            self.rus_lemmas = lemmas_of_phrase(self.rus_word)
             dup_qs = ArticleIndexTranslate.objects.filter(
                 article_id=self.article_id,
                 rus_word=self.rus_word,
@@ -207,6 +218,8 @@ class ArticleIndexTranslate(models.Model):
                 if self.pk:
                     self.delete()
                 return
+        else:
+            self.rus_lemmas = []
         super().save(*args, **kwargs)
 
     class Meta:
@@ -217,6 +230,9 @@ class ArticleIndexTranslate(models.Model):
         verbose_name = "Перевод"
         verbose_name_plural = "Переводы"
         ordering = ["rus_word"]
+        indexes = [
+            GinIndex(fields=["rus_lemmas"], name="dict_ait_rus_lemmas_gin"),
+        ]
 
 
 class ArticleIndexTag(models.Model):

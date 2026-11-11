@@ -11,6 +11,7 @@
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
 | [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
 | [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | Стоп-токены в token-OR (вариант A) |
+| [plans/search-rus-lemmas.md](plans/search-rus-lemmas.md) | P3 леммы RU-поиска (pymorphy3, `rus_lemmas`) — сделано |
 | [plans/search-module-split.md](plans/search-module-split.md) | Распил `search.py` (rus / krl / ontology) — бэклог, высокий риск |
 | [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
 | [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |

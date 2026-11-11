@@ -25,7 +25,7 @@ class KorovaNarrowingTestCase(TestCase):
             rus_word="дойная корова",
         )
 
-    def test_korova_finds_phrase_via_fuzzy_token(self):
+    def test_korova_finds_phrase_via_lemma_token(self):
         page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "корова", 1, None
         )
@@ -80,6 +80,47 @@ class KorovaNarrowingTestCase(TestCase):
             "первотельная корова", 1, None
         )
         self.assertIn(self.enzi.id, direct_ids)
+
+
+class LemmaMorphologySearchTestCase(TestCase):
+    """P3: case/conjugation match via rus_lemmas, without one-letter fuzzy."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.chelovek = Article.objects.create(word="ihmine")
+        ArticleIndexTranslate.objects.create(article=cls.chelovek, rus_word="человек")
+        cls.cheloveka = Article.objects.create(word="ihmist")
+        ArticleIndexTranslate.objects.create(
+            article=cls.cheloveka, rus_word="для человека"
+        )
+        cls.ljudjam = Article.objects.create(word="rahvahile")
+        ArticleIndexTranslate.objects.create(article=cls.ljudjam, rus_word="людям")
+        cls.ehat = Article.objects.create(word="ajea")
+        ArticleIndexTranslate.objects.create(article=cls.ehat, rus_word="едет быстро")
+        cls.mena = Article.objects.create(word="menna")
+        ArticleIndexTranslate.objects.create(article=cls.mena, rus_word="идёт домой")
+        cls.von = Article.objects.create(word="von_stench")
+        ArticleIndexTranslate.objects.create(article=cls.von, rus_word="вонь")
+
+    def _ids(self, query, f=None):
+        page, _, _, _, _, _ = search_by_translate_linked(query, 1, f)
+        return {a.id for a in page.object_list}
+
+    def test_chelovek_finds_genitive_and_suppletive(self):
+        found = self._ids("человек")
+        self.assertIn(self.chelovek.id, found)
+        self.assertIn(self.cheloveka.id, found)
+        self.assertIn(self.ljudjam.id, found)
+
+    def test_ehat_conjugation(self):
+        self.assertIn(self.ehat.id, self._ids("ехать"))
+
+    def test_idti_conjugation(self):
+        self.assertIn(self.mena.id, self._ids("идти"))
+        self.assertIn(self.mena.id, self._ids("идет"))
+
+    def test_von_not_von_stench(self):
+        self.assertNotIn(self.von.id, self._ids("вон"))
 
 
 class PonizuNarrowingTestCase(TestCase):

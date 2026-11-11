@@ -69,7 +69,16 @@ STOP_1B = {
     "чьего-л",
     "какая-л",
 }
-STOPWORDS = STOP_1A | STOP_1B
+# Function words len≥3 from corpus DF audit (P1 token-OR). Single-token
+# queries still match these; only multi-word OR drops them.
+STOP_1C = {
+    "без",
+    "для",
+    "или",
+    "под",
+    "при",
+}
+STOPWORDS = STOP_1A | STOP_1B | STOP_1C
 
 # Short-prefix fuzzy token match (backlog P3 surrogate): «корова» → «корове».
 FUZZY_TOKEN_MIN_LEN = 5
@@ -84,6 +93,21 @@ _TOKEN_BOUNDARY_AFTER = r"(?:$|[^а-яё\-])"
 def query_tokens(query):
     """Lowercase Cyrillic/hyphen tokens from a Russian query string."""
     return TOKEN_RE.findall((query or "").lower())
+
+
+def tokens_for_token_or(tokens, stopwords=None):
+    """
+    Tokens that seed token-OR (P1).
+
+    Multi-word (≥2): drop stopwords. If every token is a stop, keep all
+    (avoid empty OR). Single-token queries are unchanged.
+    """
+    toks = list(tokens or [])
+    if len(toks) < 2:
+        return toks
+    stops = STOPWORDS if stopwords is None else stopwords
+    kept = [t for t in toks if t not in stops]
+    return kept if kept else toks
 
 
 def token_boundary_regex(token):

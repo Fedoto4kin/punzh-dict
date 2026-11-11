@@ -3,6 +3,7 @@
 from django.contrib.postgres.search import SearchVector
 from django.db import transaction
 
+from dict.helpers.rus_morph import lemmas_of_phrase
 from dict.helpers.rus_word import dedupe_canonical_rus_words
 from dict.models import ArticleIndexTranslate
 
@@ -15,7 +16,11 @@ def apply_translations(article_id, words):
         if cleaned:
             ArticleIndexTranslate.objects.bulk_create(
                 [
-                    ArticleIndexTranslate(article_id=article_id, rus_word=w)
+                    ArticleIndexTranslate(
+                        article_id=article_id,
+                        rus_word=w,
+                        rus_lemmas=lemmas_of_phrase(w),
+                    )
                     for w in cleaned
                 ]
             )
