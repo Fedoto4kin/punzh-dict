@@ -1,0 +1,73 @@
+{# Shared Karelian + Russian search help (empty /search/ and home page). #}
+<div class="mt-2 mb-4 search-help" id="search-help">
+    <h4 class="mb-3">Как работает поиск</h4>
+
+    <h5 class="mt-3">Карельский язык</h5>
+    <p>Поиск идёт по <b>заглавному слову</b> статьи. Достаточно ввести слово или его часть.</p>
+    <ul class="list-group mb-3">
+        <li class="list-group-item">
+            Диакритика (надстрочные и подстрочные знаки) не учитывается.
+            Запрос «<a class="link-secondary" href="/search/hilla">hilla</a>»
+            находит и <b>hil’l’a</b>, и <b>hilla</b>.
+            Символы параллелек (<b>||</b>) и вертикалек (<b>|</b>) в запросе тоже игнорируются.
+        </li>
+        <li class="list-group-item">
+            Полугласный <b>w</b> в поиске приравнен к <b>u</b>, <b>y</b> или <b>v</b>.
+            Статью <b>tuwli</b> можно найти как
+            «<a class="link-secondary" href="/search/tuuli">tuuli</a>»,
+            «<a class="link-secondary" href="/search/tuwli">tuwli</a>» или
+            «<a class="link-secondary" href="/search/tuvli">tuvli</a>»;
+            статью <b>pyw</b> — как
+            «<a class="link-secondary" href="/search/pyw">pyw</a>»,
+            «<a class="link-secondary" href="/search/püw">püw</a>»,
+            «<a class="link-secondary" href="/search/püü">püü</a>»,
+            «<a class="link-secondary" href="/search/pyv">pyv</a>» или
+            «<a class="link-secondary" href="/search/püv">püv</a>»
+            (<b>ü</b> и <b>y</b> — один звук в разных алфавитах).
+        </li>
+        <li class="list-group-item">
+            Согласные «с птичками» (<b>č</b>, <b>š</b>, <b>ž</b>) можно вводить без надстрочных знаков:
+            «<a class="link-secondary" href="/search/seppä">seppä</a>» найдёт <b>šeppä</b> и <b>s’eppä</b>;
+            «<a class="link-secondary" href="/search/meccä">meccä</a>» — <b>meččä</b>.
+            Особую весьегонскую графему <b>i̮</b> можно заменить на <b>i</b>.
+        </li>
+        <li class="list-group-item">
+            Гласные <b>ü</b> (=<b>y</b>), <b>ä</b>, <b>ö</b> <b>не</b> сводятся к «голым» <b>u</b>, <b>a</b>, <b>o</b>:
+            гармония гласных смыслоразличительна
+            (<b>kulu</b> — <i>ветошь</i>, <b>külü</b>/<b>kyly</b> — <i>баня</i>).
+        </li>
+        <li class="list-group-item">
+            Одна любая буква — символ «<b>.</b>»; любое количество символов — «<b>?</b>».
+        </li>
+    </ul>
+    <p>Если точного совпадения нет, словарь предложит близкие по написанию слова
+        (небольшая опечатка или общее буквенное сходство).</p>
+
+    <h5 class="mt-4">Русский язык</h5>
+    <p>Поиск идёт по <b>переводам</b> словарных статей — например,
+        <a class="link-secondary" href="/search/кошка">кошка</a>.
+        Словоформы (падежи, спряжения) обычно находятся через леммы;
+        начальная форма по-прежнему самый надёжный вариант. Опечатки не исправляются.</p>
+    <ul class="list-group mb-2">
+        <li class="list-group-item">
+            <b>Точные результаты и расширенный поиск.</b>
+            <p class="mb-2 mt-2">По умолчанию показываются
+            <span class="btn alert-info btn-small px-2 py-0">Точные результаты</span>
+            — статьи, где перевод совпадает с запросом
+            (например, <a class="link-secondary" href="/search/быстро/1?f=exact">быстро</a>
+            → именно <b>«быстро»</b>, а не <b>«быстро сделать»</b> или <b>«быстро уехать»</b>).
+            Кнопка <span class="btn alert-info btn-small px-2 py-0">Расширенный поиск</span>
+            открывает все вхождения слова в переводах
+            (<a class="link-secondary" href="/search/быстро/1?f=all">быстро</a>).
+            Если расширенная выдача совпадает с точной, кнопка неактивна.</p>
+            <p class="mb-0">В режиме «Расширенный поиск» доступен блок
+            <span class="btn alert-info btn-small px-2 py-0">Уточнить запрос</span>:
+            оттенки вроде
+            <a class="link-secondary" href="/search/быстро/1?f=говорить">быстро говорить</a>,
+            <a class="link-secondary" href="/search/быстро/1?f=ехать">быстро ехать</a>.
+            Нажатие оставляет только статьи с этим оттенком;
+            повторное нажатие снимает фильтр. Одновременно действует одно уточнение.
+            Если точных совпадений нет, сразу показывается полная выдача и уточнения.</p>
+        </li>
+    </ul>
+</div>

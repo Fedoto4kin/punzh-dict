@@ -39,6 +39,10 @@
     </div>
 </div>
 
+{% if not query %}
+{% include "partials/search_help.html" %}
+{% endif %}
+
 {% if direction == 'krl' and not found_count %}
 <div class="alert alert-secondary" role="alert">
     <h4 class="alert-heading">Ничего не найдено.</h4>
