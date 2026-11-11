@@ -21,28 +21,8 @@
 <div class="mt-4">
 {% include "partials/classification_survey_ontology.html" %}
 </div>
-<div class="row mb-3">
-    <div class="col-12">
-        <p class="mb-1">
-            <a href="{% url 'ontology' %}">Онтология</a>
-        </p>
-        <h2>{{ field.name }}</h2>
-        {% if field.definition %}
-        <p class="text-muted">{{ field.definition }}</p>
-        {% endif %}
-    </div>
-</div>
 
-<div class="mb-3" id="ontologyModeFilters">
-    <div class="btn-group ontology-mode-filters" role="group" aria-label="Режим онтологии">
-        <a href="{% url 'ontology_field' field.id %}{{ mode_tr_query }}"
-           class="btn {% if not include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">По значениям</a>
-        <a href="{% url 'ontology_field' field.id %}{{ mode_all_query }}"
-           class="btn {% if include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">Переводы и примеры</a>
-    </div>
-</div>
-
-<div class="mb-4 row">
+<div class="mb-3 row">
     <div id="ontologyFields" class="col-sm-12">
         <div class="card">
             <div class="card-header" id="headingFields">
@@ -67,6 +47,27 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <p class="mb-1">
+            <a href="{% url 'ontology' %}">Онтология</a>
+        </p>
+        <h2>{{ field.name }}</h2>
+        {% if field.definition %}
+        <p class="text-muted">{{ field.definition }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mb-3" id="ontologyModeFilters">
+    <div class="btn-group ontology-mode-filters" role="group" aria-label="Режим онтологии">
+        <a href="{% url 'ontology_field' field.id %}{{ mode_tr_query }}"
+           class="btn {% if not include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">По значениям</a>
+        <a href="{% url 'ontology_field' field.id %}{{ mode_all_query }}"
+           class="btn {% if include_all %}btn-primary{% else %}btn-outline-secondary{% endif %}">Переводы и примеры</a>
     </div>
 </div>
 
