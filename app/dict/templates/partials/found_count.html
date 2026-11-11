@@ -1,0 +1,6 @@
+{% load dict_extras %}
+{% if found_count %}
+<p class="small text-muted text-center mb-1 mt-3">
+    {% if found_prefix %}{{ found_prefix }} {% endif %}{{ found_count|pluralize_words|safe }}
+</p>
+{% endif %}
