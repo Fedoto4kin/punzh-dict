@@ -1,25 +1,37 @@
 <form action="/search/">
-    <div class="input-group">
-        <input class="form-control"
-               name="query"
-               id="search"
-               type="text"
-               value="{{ query }}"
-               placeholder="Искать в словаре"
-               aria-label="Search"
-               autofocus>
-        <div class="input-group-append">
-            <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ü</button>
-            <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ä</button>
-            <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ö</button>
+    <div class="d-flex align-items-center">
+        <div class="input-group flex-grow-1">
+            <input class="form-control"
+                   name="query"
+                   id="search"
+                   type="text"
+                   value="{{ query }}"
+                   placeholder="Искать в словаре"
+                   aria-label="Search"
+                   autofocus>
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ü</button>
+                <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ä</button>
+                <button class="btn btn-outline-primary" type='button' onclick="addChar(this); return false;" >ö</button>
+            </div>
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary my-sm-0" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
         </div>
-        <div class="input-group-append">
-            <button class="btn btn-outline-secondary my-sm-0" type="submit">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
+        <button type="button"
+                class="btn btn-link text-info p-1 ml-1 shadow-none"
+                id="search-krl-hint"
+                data-toggle="tooltip"
+                data-html="true"
+                data-placement="bottom"
+                title="<span style='white-space:nowrap'>Для карельского поиска</span><br><span style='white-space:nowrap'>с неточным вхождением:</span><br><span style='white-space:nowrap'><mark>.</mark> — одна любая буква,</span><br><span style='white-space:nowrap'><mark>?</mark> — любая последовательность</span>"
+                aria-label="Подсказка по карельскому поиску с неточным вхождением: точка — одна любая буква, вопрос — любая последовательность"
+                style="cursor: help; line-height: 1;">
+            <i class="fas fa-info-circle" aria-hidden="true"></i>
+        </button>
     </div>
-    <label class="small text-muted pl-1" for="search"><i class="fas fa-info-circle text-info" aria-hidden="true"></i> Карельский поиск: <mark>.</mark> или <mark>?</mark> для неточного вхождения</label>
     <script type="application/javascript">
         let addChar = function (el) {
             let input = document.getElementById('search');
@@ -32,6 +44,17 @@
             input.focus();
             input.setSelectionRange(position+1, position+1);
             return false;
+        };
+        if (window.jQuery) {
+            jQuery(function ($) {
+                // Bootstrap strips <mark> unless sanitize is off.
+                // Wider inner so nowrap lines are not clipped (default max-width 200px).
+                $('#search-krl-hint').tooltip({
+                    html: true,
+                    sanitize: false,
+                    template: '<div class="tooltip" role="tooltip"><div class="arrow"></div><div class="tooltip-inner text-center" style="max-width:none"></div></div>'
+                });
+            });
         }
     </script>
 </form>
