@@ -52,6 +52,22 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertContains(response, "Точные результаты")
         self.assertContains(response, "Расширенный поиск")
         self.assertNotContains(response, "Уточнить запрос")
+        self.assertRegex(
+            response.content.decode(),
+            r'href="/search/[^"]+\?f=all"[^>]*btn-outline-info[^>]*>Расширенный поиск',
+        )
+
+    def test_tag_mode_keeps_extended_chip_active(self):
+        response = self.client.get("/search/быстро/1?f=ехать", follow=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_f"], "ехать")
+        self.assertTrue(response.context["refine_clickable"])
+        html = response.content.decode()
+        self.assertRegex(
+            html,
+            r'href="/search/[^"]+\?f=all"[^>]*\bactive\b[^>]*>Расширенный поиск',
+        )
+        self.assertContains(response, "Уточнить запрос")
 
     def test_no_direct_redirects_to_all(self):
         response = self.client.get("/search/первотельная", follow=False)

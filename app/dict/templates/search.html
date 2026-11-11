@@ -86,7 +86,7 @@
     <a href="/search/{{ query|urlencode }}/1?f=exact"
        class="btn btn-sm m-1 {% if active_f == 'exact' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Точные результаты</a>
     <a href="/search/{{ query|urlencode }}/1?f=all"
-       class="btn btn-sm m-1 {% if active_f == 'all' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Расширенный поиск</a>
+       class="btn btn-sm m-1 {% if refine_clickable %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Расширенный поиск</a>
 </p>
 {% endif %}
 {% if narrowing and refine_clickable %}
