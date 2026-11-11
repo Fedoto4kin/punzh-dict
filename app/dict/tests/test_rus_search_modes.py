@@ -50,7 +50,7 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertEqual(response.context["active_f"], "exact")
         self.assertFalse(response.context["refine_clickable"])
         self.assertContains(response, "Точные результаты")
-        self.assertContains(response, "Все результаты")
+        self.assertContains(response, "Расширенный поиск")
         self.assertNotContains(response, "Уточнить запрос")
 
     def test_no_direct_redirects_to_all(self):
