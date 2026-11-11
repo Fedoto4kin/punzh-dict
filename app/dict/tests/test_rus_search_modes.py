@@ -43,6 +43,9 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertTrue(response.context["has_direct"])
         self.assertTrue(response.context["refine_clickable"])
         self.assertEqual(response.context["found_count"], 4)  # no linkedown here
+        # No tag selected → refine box expanded.
+        self.assertContains(response, 'id="narrowingBox"')
+        self.assertIn('class="collapse show" id="narrowingBox"', response.content.decode())
 
     def test_exact_mode_hides_refine_block(self):
         response = self.client.get("/search/быстро/1?f=exact", follow=False)
@@ -68,6 +71,10 @@ class RusSearchModesViewTestCase(TestCase):
             r'href="/search/[^"]+\?f=all"[^>]*\bactive\b[^>]*>Расширенный поиск',
         )
         self.assertContains(response, "Уточнить запрос")
+        # Tag selected → refine box collapsed (no Bootstrap "show").
+        self.assertRegex(html, r'collapse-toggle[^>]*\bcollapsed\b')
+        self.assertIn('class="collapse" id="narrowingBox"', html)
+        self.assertNotIn('class="collapse show" id="narrowingBox"', html)
 
     def test_no_direct_redirects_to_all(self):
         response = self.client.get("/search/первотельная", follow=False)

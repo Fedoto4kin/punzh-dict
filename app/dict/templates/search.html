@@ -91,9 +91,9 @@
 {% endif %}
 {% if narrowing and refine_clickable %}
 <div class="mt-1 alert alert-info search-refine" role="alert">
-    <h5 class="alert-heading mb-0 collapse-toggle d-flex justify-content-between align-items-center"
+    <h5 class="alert-heading mb-0 collapse-toggle d-flex justify-content-between align-items-center{% if active_label %} collapsed{% endif %}"
         data-toggle="collapse" data-target="#narrowingBox"
-        aria-expanded="true" aria-controls="narrowingBox" role="button">
+        aria-expanded="{% if active_label %}false{% else %}true{% endif %}" aria-controls="narrowingBox" role="button">
         <span>
             Уточнить запрос
             {% if active_label %}
@@ -106,7 +106,7 @@
         </span>
         <span class="tgl"><span class="when-open">свернуть</span><span class="when-closed">развернуть</span></span>
     </h5>
-    <div class="collapse show" id="narrowingBox">
+    <div class="collapse{% if not active_label %} show{% endif %}" id="narrowingBox">
         <p class="mt-2 mb-0">
             {% for tag in narrowing %}
             <a href="/search/{{ query|urlencode }}/1?f={{ tag.key|urlencode }}"
