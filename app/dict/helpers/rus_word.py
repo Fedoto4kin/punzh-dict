@@ -2,8 +2,6 @@ import re
 
 # Shared with lexical /search/, AI axes, translation index, offline cleanup.
 _YO_TO_E = str.maketrans({"ё": "е", "Ё": "Е"})
-# Russian public search / debug: ё→е plus form wildcards (? any sequence, . one char).
-_RUS_QUERY_TRANS = str.maketrans({"ё": "е", "Ё": "Е", "?": "%", ".": "_"})
 
 # Caps ILIKE/token cost; same bound for lexical views and AI job/parse.
 MAX_SEARCH_QUERY_LEN = 300
@@ -17,9 +15,9 @@ def normalize_yo(text):
 def prepare_rus_query(text):
     """
     Prep a Russian search string for ILIKE / token-OR (views + search_debug).
-    Strip edges, ё→е, map ?→% and .→_.
+    Strip edges, ё→е. Wildcards ?/. are Karelian-only (prepare_krl_ilike_query).
     """
-    return (text or "").strip().translate(_RUS_QUERY_TRANS)
+    return normalize_yo((text or "").strip())
 
 
 def canonical_rus_word(text):

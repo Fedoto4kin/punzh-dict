@@ -14,6 +14,11 @@ class PrepareRusDebugQueryTestCase(TestCase):
     def test_strip(self):
         self.assertEqual("быстро", prepare_rus_debug_query("  быстро  "))
 
+    def test_does_not_map_krl_wildcards(self):
+        # ?/. are Karelian ILIKE masks only; Russian keeps them literal.
+        self.assertEqual("кош?", prepare_rus_debug_query("кош?"))
+        self.assertEqual("кош.", prepare_rus_debug_query("кош."))
+
 
 class ExplainRusSearchTestCase(TestCase):
     """Same cluster as test_search_filter — reasons must match pipeline layers."""
