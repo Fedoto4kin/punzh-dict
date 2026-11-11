@@ -10,8 +10,9 @@ job+poll (job привязан к сессии), REPL `manage.py ai_query`. LLM 
 разбора: [`SPEC_ai_query_parse.md`](SPEC_ai_query_parse.md). Очередь:
 `docs/plans/INDEX.md`.
 
-**Дальше по фидбеку альфы:** `AiSearchLog` + инлайн 👍/👎 (SPEC §6);
-доводка ранга/промпта по 👎; пункт в навигации; SSE/worker — не блокер.
+**Фидбек альфы (код):** `AiSearchLog` + инлайн 👍/👎 (SPEC §6), флаги
+`AI_SEARCH_LOG_QUERIES` / `AI_SEARCH_FEEDBACK`. Дальше: разбор 👎 → эталоны;
+export/purge логов; пункт в навигации; SSE/worker — не блокер.
 
 Пользовательский опыт AI-поиска, ОТДЕЛЬНОЙ страницы (не смешивается с обычным
 поиском). Архитектура данных — `cursor_project_overview.md` и

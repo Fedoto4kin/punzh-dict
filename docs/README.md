@@ -13,7 +13,7 @@
 | [plans/search-rus-lemmas.md](plans/search-rus-lemmas.md) | P3 леммы RU-поиска — сделано |
 | [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | P1 стоп-токены в token-OR — сделано |
 | [plans/search-module-split.md](plans/search-module-split.md) | Распил `search.py` → пакет — сделано (R1) |
-| [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
+| [../backlog.md](../backlog.md) | Продукт: «от»/kind (хвост «см от X»), пометы; `from_translation` / cleanup закрыты |
 | [backlog-search.md](backlog-search.md) | Лексический RU `/search/`: основные P закрыты; P4 keywords снят |
 
 ## Спеки и UX

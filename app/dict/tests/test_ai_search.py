@@ -1,6 +1,12 @@
 from django.test import TestCase
 
 from dict.ai.rank import SORT_ALPHA, SORT_RELEVANCE, lemmas_with_exact_translate
+from dict.ai.retrieval_schemas import (
+    MatchContext,
+    PROFILES,
+    match_profile,
+    validate_profiles,
+)
 from dict.ai.search import (
     TITLE_MAIN,
     _enrich_fields,
@@ -860,3 +866,33 @@ class SoftTagAndRelaxTestCase(TestCase):
         self.assertIn("olut2", words)
         self.assertNotIn("beika2", words)
         self.assertEqual(groups[0].get("tags"), None)
+
+
+class RetrievalSchemasTestCase(TestCase):
+    def test_profiles_validate(self):
+        self.assertEqual(validate_profiles(), [])
+
+    def test_label_theme_matches_first(self):
+        p = match_profile(
+            MatchContext(
+                label_theme=True,
+                has_stylistic_hard=False,
+                has_theme=True,
+                has_geo=True,
+            )
+        )
+        self.assertEqual(p.name, "label_theme")
+
+    def test_geo_browse_when_dialect_only(self):
+        p = match_profile(
+            MatchContext(
+                has_geo=True,
+                has_theme=False,
+                has_stylistic_hard=False,
+                has_content=False,
+            )
+        )
+        self.assertEqual(p.name, "geo_browse")
+
+    def test_six_profiles(self):
+        self.assertEqual(len(PROFILES), 6)

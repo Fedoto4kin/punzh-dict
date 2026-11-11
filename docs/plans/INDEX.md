@@ -9,9 +9,10 @@
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
 | **1** | **альфа на prod** (`eb95bc3`) | **AI-поиск:** async job+poll, hard/soft-пометы, POS-сужение, говор+тема (эталон «всг. про погоду»), см. входящие, session-bound job. LLM re-rank удалён | `docs/ai-search.md`, `SPEC_ai_query_parse.md`, `plans/ai-search-async.md`, `plans/ai-search-llm-rerank.md` |
-| **1a** | **следующий код AI** | **Декларативные схемы retrieval** + методика/журнал отказов | `plans/ai-search-retrieval-schemas.md`, `method-ai-search-retrieval.md` |
-| 2 | параллельно | Связи «от» / `ArticleLink.kind` (подсветка на сайте) | `backlog.md` §1 — **отдельный контур**, не смешивать с AI |
-| 3 | **в работе** | Обратная связь альфы: `AiSearchLog` + 👍/👎; пункт в навигации — позже | `SPEC_ai_query_parse.md` §6 |
+| **1a** | **сделано (код)** | **Декларативные схемы retrieval** + методика/журнал отказов | `retrieval_schemas.py`, `plans/ai-search-retrieval-schemas.md`, `method-ai-search-retrieval.md` |
+| 2 | **сделано** (хвост мелочь) | Связи «от» / `ArticleLink.kind` + подсветка; осталось уточнить «см от X» | `backlog.md` §1 |
+| 3 | **сделано (код)** | Обратная связь альфы: `AiSearchLog` + инлайн 👍/👎 (`AI_SEARCH_FEEDBACK`); пункт в навигации — §8 | `SPEC_ai_query_parse.md` §6 |
+| 3a | бэклог AI | Export/purge логов (`export_ai_search_logs` / retention) — в SPEC, команд ещё нет | `SPEC_ai_query_parse.md` §6 |
 
 **AI на prod (2026-10-24):** скрытый `/ai-search/`. LLM re-rank удалён
 (2026-11): гипотеза не подтвердилась — `plans/ai-search-llm-rerank.md`.

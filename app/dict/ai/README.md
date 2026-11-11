@@ -14,7 +14,8 @@
 | `prompts.py` | Замёрзший промпт и сбор входа для **классификации** по онтологии (включая аддендумы). Импортируется и рантаймом (`classify_article`), и пакетным `agents/build_ontology.py`. Промпт «по переводу» (`SYSTEM_PROMPT_TRANSLATION_FIELDS`) — общий с `pick_translation_fields.py`; вход — только `ArticleIndexTranslate`. |
 | `query_prompts.py` / `query_parse.py` | Разбор → оси; hard/soft-пометы; `display` + `axes_display`. |
 | `rank.py` | Релевантность (focus exact ≫ lexical ≫ field-tr ≫ слабые KW). |
-| `search.py` | Retrieval: hard AND / soft∩field, POS сужает, dialect+тема, см. входящие. |
+| `retrieval_schemas.py` | Декларативные профили retrieval (dataclasses); оси → множества → main. |
+| `search.py` | Интерпретатор схем: resolve sets → profile → POS/soft → demote → rank. |
 | `jobs.py` | Async job: thread + PG; `client_key` = session (изоляция poll). |
 | `telemetry.py` | Событие разбора → JSONL (REPL) и `AiSearchLog` (альфа). |
 | `classify.py` | Ядро классификации одной статьи: поля + keywords + `from_translation` (два LLM-вызова). |

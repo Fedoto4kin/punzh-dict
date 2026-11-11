@@ -1,6 +1,7 @@
 # AI-поиск: декларативные схемы retrieval
 
-**Статус:** формат согласован (2026-10-24); реализация — следующий шаг.  
+**Статус:** формат согласован (2026-10-24); **реализация в коде** —
+`app/dict/ai/retrieval_schemas.py` + интерпретатор в `search_by_parsed`.  
 **Связано:** `app/dict/ai/search.py` (`search_by_parsed`), `docs/ai-search.md`,
 `docs/SPEC_ai_query_parse.md`, `docs/plans/INDEX.md` §1a,
 **`docs/method-ai-search-retrieval.md`** (методика + журнал отказов).
@@ -124,4 +125,4 @@ class RetrievalProfile:
 
 - Промпт 1.15; эксперимент «поля без definition» (откатан).
 - LLM re-rank (снят; гипотеза не подтвердилась).
-- Переразметка всг.×погода; `research/`; feedback альфы / навигация.
+- Переразметка всг.×погода; `research/`; навигация AI (INDEX §8).

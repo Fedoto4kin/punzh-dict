@@ -19,6 +19,13 @@ from dict.ai.rank import (
     order_articles,
     relevance_score,
 )
+from dict.ai.retrieval_schemas import (
+    EMPTY_BROWSE_THEN_RELAX,
+    EMPTY_GEO_ALL,
+    MatchContext,
+    match_profile,
+    union_named,
+)
 from dict.models import (
     Article,
     ArticleAddition,
@@ -317,8 +324,8 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     """
     Build UI groups from a parse_query result dict.
 
-    Lexical + focus + theme-narrowed field hits → one ranked group.
-    Tag hits stay separate. Ranking: dict.ai.rank (focus exact ≫ lexical).
+    Resolves named id-sets, matches a RetrievalProfile
+    (dict.ai.retrieval_schemas), then POS → soft → demote → rank.
 
     Returns (groups, fallback_count).
     """
@@ -449,59 +456,89 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
     active_dialect_ids = dialect_ids
 
     # Lemma anchors = translations of lexical|focus|related ∩ тема (not KW).
-    lemma_in_theme = set()
+    anchors = set()
     if field_pool_raw and (lexical or focus or related):
-        lemma_in_theme = theme_tr_raw & field_pool_raw
-    lex_vsg = set()
-    if lemma_in_theme and (dialect_ids or place_ids):
-        lex_vsg = _apply_and_filters(lemma_in_theme, place_ids, dialect_ids)
-
-    if label_theme and not other_tags:
-        # Query named a говор → answer with that говор, not «погода по всему
-        # словарю» under dialect_relaxed. Tier 1: lemma∩тема∩говор; tier 2:
-        # rest of тема∩говор. Non-всг. glosses are not shown as if they were всг.
-        theme_vsg = set(primary_field_pool or field_pool)
-        if primary_theme:
-            fields = list(primary_theme) if len(primary_theme) == 1 else list(fields)
-        main_ids = set(lex_vsg) | theme_vsg
-        content_ids = set(lex_vsg)
-        field_pool = set(theme_vsg)
-        lex_ids = set(lex_vsg)
-        field_tr_ids = set(lex_vsg)
-        # KW illustrations must not outrank («дождь» on муравейник / чибис).
-        kw_lex = set()
-        kw_focus = set()
-        theme_ids = set(theme_tr_raw) & (field_pool_raw or set())
-    elif other_tags and other_ids:
-        field_tag = (primary_field_pool & other_ids) if primary_field_pool else set()
-        if field_tag:
-            main_ids = set(field_tag)
-        elif content_ids:
-            main_ids = content_ids & other_ids
-            if field_ids:
-                main_ids |= field_ids & other_ids
-            if not main_ids:
-                main_ids = set(content_ids)
-                if field_ids:
-                    main_ids |= field_ids
-                tags_hard_active = list(pos_tags)  # dropped stylistic; POS may remain
-                other_tags = []
-        else:
-            main_ids = set(other_ids)
+        anchors = theme_tr_raw & field_pool_raw
+    tier1 = _apply_and_filters(anchors, place_ids, dialect_ids) if anchors else set()
+    tier2 = set(primary_field_pool or field_pool)
+    field_and_stylistic = (
+        (primary_field_pool & other_ids) if primary_field_pool else set()
+    )
+    content_and_stylistic = content_ids & other_ids if other_ids else set()
+    field_kw_and_stylistic = field_ids & other_ids if other_ids else set()
+    if dialect_ids is not None:
+        geo_ids = set(dialect_ids)
+    elif place_ids is not None:
+        geo_ids = set(place_ids)
     else:
-        main_ids = set(content_ids)
-        if field_tr_ids:
-            main_ids |= field_tr_ids
-        if field_ids:
-            main_ids |= field_ids
-        if other_tags and not other_ids:
-            # Named hard mark with no articles — ignore mark, keep content.
+        geo_ids = set()
+
+    sets = {
+        "anchors": anchors,
+        "tier1": tier1,
+        "tier2": tier2,
+        "field_pool": set(field_pool),
+        "field_tr": set(field_tr_ids),
+        "field_kw": set(field_ids),
+        "content": set(content_ids),
+        "field_and_stylistic": field_and_stylistic,
+        "content_and_stylistic": content_and_stylistic,
+        "field_kw_and_stylistic": field_kw_and_stylistic,
+        "stylistic": set(other_ids),
+        "pos": set(pos_ids),
+        "soft": set(soft_tag_ids),
+        "dialect": set(dialect_ids or ()),
+        "place": set(place_ids or ()),
+        "geo": geo_ids,
+    }
+
+    # label_theme only when no named stylistic hard tags (even if their id-set is empty).
+    match_ctx = MatchContext(
+        label_theme=label_theme and not other_tags,
+        has_stylistic_hard=bool(other_tags and other_ids),
+        has_field_and_stylistic=bool(field_and_stylistic),
+        has_content=bool(content_ids),
+        has_theme=has_theme,
+        has_geo=bool(geo_ids),
+    )
+    profile = match_profile(match_ctx)
+    if profile is None:
+        return [], _fallback_count(query)
+
+    main_ids = union_named(sets, profile.main)
+    if not main_ids and profile.fallback_main:
+        main_ids = union_named(sets, profile.fallback_main)
+        if profile.drop_stylistic_on_fallback:
             tags_hard_active = list(pos_tags)
             other_tags = []
 
-    # Empty after dialect/place AND: browse theme∩говор, else relax говор.
+    # Named hard mark with no articles → ignore mark (POS may remain).
+    if other_tags and not other_ids:
+        tags_hard_active = list(pos_tags)
+        other_tags = []
+
+    if profile.prefer_primary_field and primary_theme:
+        fields = list(primary_theme) if len(primary_theme) == 1 else list(fields)
+
+    if profile.pin_score_to_content:
+        content_ids = union_named(sets, profile.content) or set(tier1)
+        field_pool = set(tier2)
+        lex_ids = set(content_ids)
+        field_tr_ids = set(content_ids)
+        theme_ids = set(theme_tr_raw) & (field_pool_raw or set())
+        sets["content"] = set(content_ids)
+        sets["field_pool"] = set(field_pool)
+        sets["field_tr"] = set(field_tr_ids)
+
+    if profile.zero_kw_score:
+        # KW illustrations must not outrank («дождь» on муравейник / чибис).
+        kw_lex = set()
+        kw_focus = set()
+
+    # Empty after dialect/place AND: browse theme∩говор, else relax / geo-all.
     if not main_ids:
-        if has_theme:
+        policy = profile.empty_policy
+        if policy == EMPTY_BROWSE_THEN_RELAX and has_theme:
             browse_names = list(llm_fields) or list(primary_theme) or list(fields)
             browse_pool = _apply_and_filters(
                 _field_ids(browse_names, include_referrers=False),
@@ -550,10 +587,11 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
                 main_ids = set(content_ids)
                 if field_ids:
                     main_ids |= field_ids
-        elif dialect_ids:
-            main_ids = set(dialect_ids)
-        elif place_ids:
-            main_ids = set(place_ids)
+        elif policy in (EMPTY_BROWSE_THEN_RELAX, EMPTY_GEO_ALL) or not has_theme:
+            if dialect_ids:
+                main_ids = set(dialect_ids)
+            elif place_ids:
+                main_ids = set(place_ids)
 
     # POS tightens only: intersect base, never replace with all verbs in a field.
     if pos_ids:
@@ -591,8 +629,10 @@ def search_by_parsed(parsed, sort=SORT_RELEVANCE):
         active_dialect_ids,
     )
     demote_ids = main_ids - direct_ids
-    if label_theme and lex_vsg:
-        demote_ids |= main_ids - lex_vsg
+    if profile.demote_except:
+        keep = union_named(sets, profile.demote_except)
+        if keep:
+            demote_ids |= main_ids - keep
     # No own translations (KW/illustration-only) → same demote tier as см./от.
     if main_ids:
         with_tr = set(
