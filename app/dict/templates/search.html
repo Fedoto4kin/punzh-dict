@@ -77,8 +77,12 @@
 <p class="mb-2 search-refine">
     <a href="/search/{{ query|urlencode }}/1?f=exact"
        class="btn btn-sm m-1 {% if active_f == 'exact' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Точные результаты</a>
+    {% if wide_equals_exact %}
+    <span class="btn btn-sm m-1 btn-outline-info disabled" aria-disabled="true" title="Совпадает с точными результатами">Расширенный поиск</span>
+    {% else %}
     <a href="/search/{{ query|urlencode }}/1?f=all"
        class="btn btn-sm m-1 {% if refine_clickable %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Расширенный поиск</a>
+    {% endif %}
 </p>
 {% endif %}
 {% if narrowing and refine_clickable %}

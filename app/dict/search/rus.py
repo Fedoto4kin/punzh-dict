@@ -302,10 +302,15 @@ def rus_search_core(query: str, f=None, expand_links=True) -> RusSearchCore:
 def search_by_translate_linked(query: str, page=1, f=None):
     core = rus_search_core(query, f=f)
     page_obj, found_count = get_sorted_articles(core.filtered_ids, page)
+    # Exact set covers the whole wide listing — no point offering «all».
+    wide_equals_exact = bool(core.direct_ids) and len(core.direct_ids) == len(
+        core.result_ids
+    )
     return (
         page_obj,
         found_count,
         core.narrowing,
         core.direct_ids,
         core.related_queries,
+        wide_equals_exact,
     )

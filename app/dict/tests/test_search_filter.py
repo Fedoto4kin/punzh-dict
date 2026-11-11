@@ -38,7 +38,7 @@ class SearchFilterTestCase(TestCase):
         ArticleLink.objects.create(from_article=self.linkedown, to_article=self.ruttoh)
 
     def test_no_filter_tags_and_exact_from_full_anchor(self):
-        page_obj, found_count, narrowing, direct_ids, related = (
+        page_obj, found_count, narrowing, direct_ids, related, _ = (
             search_by_translate_linked("быстро", 1, None)
         )
         self.assertEqual(["круто", "скоро"], related)
@@ -52,7 +52,7 @@ class SearchFilterTestCase(TestCase):
         )
 
     def test_exact_filter_keeps_ilike_and_inherited_only(self):
-        page_obj, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "быстро", 1, "exact"
         )
         self.assertEqual(3, found_count)
@@ -63,31 +63,31 @@ class SearchFilterTestCase(TestCase):
         self.assertEqual({"пробежать", "ехать"}, {t["key"] for t in narrowing})
 
     def test_key_filter_narrows_to_matching_cards(self):
-        page_obj, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "быстро", 1, "ехать"
         )
         self.assertEqual(1, found_count)
         self.assertEqual({"ehatta"}, {a.word for a in page_obj.object_list})
 
     def test_inherited_exact_hit_present(self):
-        page_obj, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "быстро", 1, "exact"
         )
         self.assertIn(self.rutoldi.id, set(direct_ids))
         self.assertIn("rutoldi", {a.word for a in page_obj.object_list})
 
     def test_linked_with_own_translations_excluded_from_exact(self):
-        page_obj, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "быстро", 1, "exact"
         )
         self.assertNotIn(self.linkedown.id, set(direct_ids))
         self.assertNotIn("linkedown", {a.word for a in page_obj.object_list})
 
     def test_all_filter_matches_no_filter(self):
-        none_page, none_count, none_narrow, none_direct, none_rel = (
+        none_page, none_count, none_narrow, none_direct, none_rel, _ = (
             search_by_translate_linked("быстро", 1, None)
         )
-        all_page, all_count, all_narrow, all_direct, all_rel = (
+        all_page, all_count, all_narrow, all_direct, all_rel, _ = (
             search_by_translate_linked("быстро", 1, "all")
         )
         self.assertEqual(none_count, all_count)

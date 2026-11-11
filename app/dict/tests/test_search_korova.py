@@ -26,7 +26,7 @@ class KorovaNarrowingTestCase(TestCase):
         )
 
     def test_korova_finds_phrase_via_fuzzy_token(self):
-        page_obj, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        page_obj, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "корова", 1, None
         )
         words = {a.word for a in page_obj.object_list}
@@ -35,13 +35,13 @@ class KorovaNarrowingTestCase(TestCase):
         self.assertNotIn(self.enzi.id, direct_ids)
 
     def test_korova_narrowing_label_keeps_parens(self):
-        _, _, narrowing, _, _ = search_by_translate_linked("корова", 1, None)
+        _, _, narrowing, _, _, _ = search_by_translate_linked("корова", 1, None)
         enzi_tags = [t for t in narrowing if t["key"].startswith("первотельная")]
         self.assertTrue(enzi_tags)
         self.assertIn("(о корове)", enzi_tags[0]["label"])
 
     def test_korova_filter_by_pervotelnaia(self):
-        page_obj, found_count, _, _, _ = search_by_translate_linked(
+        page_obj, found_count, _, _, _, _ = search_by_translate_linked(
             "корова", 1, "первотельная"
         )
         self.assertEqual(1, found_count)
@@ -53,7 +53,7 @@ class KorovaNarrowingTestCase(TestCase):
             article=gloss_only,
             rus_word="быть в охоте (о корове)",
         )
-        page_obj, found_count, _, _, _ = search_by_translate_linked(
+        page_obj, found_count, _, _, _, _ = search_by_translate_linked(
             "корова", 1, "первотельная"
         )
         self.assertEqual(1, found_count)
@@ -65,7 +65,7 @@ class KorovaNarrowingTestCase(TestCase):
             article=gloss_only,
             rus_word="быть в охоте (о корове)",
         )
-        page_obj, found_count, _, _, _ = search_by_translate_linked(
+        page_obj, found_count, _, _, _, _ = search_by_translate_linked(
             "корова", 1, "первотельная корове"
         )
         self.assertEqual(1, found_count)
@@ -76,7 +76,7 @@ class KorovaNarrowingTestCase(TestCase):
             article=self.enzi,
             rus_word="первотельная корова",
         )
-        _, _, _, direct_ids, _ = search_by_translate_linked(
+        _, _, _, direct_ids, _, _ = search_by_translate_linked(
             "первотельная корова", 1, None
         )
         self.assertIn(self.enzi.id, direct_ids)
@@ -91,7 +91,9 @@ class PonizuNarrowingTestCase(TestCase):
         ArticleIndexTranslate.objects.create(article=cls.verb, rus_word="понизить цену")
 
     def test_ponizu_no_spurious_narrowing_tags(self):
-        _, _, narrowing, direct_ids, _ = search_by_translate_linked("понизу", 1, None)
+        _, _, narrowing, direct_ids, _, _ = search_by_translate_linked(
+            "понизу", 1, None
+        )
         self.assertEqual([], narrowing)
         self.assertIn(self.exact.id, direct_ids)
 
@@ -108,7 +110,7 @@ class HighFreqAnchorTestCase(TestCase):
             )
 
     def test_byt_prio_limits_narrowing_tags(self):
-        _, found_count, narrowing, direct_ids, _ = search_by_translate_linked(
+        _, found_count, narrowing, direct_ids, _, _ = search_by_translate_linked(
             "быть", 1, None
         )
         self.assertGreater(found_count, 1)

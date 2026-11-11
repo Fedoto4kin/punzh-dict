@@ -52,7 +52,7 @@ class ExplainRusSearchTestCase(TestCase):
         return {c.article.word: c for c in result.cards}
 
     def test_counts_match_public_search(self):
-        page_obj, found_count, narrowing, direct_ids, related = (
+        page_obj, found_count, narrowing, direct_ids, related, _ = (
             search_by_translate_linked("быстро", 1, None)
         )
         result = explain_rus_search("быстро")

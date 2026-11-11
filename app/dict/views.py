@@ -134,16 +134,25 @@ def search(request, query="", page=1):
     phrase_filter = None
     t_query = ""
     refine_clickable = True
+    wide_equals_exact = False
     if direction == "rus":
-        page_obj, found_count, narrowing, direct_ids, related_queries = (
-            search_by_translate_linked(prepare_rus_query(query), page, f)
-        )
+        (
+            page_obj,
+            found_count,
+            narrowing,
+            direct_ids,
+            related_queries,
+            wide_equals_exact,
+        ) = search_by_translate_linked(prepare_rus_query(query), page, f)
         possible = []
         has_direct = bool(direct_ids)
         # Explicit ?f=: bare URL redirects to exact (if any) or all.
         if f is None:
             target = "exact" if has_direct else "all"
             return redirect("/search/%s/1?f=%s" % (quote(query), target))
+        # Wide listing identical to exact — keep users on ?f=exact.
+        if wide_equals_exact and f == "all":
+            return redirect("/search/%s/1?f=exact" % quote(query))
         # Badge in refine heading: only for an active narrowing tag.
         if f not in ("exact", "all"):
             for tag in narrowing:
@@ -152,7 +161,8 @@ def search(request, query="", page=1):
                     break
             if active_label is None:
                 active_label = f
-        refine_clickable = f != "exact"
+        # When wide==exact, refine stays available on the exact screen.
+        refine_clickable = f != "exact" or wide_equals_exact
         t_query = "?f=%s" % quote(f)
     else:
         direction = "krl"
@@ -185,6 +195,7 @@ def search(request, query="", page=1):
         "active_f": f,
         "active_label": active_label,
         "refine_clickable": refine_clickable,
+        "wide_equals_exact": wide_equals_exact,
         "found_count": found_count,
         "direction": direction,
         "trigrams": trigrams,
