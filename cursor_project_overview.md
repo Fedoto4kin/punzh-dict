@@ -44,21 +44,20 @@
 uwsgi без hot-reload). Подробнее: `AGENTS.md`.
 
 ## Key models (`app/dict/models/`)
-- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`search_vector`), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; шаги 1–4 закрыты, хвост — подсветка на сайте, см. `backlog.md` §1).
-- `semantic.py` — `SemanticField`, `ArticleSemanticField` (`from_translation`), `ArticleKeyword`.
+- `articles.py` — `ArticleBase` (abstract), `Article` (`save()` пересобирает индексы заголовка/нормализации), `ArticleAddition`, `ArticleIndexWord`, `ArticleIndexTranslate` (`rus_word`, `rus_lemmas`, `search_vector` пишется / поиском не читается), `ArticleIndexWordNormalization`, `ArticleIndexTag`, `ArticleLink` (`kind`: see/cf/deriv; хвост — подсветка на сайте, `backlog.md` §1).
+- `semantic.py` — `SemanticField`, `ArticleSemanticField` (`from_translation`), `ArticleKeyword` (AI/онтология, не seed `/search/`).
 - `tags.py` — `Tag`.
 - `source.py` — `Source`.
 - `levenshtein.py` — **не модель**: SQL-обёртка `Func` над `levenshtein()`.
 
-## Search (прод, `app/dict/search.py` + `views.py`)
+## Search (прод, пакет `app/dict/search/` + `views.py`)
 - Алфавитный указатель по первой букве.
-- Карельский запрос (автоопределение направления) → `ILIKE` по `ArticleIndexWord` (варианты написания заголовка, не лемматизация).
-- Русский запрос → `ILIKE` + token-OR по `ArticleIndexTranslate` (ядро `rus_search_core`); выдача расширяется через `ArticleLink`; уточняющие ярлыки по покрытиям перевода (`?f=`), не модель `Tag`.
-- Нет точных попаданий по карельскому → пересечение Левенштейна (≤2) и триграмм.
-- Пометы — отдельный маршрут `/tags/` (OR внутри типа пометы, AND между типами).
-- Staff (админка Dict): **Переводы** `/admin/dict/articleindextranslate/` — карточки по точному/`содержит`/`префикс` `rus_word`; **Отладка** `/admin/dict/article/search-debug/` — explain этапов русской выдачи. См. `docs/searching_upgrade.md` §0.2.
+- Карельский запрос → `ILIKE` по `ArticleIndexWord` (варианты заголовка); нет точных → Левенштейн (≤2) ∩ триграммы; фильтры `?t=` / `?ph=`.
+- Русский запрос → `ILIKE` по `rus_word` + **lemma-OR** по `rus_lemmas` (`rus_search_core`, pymorphy3); multi-word без стопов; expand через `ArticleLink` (см.+от); `?f=exact|all|ключ`. Эталон: `docs/searching_upgrade.md`.
+- Пометы — `/tags/` (OR внутри типа, AND между типами).
+- Staff: **Переводы** + **Отладка** русского поиска — `searching_upgrade.md` §0.2.
 
-Поиск по смысловому полю / keywords **внутри** `/search/` **не реализован**. Спека AI-поиска: `docs/ai-search.md`.
+Keywords **не** подмешиваются в классический `/search/` (P4 снят). AI-поиск: `docs/ai-search.md`.
 
 Отдельный просмотр поля: `/ontology/`, `/ontology/<id>/` (`search_by_semantic_field`). К размеченным статьям на лету добавляются неотмеченные отсылки «см. X» (входящий `ArticleLink`). Сортировка как у остальной выдачи (`sort_and_paginate`). Тесты: `dict/tests/test_ontology_view.py`. Админка: поля на статье и справочник — read-only. `/ontology/` **не** фильтрует по `from_translation`.
 

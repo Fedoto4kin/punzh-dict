@@ -1,7 +1,7 @@
 # План: стоп-токены в многословном русском поиске (вариант A)
 
-Статус: **сделано** (лексический `/search/`, не AI).  
-Связь: `docs/backlog-search.md` §P1-stop, `docs/plans/INDEX.md`.
+Статус: **сделано** (лексический `/search/`, не AI; на prod 2026-11).  
+Связь: `docs/backlog-search.md`, `docs/searching_upgrade.md` §0, `docs/plans/INDEX.md`.
 
 ## Проблема
 

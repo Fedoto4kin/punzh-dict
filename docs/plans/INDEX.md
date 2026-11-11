@@ -56,11 +56,15 @@
 - KRL `/search/`: фильтры по пометам `?t=` / `?ph=` — `plans/krl-search-tag-filters.md`.
 - Массовая пометка `from_translation` на prod (`pick_translation_fields` + `load_translation_fields`) — `backlog.md` §4.
 - Очистка переводов LLM + `--write` на prod, канон **е** в индексе (`translation_cleanup.md`).
-- Русский поиск: ILIKE + **токенный OR** (не FTS `russian`), ё→е, `expand_by_links` только **см.+от**.
-- Русский UX: дефолт `?f=exact`, `?f=all`, сужающие теги; чипы «Точные результаты» / «Расширенный поиск»; `wide_equals_exact` гасит лишний «Расширенный»; «Уточнить запрос» вне exact (и на exact при совпадении wide=exact). Пустой `/search/` + главная: `partials/search_help.html`; KRL `.`/`?` — tooltip у `(i)` в `searchForm.html`.
-- «Связанные запросы», prio «быть», эталон «корова»/1717 (тесты; key без скобок, `?f=` AND).
-- `kind` на `ArticleLink`, инвентаризация, автосоздание однозначных `deriv`, админка kind — `backlog.md` §1.
-- Админка: браузер **Переводы** (карточки по `rus_word`) + **Отладка** русского поиска (`rus_search_core`) — `docs/searching_upgrade.md` §0.2.
-- **P3 леммы (2026-11):** pymorphy3, `ArticleIndexTranslate.rus_lemmas`, token-OR по overlap; one-letter fuzzy снят; `?f=exact` по поверхности — `plans/search-rus-lemmas.md`.
+- Русский поиск: ILIKE + **lemma-OR** по `rus_lemmas` (не FTS), ё→е,
+  `expand_by_links` только **см.+от**; multi-word без стопов 1a∪1b∪1c.
+- Русский UX: дефолт `?f=exact`, `?f=all`, сужающие теги; чипы «Точные» /
+  «Расширенный»; `wide_equals_exact`; help partial + KRL tooltip — см.
+  `searching_upgrade.md` §0 / §4.
+- «Связанные запросы», prio «быть», эталон «корова»/1717.
+- Админка: **Переводы** + **Отладка** (`rus_search_core`) —
+  `searching_upgrade.md` §0.2.
+- **P1 стопы** + **P3 леммы** (2026-11); **P4 keywords в `/search/`** снят.
+- `kind` на `ArticleLink` — `backlog.md` §1.
 
 Подробно: `docs/searching_upgrade.md`, `docs/backlog-search.md`.

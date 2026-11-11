@@ -73,7 +73,7 @@ LLM-очистка на prod (`clean_translations --write`), регрессия 
 
 - Runbook: **`docs/translation_cleanup.md`**
 - Контракт UX после cleanup: **`docs/searching_upgrade.md`** §0.1
-- Опционально дальше: стеммер, fuzzy — **`docs/backlog-search.md`** (низкий приоритет)
+- Лексический RU `/search/`: основные пункты закрыты / сняты — **`docs/backlog-search.md`**
 
 ---
 

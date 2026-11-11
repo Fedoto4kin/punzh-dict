@@ -8,8 +8,9 @@ import re
 
 TOKEN_RE = re.compile(r"[а-яё\-]+", re.IGNORECASE)
 
-# Stop-words for the narrowing split (SPEC v2 §5): corpus buckets 1a (len<=2)
-# and 1b (dictionary abbreviations ending in -л). Static list.
+# Stop-words: narrowing KEY (split_by_coverage) and multi-word token-OR seed.
+# Buckets: 1a short function words; 1b dictionary abbreviations ending in -л;
+# 1c longer function words from corpus DF audit.
 STOP_1A = {
     "в",
     "с",
@@ -80,9 +81,9 @@ STOP_1C = {
 }
 STOPWORDS = STOP_1A | STOP_1B | STOP_1C
 
-# Short-prefix fuzzy token match (backlog P3 surrogate): «корова» → «корове».
+# Legacy one-letter fuzzy (pre-P3). Not used by rus token-OR anymore; kept for
+# any remaining callers/tests. Prefer rus_lemmas / lemma_token.
 FUZZY_TOKEN_MIN_LEN = 5
-# One inflection letter (корова/корове); not derivational siblings (понизу/понизить).
 _FUZZY_SUFFIX = r"[а-яё]"
 
 # Token boundary for rus_word: same alphabet as TOKEN_RE ([а-яё\-] tokens).

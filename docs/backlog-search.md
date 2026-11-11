@@ -27,16 +27,24 @@
 
 ---
 
-## СТАТУС на 2026-08-30
+## СТАТУС на 2026-11
 
-**Baseline лексического поиска готов** — ветка не блокирует AI-поиск (`docs/ai-search.md`).
+**Лексический RU `/search/` закрыт по основным приоритетам** (на prod).
+Ветка не блокирует AI-поиск (`docs/ai-search.md`). Эталон поведения:
+`docs/searching_upgrade.md` §0 / §0.1.
 
-Реализовано (2026-08): теги `?f=`, exact, **токенный OR** (не FTS), расширение **см.+от**,
-**связанные запросы**, prio «быть», эталон корova/1717, канон е, UX-теги.
-Тесты: `test_split_by_coverage`, `test_search_filter`, `test_find_related_queries`,
-`test_search_korova`, `test_search_token_regression`.
+| Слой | Состояние |
+|------|-----------|
+| Baseline (exact / `?f=` / см.+от / related / ё→е) | ✓ 2026-08 |
+| P1 стоп-токены в multi-word OR | ✓ |
+| P3 леммы (`rus_lemmas`, pymorphy3) | ✓ |
+| P2 русский trigram | ✗ вне скоупа |
+| P4 keywords в `/search/` | ✗ гипотеза не подтвердилась |
+| Мелочи UX тегов | опциональный техдолг (§ниже) |
 
-Эталон: `docs/searching_upgrade.md` §0.1.
+Код: пакет `app/dict/search/` (`rus.py`), примитивы `helpers/rus_tokens.py` +
+`rus_morph.py`. Тесты: `test_search_*`, `test_rus_morph`,
+`test_search_query_stopwords`, `test_split_by_coverage`, …
 
 ---
 

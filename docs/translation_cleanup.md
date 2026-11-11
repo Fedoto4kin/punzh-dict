@@ -10,7 +10,7 @@ Handoff для агента: LLM-очистка `ArticleIndexTranslate.rus_word`
 | Промпт + sanitize | `app/agents/translation_cleanup.py` | готово |
 | Dry-run / write | `app/agents/clean_translations.py` | готово |
 | Запись | `app/dict/translation_index_write.py` | готово |
-| Exact-поиск | `find_exact_match_ids` в `app/dict/search.py` | готово |
+| Exact-поиск | `find_exact_match_ids` в `app/dict/search/rus.py` | готово |
 | Service-word post-filter | `_keep_service_word_phrase` | упрощено, `9b92ba6` |
 | Боевой dry-run + `--from-json` | prod | **готово** (2026-08) |
 

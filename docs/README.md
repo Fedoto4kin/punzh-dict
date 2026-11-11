@@ -9,12 +9,12 @@
 | Файл | О чём |
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
-| [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup |
-| [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | Стоп-токены в token-OR (вариант A) |
-| [plans/search-rus-lemmas.md](plans/search-rus-lemmas.md) | P3 леммы RU-поиска (pymorphy3, `rus_lemmas`) — сделано |
-| [plans/search-module-split.md](plans/search-module-split.md) | Распил `search.py` (rus / krl / ontology) — бэклог, высокий риск |
+| [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup (план) |
+| [plans/search-rus-lemmas.md](plans/search-rus-lemmas.md) | P3 леммы RU-поиска — сделано |
+| [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | P1 стоп-токены в token-OR — сделано |
+| [plans/search-module-split.md](plans/search-module-split.md) | Распил `search.py` → пакет — сделано (R1) |
 | [../backlog.md](../backlog.md) | Продукт: связи «от», пометы; `from_translation` и очистка переводов закрыты |
-| [backlog-search.md](backlog-search.md) | Лексический `/search/` (не семантика) |
+| [backlog-search.md](backlog-search.md) | Лексический RU `/search/`: основные P закрыты; P4 keywords снят |
 
 ## Спеки и UX
 
@@ -36,7 +36,7 @@
 
 | Файл | О чём |
 |------|--------|
-| [searching_upgrade.md](searching_upgrade.md) | Реализованные подсказки русского поиска, эталон «быстро»; staff: Переводы + Отладка (§0.2) |
+| [searching_upgrade.md](searching_upgrade.md) | Спека RU-поиска как в коде (леммы, стопы, `?f=`, UX); staff §0.2 |
 | [method-onthlogy-markup.md](method-onthlogy-markup.md) | Как строили онтологию и разметку |
 | [method-ai-search-retrieval.md](method-ai-search-retrieval.md) | Retrieval AI-поиска: схемы, эталоны, **журнал отказов** |
 

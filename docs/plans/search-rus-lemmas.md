@@ -1,7 +1,7 @@
 # План: леммы в русском поиске (P3)
 
-Статус: **сделано** (лексический `/search/`, не AI).  
-Связь: `docs/backlog-search.md` §P3, `docs/searching_upgrade.md` §0 / §0.1,
+Статус: **сделано** (лексический `/search/`, не AI; на prod 2026-11).  
+Связь: `docs/backlog-search.md`, `docs/searching_upgrade.md` §0 / §0.1,
 `docs/plans/INDEX.md`.
 
 ## Проблема
