@@ -80,12 +80,12 @@
 {% if has_direct %}
 <p class="mb-2 search-refine">
     <a href="/search/{{ query|urlencode }}/1?f=exact"
-       class="btn btn-sm m-1 {% if active_f == 'exact' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Точные результаты</a>
+       class="btn btn-sm m-1 {% if active_f == 'exact' %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Точный смысл</a>
     {% if wide_equals_exact %}
-    <span class="btn btn-sm m-1 btn-outline-info disabled" aria-disabled="true" title="Совпадает с точными результатами">Расширенный поиск</span>
+    <span class="btn btn-sm m-1 btn-outline-info disabled" aria-disabled="true" title="Совпадает с точным смыслом">С оттенками и сочетаниями</span>
     {% else %}
     <a href="/search/{{ query|urlencode }}/1?f=all"
-       class="btn btn-sm m-1 {% if refine_clickable %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">Расширенный поиск</a>
+       class="btn btn-sm m-1 {% if refine_clickable %}btn-info active border-dark{% else %}btn-outline-info{% endif %}">С оттенками и сочетаниями</a>
     {% endif %}
 </p>
 {% endif %}

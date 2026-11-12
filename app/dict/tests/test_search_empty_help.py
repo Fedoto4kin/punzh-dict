@@ -13,8 +13,8 @@ class SearchEmptyHelpTestCase(TestCase):
         html = response.content.decode("utf-8")
         self.assertIn('id="search-help"', html)
         self.assertIn("Как работает поиск", html)
-        self.assertIn("Точные результаты", html)
-        self.assertIn("Расширенный поиск", html)
+        self.assertIn("Точный смысл", html)
+        self.assertIn("С оттенками и сочетаниями", html)
         # Karelian wildcards called out in the help.
         self.assertIn("<b>.</b>", html)
         self.assertIn("<b>?</b>", html)
@@ -34,5 +34,7 @@ class SearchEmptyHelpTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode("utf-8")
         self.assertIn('id="search-help"', html)
-        self.assertIn("Словоформы (падежи, спряжения) обычно находятся через леммы", html)
+        self.assertIn(
+            "Словоформы (падежи, спряжения) обычно находятся через леммы", html
+        )
         self.assertNotIn("словоформы пока не распознаются", html)

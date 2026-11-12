@@ -54,12 +54,12 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["active_f"], "exact")
         self.assertFalse(response.context["refine_clickable"])
-        self.assertContains(response, "Точные результаты")
-        self.assertContains(response, "Расширенный поиск")
+        self.assertContains(response, "Точный смысл")
+        self.assertContains(response, "С оттенками и сочетаниями")
         self.assertNotContains(response, "Уточнить запрос")
         self.assertRegex(
             response.content.decode(),
-            r'href="/search/[^"]+\?f=all"[^>]*btn-outline-info[^>]*>Расширенный поиск',
+            r'href="/search/[^"]+\?f=all"[^>]*btn-outline-info[^>]*>С оттенками и сочетаниями',
         )
 
     def test_tag_mode_keeps_extended_chip_active(self):
@@ -70,7 +70,7 @@ class RusSearchModesViewTestCase(TestCase):
         html = response.content.decode()
         self.assertRegex(
             html,
-            r'href="/search/[^"]+\?f=all"[^>]*\bactive\b[^>]*>Расширенный поиск',
+            r'href="/search/[^"]+\?f=all"[^>]*\bactive\b[^>]*>С оттенками и сочетаниями',
         )
         self.assertContains(response, "Уточнить запрос")
         # Tag selected → refine box collapsed (no Bootstrap "show").
@@ -86,7 +86,7 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertEqual(followed.status_code, 200)
         self.assertEqual(followed.context["active_f"], "all")
         self.assertFalse(followed.context["has_direct"])
-        self.assertNotContains(followed, "Точные результаты")
+        self.assertNotContains(followed, "Точный смысл")
 
     def test_wide_equals_exact_disables_extended_chip(self):
         # Only an exact translation — wide listing cannot grow past exact.
@@ -97,7 +97,7 @@ class RusSearchModesViewTestCase(TestCase):
         self.assertTrue(response.context["wide_equals_exact"])
         html = response.content.decode()
         self.assertIn("aria-disabled", html)
-        self.assertIn("Расширенный поиск", html)
+        self.assertIn("С оттенками и сочетаниями", html)
         self.assertNotIn("?f=all", html)
 
     def test_wide_equals_exact_redirects_all_to_exact(self):
