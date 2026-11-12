@@ -113,3 +113,26 @@ class TagSearchTestCase(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(3, response.context["found_count"])
         self.assertContains(response, "<b>3</b> слова")
+
+    def test_empty_tags_page_has_no_collapse_toggle(self):
+        response = Client().get("/tags/")
+        self.assertEqual(200, response.status_code)
+        html = response.content.decode()
+        self.assertIn("Служебные отметки", html)
+        self.assertNotIn(
+            'data-toggle="collapse"',
+            html.split('id="headingOne"')[1].split('id="collapseOne"')[0],
+        )
+        self.assertNotIn(
+            "свернуть", html.split('id="headingOne"')[1].split('id="collapseOne"')[0]
+        )
+        self.assertNotIn('class="collapse"', html.split('id="collapseOne"')[1][:80])
+
+    def test_selected_tags_page_keeps_collapse_toggle(self):
+        response = Client().get("/tags/%s" % self.l1.id)
+        self.assertEqual(200, response.status_code)
+        html = response.content.decode()
+        header = html.split('id="headingOne"')[1].split('id="collapseOne"')[0]
+        self.assertIn('data-toggle="collapse"', header)
+        self.assertIn("развернуть", header)
+        self.assertIn('class="collapse"', html)
