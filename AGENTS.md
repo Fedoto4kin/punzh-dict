@@ -13,8 +13,9 @@
 | Онтология `/ontology/` | semantic-модели, views | поля/keywords; **не** фильтровать по `from_translation` |
 | Рантайм-AI | `app/dict/ai/` | шлюз Timeweb; `/ai-search/` + `manage.py ai_query` |
 | Оффлайн LLM | `app/agents/` | пакет → JSON; в БД — management-команды (исключение: `clean_translations --write`) |
+| Офлайн mobile | sibling `../punzh-dict-mobile` | Flutter-клиент; контракт пакета — `docs/plans/mobile-pack-contract.md` |
 
-Подробнее: `app/agents/AGENTS.md`, `app/dict/ai/README.md`.
+Подробнее: `app/agents/AGENTS.md`, `app/dict/ai/README.md`; mobile — `../punzh-dict-mobile/AGENTS.md`.
 
 `research/` — результаты исследовательских проектов на материале словаря (один каталог на проект). Не спеки и не очередь разработки: это `docs/`. Примеры: `research/studia-nordica/` (статья о классификации), `research/classification-verification/` (верификация LLM-разметки).
 

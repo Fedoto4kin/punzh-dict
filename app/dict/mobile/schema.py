@@ -9,7 +9,7 @@ MIN_APP = "0.1.0"
 DB_FILENAME = "dict.sqlite"
 MANIFEST_FILENAME = "manifest.json"
 
-# DDL applied in order. Keep in sync with docs/plans/mobile-offline.md.
+# DDL applied in order. Canonical docs: docs/plans/mobile-pack-contract.md.
 DDL_STATEMENTS = (
     """
     CREATE TABLE meta (

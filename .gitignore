@@ -24,4 +24,9 @@ app/adjectives_by_field.md
 
 db
 backups/
+
+# Offline mobile package snapshots (full dict — do not commit)
+mobile/assets/dict.sqlite
+mobile/assets/dict.sqlite.gz
+*.sqlite.gz
 mobile-pack/

@@ -10,6 +10,9 @@
 |------|--------|
 | [plans/INDEX.md](plans/INDEX.md) | Приоритеты, не смешивать ветки |
 | [plans/translation_index_audit.md](plans/translation_index_audit.md) | Аудит `rus_word` после LLM-cleanup (план) |
+| [plans/mobile-offline.md](plans/mobile-offline.md) | Офлайн mobile: бэклог P0–P8; клиент в `punzh-dict-mobile` |
+| [plans/mobile-pack-contract.md](plans/mobile-pack-contract.md) | Канон offline-пакета (`dict.sqlite` + manifest) |
+| [`../punzh-dict-mobile/docs/DICTIONARY.md`](../punzh-dict-mobile/docs/DICTIONARY.md) | Семантика словаря (app-repo) |
 | [plans/search-rus-lemmas.md](plans/search-rus-lemmas.md) | P3 леммы RU-поиска — сделано |
 | [plans/search-query-stopwords.md](plans/search-query-stopwords.md) | P1 стоп-токены в token-OR — сделано |
 | [plans/search-module-split.md](plans/search-module-split.md) | Распил `search.py` → пакет — сделано (R1) |
