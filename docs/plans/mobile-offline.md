@@ -126,7 +126,7 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 
 ## Бэклог развития (ближайшее)
 
-Приоритеты зафиксированы (P0 → P8). Клиент вынесен в `punzh-dict-mobile`. **Следующее:** P7 (рефактор + полный регресс), затем P8 (магазины / APK на сайте).
+Приоритеты зафиксированы (P0 → P8). Клиент вынесен в `punzh-dict-mobile`. **Следующее:** **P8** (магазины / APK на сайте). P7: ручной регресс ✓ + точечный KISS/DRY hygiene ✓; крупный split Home — в «не боли» ниже.
 Инкременты / наблюдатель моделей — не в P2; полный пакет раз в неделю (`scripts/publish_mobile_pack.sh` + cron на prod).
 
 | Pri | Что | Заметка |
@@ -135,11 +135,26 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 | **P1** | ~~**Меню-оболочка**~~ | Сделано: Drawer — «Как искать» / «О словаре» / «О приложении» (in-pane), обновление БД, логотип + КарНЦ РАН (без ссылки) |
 | **P2** | ~~**Update path** (полный пакет)~~ | Сделано и на prod: `…/mobile-pack/` + `DbUpdater` + UI в меню; seed = fallback; weekly cron. Далее — вынос приложения (см. ниже) |
 | **P3** | ~~**Поиск: навигация по выдаче**~~ | Сделано: при большой выдаче — тот же n-gram scrubber / окна страниц, что у буквенного указателя |
-| **P4** | ~~**Закладки**~~ | Сделано: `bookmarks.json` вне пакета; звезда на карточке; список в drawer (свайп удаляет); переживают update БД |
+| **P4** | ~~**Закладки**~~ | Сделано: `bookmarks.json` вне пакета; звезда на карточке; список в drawer (свайп удаляет); переживают update БД; лимит 100 |
 | **P5** | ~~**Фильтры по пометам**~~ | Сделано: после KRL-поиска; фасеты из выдачи; radio/AND/ph; неприменимые чипы disabled; не для алфавитного указателя |
 | **P6** | ~~**Fuzzy KRL**~~ | Сделано: при пустой KRL-выдаче — «Возможно вы искали» (Levenshtein ≤ 2 по `words`, без триграмм); чипы перезапускают поиск |
-| **P7** | **Рефакторинг + полный регресс** | **Обязательно перед дропом в магазины.** Причесать код после MVP-инкрементов; прогон `flutter test` / `analyze` + ручной чеклист (указатель, KRL/RU поиск + шаблоны, пометы, закладки, см./от, update path, «Как искать») |
-| **P8** | **Релизный контур** | Seed/CI/release-APK; раздача — сайт + магазины. Клиент уже в `punzh-dict-mobile`. В punzh — контракт/экспорт ([`mobile-pack-contract.md`](mobile-pack-contract.md)) + одна APK на сайте. Версии — app-repo `AGENTS.md`. После P7 |
+| **P7** | ~~**Рефакторинг + полный регресс**~~ | Ручной чеклист ✓ ([`MANUAL-REGRESSION.md`](../../punzh-dict-mobile/docs/MANUAL-REGRESSION.md)); hygiene ✓ (мёртвый `ArticleScreen`, shared fold/tags, mini-repo helper, MenuDrawer←session). Крупный split Home — см. «не боли» |
+| **P8** | **Релизный контур** | Seed/CI/release-APK; раздача — сайт + магазины. Клиент уже в `punzh-dict-mobile`. В punzh — контракт/экспорт ([`mobile-pack-contract.md`](mobile-pack-contract.md)) + одна APK на сайте. Версии — app-repo `AGENTS.md` |
+
+### P7+ — отложено («не боли», не блокирует P8)
+
+Из ревью KISS/DRY/SOLID (ноя 2026). Делать **по касанию фичи**, не hygiene ради SOLID.
+
+| Когда | Что | Не делать «просто так» |
+|-------|-----|-------------------------|
+| Следующая крупная UX-правка Home | Вынести letter window / n-gram rail из `_HomeScreenState` в обычный контроллер (без BLoC/Riverpod) | Полный rewrite Home «для красоты» |
+| Новая ось поиска / фильтров (напр. RU+tags) | Тогда же — узкий split search-методов repo или общий `run(query, filters)`; **не** Strategy/SearchBackend заранее | Паттерн Strategy для KRL/RU «на вырост» |
+| Второй backend или тяжёлый widget-тест Home | Abstract `IDictionaryRepository` / DI | Интерфейсы над одним sqlite |
+| Рост SQL/поиска в одном файле + реальная новая ось | Sibling-классы / private helpers вокруг `DictionaryRepository` | Преждевременная нарезка «толстого» repo |
+| Касание drawer/update UI | Вынести `_UpdateDbPane` в отдельный файл | — |
+| Второй UI-потребитель preview | `formatPreview` рядом с `article_format` | Перенос `previewLine` без нужды |
+
+**Сознательно раздельно:** `orthography` ≠ `prepareKrlIlikeQuery` (разные порты Django); sheet ≠ route для статьи.
 
 ### P1 — меню приложения ✓
 
