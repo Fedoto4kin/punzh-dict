@@ -43,4 +43,5 @@ class ClassificationSurveyResponse(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.respondent_key[:8]}… → {self.article_id} ({self.decision})"
+        word = getattr(self.article, "word", None) or self.article_id
+        return f"{word} ({self.decision})"
