@@ -29,7 +29,6 @@ class ClassificationSurveyResponseAdm(admin.ModelAdmin):
         "fields_preview",
         "created_at",
     )
-    list_filter = ("decision", "created_at")
     search_fields = ("article__word",)
     fields = (
         "article_preview",
@@ -62,17 +61,14 @@ class ClassificationSurveyResponseAdm(admin.ModelAdmin):
         if not obj or not obj.article_id:
             return "—"
         art = obj.article
-        word = (art.word_normalized or art.word or "").strip() or f"#{art.pk}"
         html = art.article_html or ""
         if html:
             body = mark_safe(format_article_html(html))
         else:
             body = "—"
         return format_html(
-            '<p style="margin-top:0"><b>{}</b>'
-            ' <span style="color:#666">(id {})</span></p>'
+            '<p style="margin-top:0;color:#666">id {}</p>'
             '<div class="article-html-preview">{}</div>',
-            word,
             art.pk,
             body,
         )
