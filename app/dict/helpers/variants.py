@@ -56,23 +56,37 @@ def expand_index_variants(variants):
     return out
 
 
+def krl_abc_chars() -> str:
+    """Interleaved upper+lower KRL alphabet (Ü folded to Y), as Article.get_krl_abc."""
+    abc = ""
+    for letter in KRL_ABC.replace("Ü", "Y"):
+        abc += letter + letter.lower()
+    return abc
+
+
+def krl_sort_ranks(word: str) -> list[int]:
+    """
+    Rank sequence for Karelian collation (website sorted_by_krl).
+    Used in-process as a Python sort key and encoded for SQLite ORDER BY.
+    """
+    abc = krl_abc_chars()
+    abc_set = set(abc)
+    prepared = normalization(
+        re.split(r"\s|,", (word or "").replace("i̮a", "ua"), maxsplit=1)[0]
+    ).lower()
+    return [abc.index(c) for c in prepared if c in abc_set]
+
+
+def krl_sort_key(word: str) -> str:
+    """
+    Opaque lexicographic key for SQLite ORDER BY.
+    Zero-padded ranks so string order matches krl_sort_ranks.
+    """
+    return "".join(f"{rank:02d}" for rank in krl_sort_ranks(word))
+
+
 def sorted_by_krl(article, field="word"):
-
-    def prepare_word(word):
-        return normalization(
-            re.split(r"\s|,", word.replace("i̮a", "ua"), maxsplit=1)[0]
-        ).lower()
-
-    return [
-        article.get_krl_abc().index(c)
-        for c in "".join(
-            [
-                c
-                for c in prepare_word(getattr(article, field))
-                if c in set(article.get_krl_abc())
-            ]
-        )
-    ]
+    return krl_sort_ranks(getattr(article, field))
 
 
 def r_gen_word_variants(word, _word) -> ():
