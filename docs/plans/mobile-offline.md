@@ -139,7 +139,7 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 | **P5** | ~~**Фильтры по пометам**~~ | Сделано: после KRL-поиска; фасеты из выдачи; radio/AND/ph; неприменимые чипы disabled; не для алфавитного указателя |
 | **P6** | ~~**Fuzzy KRL**~~ | Сделано: при пустой KRL-выдаче — «Возможно вы искали» (Levenshtein ≤ 2 по `words`, без триграмм); чипы перезапускают поиск |
 | **P7** | ~~**Рефакторинг + полный регресс**~~ | Ручной чеклист ✓ ([`MANUAL-REGRESSION.md`](../../punzh-dict-mobile/docs/MANUAL-REGRESSION.md)); hygiene ✓ (мёртвый `ArticleScreen`, shared fold/tags, mini-repo helper, MenuDrawer←session). Крупный split Home — см. «не боли» |
-| **P8** | **Релизный контур** | Seed/CI/release-APK; раздача — сайт + магазины. Клиент уже в `punzh-dict-mobile`. В punzh — контракт/экспорт ([`mobile-pack-contract.md`](mobile-pack-contract.md)) + одна APK на сайте. Версии — app-repo `AGENTS.md` |
+| **P8** | **Релизный контур (пилот)** | **В работе.** Порядок: **RuStore → Huawei AppGallery**; сайт («скачать APK») позже; Play — по готовности. `main` = upload keystore; `dev` = debug/USB. Клиент — `punzh-dict-mobile` (`AGENTS.md`). Контракт/экспорт — [`mobile-pack-contract.md`](mobile-pack-contract.md) |
 
 ### P7+ — отложено («не боли», не блокирует P8)
 
