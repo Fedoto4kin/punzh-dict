@@ -14,6 +14,7 @@
 | Рантайм-AI | `app/dict/ai/` | шлюз Timeweb; `/ai-search/` + `manage.py ai_query` |
 | Оффлайн LLM | `app/agents/` | пакет → JSON; в БД — management-команды (исключение: `clean_translations --write`) |
 | Офлайн mobile | sibling `../punzh-dict-mobile` | Flutter-клиент; контракт пакета — `docs/plans/mobile-pack-contract.md` |
+| APK для сайта | prod `~/punzh-dict/mobile-pack/punzh-dict-latest.apk` | После **release** в mobile: `scp` с karielan-hub (не в git). URL `/mobile-pack/punzh-dict-latest.apk`. Скрипт: `../punzh-dict-mobile/scripts/publish_downloads.sh` |
 
 Подробнее: `app/agents/AGENTS.md`, `app/dict/ai/README.md`; mobile — `../punzh-dict-mobile/AGENTS.md`.
 
