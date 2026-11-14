@@ -30,3 +30,6 @@ mobile/assets/dict.sqlite
 mobile/assets/dict.sqlite.gz
 *.sqlite.gz
 mobile-pack/
+
+# Direct-download APK (+ manifest); publish via scripts/publish_apk.sh
+app/downloads/

@@ -1,0 +1,77 @@
+{% if mobile_app_banner %}
+{# Android-only soft promo: RuStore and/or direct APK. Dismissed per version. #}
+<div id="androidAppBanner" class="android-app-banner d-none" role="region"
+     aria-label="Мобильное приложение"
+     data-dismiss-key="punzh-android-app-banner-{{ mobile_app_version|default:'1' }}">
+  <div class="android-app-banner__inner">
+    <div class="android-app-banner__text">
+      <strong>Офлайн-словарь для Android</strong>
+      {% if mobile_app_version %}
+      <span class="text-muted">· {{ mobile_app_version }}</span>
+      {% endif %}
+      <span class="d-block small text-muted mt-1">
+        Работает без интернета. Установка из файла — через «Неизвестные источники».
+      </span>
+    </div>
+    <div class="android-app-banner__actions">
+      {% if mobile_app_rustore_url %}
+      <a class="btn btn-sm btn-primary mb-1"
+         href="{{ mobile_app_rustore_url }}"
+         rel="noopener"
+         target="_blank">RuStore</a>
+      {% endif %}
+      <a class="btn btn-sm btn-outline-primary mb-1"
+         href="{{ mobile_app_apk_url }}"
+         download="punzh-dict.apk">Скачать APK</a>
+      <button type="button" class="btn btn-sm btn-link text-muted mb-1"
+              id="androidAppBannerDismiss" aria-label="Скрыть">Позже</button>
+    </div>
+  </div>
+</div>
+<style>
+  .android-app-banner {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: #e8f4fc;
+    border-bottom: 1px solid #b6d4e8;
+    font-size: 0.95rem;
+  }
+  .android-app-banner__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0.65rem 1rem;
+  }
+  .android-app-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+</style>
+<script>
+(function () {
+  var el = document.getElementById("androidAppBanner");
+  if (!el) return;
+  var key = el.getAttribute("data-dismiss-key") || "punzh-android-app-banner";
+  try {
+    if (window.localStorage && localStorage.getItem(key) === "1") return;
+  } catch (e) {}
+  el.classList.remove("d-none");
+  var btn = document.getElementById("androidAppBannerDismiss");
+  if (btn) {
+    btn.addEventListener("click", function () {
+      el.classList.add("d-none");
+      try {
+        if (window.localStorage) localStorage.setItem(key, "1");
+      } catch (e) {}
+    });
+  }
+})();
+</script>
+{% endif %}

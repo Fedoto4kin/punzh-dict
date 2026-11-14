@@ -69,6 +69,17 @@ AI_SEARCH_FEEDBACK = env.bool("AI_SEARCH_FEEDBACK", default=True)
 # Visitor thematic-classification survey (control channel; not expert gold).
 CLASSIFICATION_SURVEY = env.bool("CLASSIFICATION_SURVEY", default=DEBUG)
 
+# Android app promo banner (UA Android + published APK under DOWNLOADS_ROOT).
+MOBILE_APP_PROMOTE = env.bool("MOBILE_APP_PROMOTE", default=True)
+MOBILE_APP_APK_URL = env("MOBILE_APP_APK_URL", default="/downloads/punzh-dict.apk")
+# Set to "" in .env to hide the RuStore button (e.g. while listing is in review).
+MOBILE_APP_RUSTORE_URL = env(
+    "MOBILE_APP_RUSTORE_URL",
+    default="https://www.rustore.ru/catalog/app/host.punzh.punzh_dict",
+)
+# Under ./app so the Docker bind-mount ./app:/app sees published APKs.
+DOWNLOADS_ROOT = Path(env("DOWNLOADS_ROOT", default=str(BASE_DIR / "downloads")))
+
 # Application definition
 INSTALLED_APPS = [
     "bootstrap4",
@@ -110,6 +121,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "dict.context_processors.classification_survey",
+                "dict.context_processors.mobile_app",
             ],
         },
     },

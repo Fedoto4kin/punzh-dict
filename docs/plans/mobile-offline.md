@@ -139,7 +139,7 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 | **P5** | ~~**Фильтры по пометам**~~ | Сделано: после KRL-поиска; фасеты из выдачи; radio/AND/ph; неприменимые чипы disabled; не для алфавитного указателя |
 | **P6** | ~~**Fuzzy KRL**~~ | Сделано: при пустой KRL-выдаче — «Возможно вы искали» (Levenshtein ≤ 2 по `words`, без триграмм); чипы перезапускают поиск |
 | **P7** | ~~**Рефакторинг + полный регресс**~~ | Ручной чеклист ✓ ([`MANUAL-REGRESSION.md`](../../punzh-dict-mobile/docs/MANUAL-REGRESSION.md)); hygiene ✓ (мёртвый `ArticleScreen`, shared fold/tags, mini-repo helper, MenuDrawer←session). Крупный split Home — см. «не боли» |
-| **P8** | **Релизный контур (пилот)** | **В работе.** Порядок: **RuStore → Huawei → ссылки на сайте → Play.** RuStore: на модерации (сборка пилота). Huawei: кит `store/huawei/`, AGC ещё не сдан. Сайт: APK на прод как `…/mobile-pack/punzh-dict-latest.apk` ✓ (`publish_downloads.sh`); ссылки с главной — позже (punzh-dict). Клиент `1.0.3+23`: upload на `main`, debug на `dev`. Контракт — [`mobile-pack-contract.md`](mobile-pack-contract.md) |
+| **P8** | **Релизный контур (пилот)** | **В работе.** Порядок: **RuStore → Huawei → ссылки на сайте → Play.** RuStore: на модерации. Huawei: кит `store/huawei/`. Сайт: APK на прод `…/mobile-pack/punzh-dict-latest.apk` ✓ (`publish_downloads.sh`); баннер для Android UA — эта ветка. Клиент `1.0.3+23`. Контракт — [`mobile-pack-contract.md`](mobile-pack-contract.md) |
 
 ### P7+ — отложено («не боли», не блокирует P8)
 
