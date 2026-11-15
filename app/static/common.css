@@ -80,3 +80,106 @@ footer {
         padding-top: 2rem;
     }
 }
+
+
+/* Below lg: brand + toggler on first row; open menu wraps below (do NOT nowrap). */
+@media (max-width: 991.98px) {
+    .navbar.navbar-expand-lg > .container {
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .navbar-toggler {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+    .navbar-brand {
+        min-width: 0;
+        max-width: calc(100% - 3.5rem);
+        overflow: hidden;
+    }
+    /* Collapse must take full row under brand/toggler when open */
+    #mainNav.navbar-collapse {
+        flex-basis: 100%;
+        width: 100%;
+    }
+    .navbar-brand .site-title.site-title--fit {
+        display: inline !important;
+        white-space: nowrap;
+    }
+}
+
+/* Main nav: pin groups to the right of the bar on desktop */
+@media (min-width: 992px) {
+    .navbar.navbar-expand-lg > .container {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+    #mainNav.navbar-collapse {
+        margin-left: auto;
+        flex-grow: 0;
+        flex-basis: auto;
+    }
+}
+
+/* Main nav: dark dropdown matching navbar-dark (#333) */
+#mainNav .dropdown-menu {
+    background-color: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#mainNav .dropdown-item {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+#mainNav .dropdown-item:hover,
+#mainNav .dropdown-item:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+#mainNav .dropdown-item.active,
+#mainNav .dropdown-item:active {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+#mainNav .nav-item.active > .nav-link {
+    color: #fff;
+}
+
+@media (max-width: 991.98px) {
+    #mainNav .navbar-nav {
+        width: 100%;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+    #mainNav .nav-item {
+        width: 100%;
+    }
+    #mainNav .dropdown-menu {
+        position: static;
+        float: none;
+        width: 100%;
+        margin-top: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+    #mainNav .dropdown-item {
+        color: rgba(255, 255, 255, 0.85);
+        padding-left: 1.5rem;
+    }
+    #mainNav .dropdown-item:hover,
+    #mainNav .dropdown-item:focus {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    #mainNav .dropdown-item.active,
+    #mainNav .dropdown-item:active {
+        background-color: rgba(255, 255, 255, 0.18);
+        color: #fff;
+    }
+}
