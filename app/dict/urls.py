@@ -94,13 +94,3 @@ urlpatterns = [
     path("<letter>/", views.index, name="index"),
     path("<letter>/<int:page>", views.index, name="index"),
 ]
-
-# Local runserver: nginx /downloads/ is prod-only.
-if settings.DEBUG:
-    urlpatterns += [
-        path(
-            "downloads/<path:path>",
-            serve,
-            {"document_root": settings.DOWNLOADS_ROOT},
-        ),
-    ]

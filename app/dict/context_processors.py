@@ -1,7 +1,3 @@
-import json
-from functools import lru_cache
-from pathlib import Path
-
 from django.conf import settings
 
 
@@ -23,46 +19,33 @@ def _is_android_ua(user_agent: str) -> bool:
     return True
 
 
-@lru_cache(maxsize=4)
-def _load_apk_manifest(mtime_ns: int) -> dict | None:
-    del mtime_ns  # cache key only
-    root = Path(getattr(settings, "DOWNLOADS_ROOT", ""))
-    path = root / "manifest.json"
-    if not path.is_file():
-        return None
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    if not isinstance(data, dict):
-        return None
-    return data
-
-
-def _apk_manifest() -> dict | None:
-    root = Path(getattr(settings, "DOWNLOADS_ROOT", ""))
-    path = root / "manifest.json"
-    try:
-        mtime_ns = path.stat().st_mtime_ns
-    except OSError:
-        return None
-    return _load_apk_manifest(mtime_ns)
+def _is_home_page(request) -> bool:
+    """True only for `/` (not letter index `/a/`, search, etc.)."""
+    match = getattr(request, "resolver_match", None)
+    if match is None or match.url_name != "index":
+        return False
+    return not match.kwargs.get("letter")
 
 
 def mobile_app(request):
-    """Offer RuStore / APK only to Android browsers when a pack is published."""
+    """Soft promo for Android browsers on the home page only."""
     promote = bool(getattr(settings, "MOBILE_APP_PROMOTE", False))
-    manifest = _apk_manifest() if promote else None
     show = bool(
-        promote and manifest and _is_android_ua(request.META.get("HTTP_USER_AGENT", ""))
+        promote
+        and _is_home_page(request)
+        and _is_android_ua(request.META.get("HTTP_USER_AGENT", ""))
     )
     return {
         "mobile_app_banner": show,
         "mobile_app_apk_url": getattr(
-            settings, "MOBILE_APP_APK_URL", "/downloads/punzh-dict.apk"
+            settings,
+            "MOBILE_APP_APK_URL",
+            "/mobile-pack/punzh-dict-latest.apk",
         ),
         "mobile_app_rustore_url": (
             getattr(settings, "MOBILE_APP_RUSTORE_URL", "") or ""
         ).strip(),
-        "mobile_app_version": (manifest or {}).get("version") or "",
+        "mobile_app_version": (
+            getattr(settings, "MOBILE_APP_VERSION", "") or ""
+        ).strip(),
     }

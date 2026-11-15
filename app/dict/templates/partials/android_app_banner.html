@@ -1,11 +1,12 @@
 {% if mobile_app_banner %}
-{# Android-only soft promo: RuStore and/or direct APK. Dismissed per version. #}
-<div id="androidAppBanner" class="android-app-banner d-none" role="region"
-     aria-label="Мобильное приложение"
-     data-dismiss-key="punzh-android-app-banner-{{ mobile_app_version|default:'1' }}">
+{# Android-only soft promo on the home page. "Позже" hides until next visit. #}
+<div id="androidAppBanner" class="android-app-banner" role="region"
+     aria-label="Мобильное приложение">
   <div class="android-app-banner__inner">
     <div class="android-app-banner__text">
-      <strong>Офлайн-словарь для Android</strong>
+      <strong>Офлайн-словарь для Android
+        <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+      </strong>
       {% if mobile_app_version %}
       <span class="text-muted">· {{ mobile_app_version }}</span>
       {% endif %}
@@ -22,7 +23,9 @@
       {% endif %}
       <a class="btn btn-sm btn-outline-primary mb-1"
          href="{{ mobile_app_apk_url }}"
-         download="punzh-dict.apk">Скачать APK</a>
+         download="punzh-dict-latest.apk">
+        <i class="fas fa-download" aria-hidden="true"></i> Скачать APK
+      </a>
       <button type="button" class="btn btn-sm btn-link text-muted mb-1"
               id="androidAppBannerDismiss" aria-label="Скрыть">Позже</button>
     </div>
@@ -58,18 +61,10 @@
 (function () {
   var el = document.getElementById("androidAppBanner");
   if (!el) return;
-  var key = el.getAttribute("data-dismiss-key") || "punzh-android-app-banner";
-  try {
-    if (window.localStorage && localStorage.getItem(key) === "1") return;
-  } catch (e) {}
-  el.classList.remove("d-none");
   var btn = document.getElementById("androidAppBannerDismiss");
   if (btn) {
     btn.addEventListener("click", function () {
       el.classList.add("d-none");
-      try {
-        if (window.localStorage) localStorage.setItem(key, "1");
-      } catch (e) {}
     });
   }
 })();

@@ -69,16 +69,15 @@ AI_SEARCH_FEEDBACK = env.bool("AI_SEARCH_FEEDBACK", default=True)
 # Visitor thematic-classification survey (control channel; not expert gold).
 CLASSIFICATION_SURVEY = env.bool("CLASSIFICATION_SURVEY", default=DEBUG)
 
-# Android app promo banner (UA Android + published APK under DOWNLOADS_ROOT).
+# Soft Android promo banner (UA). APK lives on nginx /mobile-pack/ (not in git).
 MOBILE_APP_PROMOTE = env.bool("MOBILE_APP_PROMOTE", default=True)
-MOBILE_APP_APK_URL = env("MOBILE_APP_APK_URL", default="/downloads/punzh-dict.apk")
-# Set to "" in .env to hide the RuStore button (e.g. while listing is in review).
-MOBILE_APP_RUSTORE_URL = env(
-    "MOBILE_APP_RUSTORE_URL",
-    default="https://www.rustore.ru/catalog/app/host.punzh.punzh_dict",
+MOBILE_APP_APK_URL = env(
+    "MOBILE_APP_APK_URL", default="/mobile-pack/punzh-dict-latest.apk"
 )
-# Under ./app so the Docker bind-mount ./app:/app sees published APKs.
-DOWNLOADS_ROOT = Path(env("DOWNLOADS_ROOT", default=str(BASE_DIR / "downloads")))
+# Empty while RuStore listing is not public — banner shows APK only.
+MOBILE_APP_RUSTORE_URL = env("MOBILE_APP_RUSTORE_URL", default="")
+# Optional label for the banner / dismiss key (e.g. "1.0.3").
+MOBILE_APP_VERSION = env("MOBILE_APP_VERSION", default="")
 
 # Application definition
 INSTALLED_APPS = [

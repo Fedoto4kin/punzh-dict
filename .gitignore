@@ -31,5 +31,5 @@ mobile/assets/dict.sqlite.gz
 *.sqlite.gz
 mobile-pack/
 
-# Direct-download APK (+ manifest); publish via scripts/publish_apk.sh
+# Legacy local APK drop folder (publish goes to mobile-pack/ now)
 app/downloads/
