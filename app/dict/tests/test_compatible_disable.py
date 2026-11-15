@@ -13,6 +13,8 @@ from ..search import article_ids_by_tags, compatible_disable
 
 class CompatibleDisableTestCase(TestCase):
     def setUp(self):
+        # Data migrations may seed catalog Tags (e.g. анат.); isolate this fixture.
+        Tag.objects.all().delete()
         self.g1 = Tag.objects.create(tag="g1", name="Гео 1", type=1)
         self.g2 = Tag.objects.create(tag="g2", name="Гео 2", type=1)
         self.l1 = Tag.objects.create(tag="l1", name="Линг 1", type=2)

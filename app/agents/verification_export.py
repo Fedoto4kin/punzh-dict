@@ -76,6 +76,12 @@ STYLISTIC_TYPE3_TAGS = frozenset(
 # Draft mapping for phase-4 experiments (not gold).
 DEFAULT_SUBJECT_WHITELIST = [
     {
+        "tag": "анат.",
+        "name": "анатомия",
+        "fields": ["Человек и тело"],
+        "note": "Anatomical terms; rare in index",
+    },
+    {
         "tag": "бот.",
         "name": "ботаника",
         "fields": ["Земледелие и растения"],
@@ -198,9 +204,7 @@ def dump_snapshot(out_dir: Path, dump_name: str) -> dict:
             "semantic_fields": n_fields,
             "article_semantic_assignments": n_asg,
             "from_translation_true": n_from_tr,
-            "from_translation_share": (
-                round(n_from_tr / n_asg, 4) if n_asg else None
-            ),
+            "from_translation_share": (round(n_from_tr / n_asg, 4) if n_asg else None),
         },
         "fields": fields,
     }
@@ -251,9 +255,7 @@ def dump_tag_inventory(out_dir: Path) -> dict:
         ),
         "tags": rows,
         "type3_subject_candidates": [
-            r
-            for r in rows
-            if r["type"] == 3 and not r["is_stylistic_type3"]
+            r for r in rows if r["type"] == 3 and not r["is_stylistic_type3"]
         ],
     }
     write_json(out_path(out_dir, "subject-tags-inventory.json"), inventory)
@@ -546,9 +548,7 @@ def main() -> None:
     args = ap.parse_args()
     if args.all:
         args.snapshot = args.tags = args.pilot_sample = args.export_cards = True
-    if not any(
-        [args.snapshot, args.tags, args.pilot_sample, args.export_cards]
-    ):
+    if not any([args.snapshot, args.tags, args.pilot_sample, args.export_cards]):
         ap.error("pass --all or one of --snapshot/--tags/--pilot-sample/--export-cards")
 
     out = Path(args.out)

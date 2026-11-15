@@ -27,6 +27,7 @@ from dict.models import (
 
 # Tag.type 3+4 snapshot for SimpleTestCase (no DB). Keep in sync with prod Tag.
 _TEST_DICT_LABEL_TAGS = [
+    "анат.",
     "арх.",
     "бот.",
     "бранн.",
@@ -614,6 +615,8 @@ class TranslationCleanupPromptTestCase(TestCase):
         self.assertIn("dict_labels", payload)
 
     def test_build_cleanup_input_dict_labels_from_tag(self):
+        # Drop migration-seeded type 3/4 labels so the assertion stays exact.
+        Tag.objects.filter(type__in=(3, 4)).delete()
         Tag.objects.create(tag="всг.", name="весьегонский говор", type=4)
         Tag.objects.create(tag="перен.", name="переносно", type=3)
         Tag.objects.create(tag="s", name="substantivum", type=2)

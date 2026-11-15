@@ -24,6 +24,8 @@ from dict.models import (
 
 class ExportMobileDbTestCase(TestCase):
     def setUp(self):
+        # Data migrations may seed catalog Tags; isolate the export fixture.
+        Tag.objects.all().delete()
         self.source = Source.objects.create(title="Punzhina test")
         self.tag_pos = Tag.objects.create(
             tag="n.", name="substantivum", type=2, sorting=1, level=0
