@@ -10,6 +10,7 @@
 - publish данных — [`scripts/publish_mobile_pack.sh`](../scripts/publish_mobile_pack.sh) → `/mobile-pack/`
 - publish APK — sibling `punzh-dict-mobile/scripts/publish_downloads.sh` → `/mobile-pack/punzh-dict-latest.apk`
 - баннер Android на сайте (RuStore + APK) — `partials/android_app_banner.html`
-- план/бэклог — [`docs/plans/mobile-offline.md`](../docs/plans/mobile-offline.md)
 
-Семантика словаря для приложения: `punzh-dict-mobile/docs/DICTIONARY.md`.
+Функции v1: `punzh-dict-mobile/docs/FEATURES-V1.md`.  
+Беклог следующей версии: `punzh-dict-mobile/docs/BACKLOG.md`.  
+Семантика словаря: `punzh-dict-mobile/docs/DICTIONARY.md`.

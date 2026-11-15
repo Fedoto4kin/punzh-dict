@@ -159,6 +159,18 @@ class ExportMobileDbTestCase(TestCase):
             finally:
                 conn.close()
 
+    def test_data_version_stable_when_content_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first = export_mobile_package(Path(tmp) / "a")
+            second = export_mobile_package(Path(tmp) / "b")
+            self.assertEqual(
+                first.manifest["data_version"],
+                second.manifest["data_version"],
+            )
+            # built_at is outside the content hash, so final file digests may differ.
+            self.assertNotEqual(first.manifest["built_at"], "")
+            self.assertNotEqual(second.manifest["built_at"], "")
+
     def test_management_command_writes_out(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "pack"

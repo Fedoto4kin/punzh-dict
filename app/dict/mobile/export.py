@@ -59,21 +59,26 @@ def export_mobile_package(out_dir: str | Path) -> MobilePackage:
         for stmt in DDL_STATEMENTS:
             conn.execute(stmt)
         _write_rows(conn)
-        built_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-        # data_version is derived from a content hash before it is written into
-        # meta (otherwise the hash would include itself).
-        _write_meta(conn, built_at=built_at, data_version=None)
+        # Content identity: schema_version + min_app + data tables only.
+        # built_at / data_version are written after the content hash so a cron
+        # rebuild with unchanged dictionary data keeps the same data_version.
+        _write_stable_meta(conn)
         conn.commit()
+        conn.execute("VACUUM")
     finally:
         conn.close()
 
     content_digest, _ = _sha256_and_size(db_path)
     data_version = content_digest[:12]
+    built_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     conn = sqlite3.connect(str(db_path))
     try:
-        conn.execute(
+        conn.executemany(
             "INSERT INTO meta(key, value) VALUES (?, ?)",
-            ("data_version", data_version),
+            [
+                ("built_at", built_at),
+                ("data_version", data_version),
+            ],
         )
         conn.commit()
     finally:
@@ -104,27 +109,21 @@ def export_mobile_package(out_dir: str | Path) -> MobilePackage:
     )
 
 
-def _write_meta(
-    conn: sqlite3.Connection,
-    *,
-    built_at: str,
-    data_version: str | None,
-) -> None:
-    rows: list[tuple[str, str]] = [
-        ("schema_version", str(SCHEMA_VERSION)),
-        ("built_at", built_at),
-        ("min_app", MIN_APP),
-    ]
-    if data_version is not None:
-        rows.append(("data_version", data_version))
-    conn.executemany("INSERT INTO meta(key, value) VALUES (?, ?)", rows)
+def _write_stable_meta(conn: sqlite3.Connection) -> None:
+    conn.executemany(
+        "INSERT INTO meta(key, value) VALUES (?, ?)",
+        [
+            ("schema_version", str(SCHEMA_VERSION)),
+            ("min_app", MIN_APP),
+        ],
+    )
 
 
 def _write_rows(conn: sqlite3.Connection) -> None:
-    sources = {s.id: s.title for s in Source.objects.all().only("id", "title")}
+    sources = {s.id: s.title for s in Source.objects.order_by("id").only("id", "title")}
 
     article_rows = []
-    for a in Article.objects.all().iterator(chunk_size=BATCH):
+    for a in Article.objects.order_by("id").iterator(chunk_size=BATCH):
         article_rows.append(
             (
                 a.id,
@@ -153,7 +152,7 @@ def _write_rows(conn: sqlite3.Connection) -> None:
         """,
         (
             (row.id, row.article_id, row.article_html or "")
-            for row in ArticleAddition.objects.all().iterator(chunk_size=BATCH)
+            for row in ArticleAddition.objects.order_by("id").iterator(chunk_size=BATCH)
         ),
     )
     _bulk_copy(
@@ -164,7 +163,7 @@ def _write_rows(conn: sqlite3.Connection) -> None:
         """,
         (
             (row.id, row.from_article_id, row.to_article_id, row.kind)
-            for row in ArticleLink.objects.all().iterator(chunk_size=BATCH)
+            for row in ArticleLink.objects.order_by("id").iterator(chunk_size=BATCH)
         ),
     )
     _bulk_copy(
@@ -177,6 +176,7 @@ def _write_rows(conn: sqlite3.Connection) -> None:
             (row.id, row.article_id, row.word)
             for row in ArticleIndexWord.objects.exclude(word__isnull=True)
             .exclude(word="")
+            .order_by("id")
             .iterator(chunk_size=BATCH)
         ),
     )
@@ -190,6 +190,7 @@ def _write_rows(conn: sqlite3.Connection) -> None:
             (row.id, row.article_id, row.rus_word)
             for row in ArticleIndexTranslate.objects.exclude(rus_word__isnull=True)
             .exclude(rus_word="")
+            .order_by("id")
             .only("id", "article_id", "rus_word")
             .iterator(chunk_size=BATCH)
         ),
@@ -202,7 +203,7 @@ def _write_rows(conn: sqlite3.Connection) -> None:
         """,
         (
             (t.id, t.tag, t.name, t.type, t.sorting, t.level)
-            for t in Tag.objects.all().iterator(chunk_size=BATCH)
+            for t in Tag.objects.order_by("id").iterator(chunk_size=BATCH)
         ),
     )
     _bulk_copy(
@@ -213,7 +214,9 @@ def _write_rows(conn: sqlite3.Connection) -> None:
         """,
         (
             (row.article_id, row.tag_id)
-            for row in ArticleIndexTag.objects.all().iterator(chunk_size=BATCH)
+            for row in ArticleIndexTag.objects.order_by(
+                "article_id", "tag_id"
+            ).iterator(chunk_size=BATCH)
         ),
     )
 

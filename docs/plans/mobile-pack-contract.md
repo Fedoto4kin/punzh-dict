@@ -31,8 +31,8 @@ dict.sqlite
 |------|-----|--------|
 | `schema_version` | `schema.py`, `meta`, manifest | Ломающая схема sqlite. Сейчас **2**. |
 | `min_app` | `schema.py`, `meta`, manifest | Минимальный `versionName` клиента (`X.Y.Z`). Сейчас `"0.1.0"`. |
-| `data_version` | `meta`, manifest | Снимок данных: первые 12 hex sha256 файла **до** записи `data_version` в meta, затем финальный sha256 файла для манифеста. |
-| `built_at` | `meta`, manifest | UTC ISO-8601 время сборки пакета. |
+| `data_version` | `meta`, manifest | Идентичность **данных**: первые 12 hex sha256 файла после таблиц + `schema_version`/`min_app`, **до** записи `built_at`/`data_version`. Одинаковые данные → тот же `data_version` (cron без правок не двигает версию). |
+| `built_at` | `meta`, manifest | UTC ISO-8601 время этой сборки; в content-hash не входит. |
 
 Клиент **обязан** отвергнуть пакет с неподдерживаемым `schema_version` и не
 применять обновление при `min_app` выше установленного приложения.
@@ -55,8 +55,9 @@ dict.sqlite
 }
 ```
 
-- `sha256` / `size` — от финального `dict.sqlite` (после записи `data_version` в meta).
+- `sha256` / `size` — от финального `dict.sqlite` (после `built_at` + `data_version` в meta). Могут меняться при той же `data_version`.
 - `url` — путь относительно base URL каталога пакета.
+- Клиент обновляет БД только при новой `data_version`. Publish на сервере пропускает запись, если живой манифест уже с тем же `data_version` (см. `publish_mobile_pack.sh`; `--force` перезаписывает).
 
 ## Таблицы sqlite
 

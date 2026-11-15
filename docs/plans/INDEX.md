@@ -29,7 +29,7 @@
 | 6a | **сделано** | **Леммы RU-поиска (P3):** pymorphy3, `rus_lemmas`, снят fuzzy | `plans/search-rus-lemmas.md` |
 | 7 | бэклог | KRL в русской транслитерации → формальные правила → «возможно вы искали» | `docs/ai-search.md` §Перспектива (Метрика) |
 | 8 | бэклог AI | Пункт «умный поиск» в навигации; SSE/worker — по нагрузке | `plans/ai-search-async.md` |
-| 9 | MVP ✓ / предрелиз | Офлайн mobile: клиент → `punzh-dict-mobile`; контракт/экспорт здесь; P7→P8 | `plans/mobile-offline.md`, `plans/mobile-pack-contract.md` |
+| 9 | **v1 клиента ✓** | Офлайн mobile: функции — `FEATURES-V1.md`; дальше — `BACKLOG.md`; контракт/экспорт здесь; витрины — в app-repo | `punzh-dict-mobile/docs/FEATURES-V1.md`, `…/BACKLOG.md`, `plans/mobile-pack-contract.md` |
 
 ## Рефакторинг (техдолг)
 

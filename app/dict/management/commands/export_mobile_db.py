@@ -10,7 +10,7 @@ from dict.mobile import export_mobile_package
 class Command(BaseCommand):
     help = (
         "Собрать офлайн-пакет для mobile: dict.sqlite + manifest.json "
-        "(без семантики / AI / rus_lemmas). См. docs/plans/mobile-offline.md."
+        "(без семантики / AI / rus_lemmas). См. docs/plans/mobile-pack-contract.md."
     )
 
     def add_arguments(self, parser):
