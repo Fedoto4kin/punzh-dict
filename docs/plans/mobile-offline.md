@@ -126,7 +126,7 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 
 ## Бэклог развития (ближайшее)
 
-Приоритеты зафиксированы (P0 → P8). Клиент вынесен в `punzh-dict-mobile`. **Следующее:** дожать **P8** (Huawei + ссылки с главной; RuStore на модерации). P7 ✓; крупный split Home — в «не боли» ниже.
+Приоритеты зафиксированы (P0 → P9). Клиент вынесен в `punzh-dict-mobile`. **Следующее:** дожать **P8** (Huawei + RuStore; баннер на сайте уже есть). P7 ✓; крупный split Home — в «не боли» ниже. **P9** — позже, после стабилизации магазинов.
 Инкременты / наблюдатель моделей — не в P2; полный пакет раз в неделю (`scripts/publish_mobile_pack.sh` + cron на prod).
 
 | Pri | Что | Заметка |
@@ -139,7 +139,8 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 | **P5** | ~~**Фильтры по пометам**~~ | Сделано: после KRL-поиска; фасеты из выдачи; radio/AND/ph; неприменимые чипы disabled; не для алфавитного указателя |
 | **P6** | ~~**Fuzzy KRL**~~ | Сделано: при пустой KRL-выдаче — «Возможно вы искали» (Levenshtein ≤ 2 по `words`, без триграмм); чипы перезапускают поиск |
 | **P7** | ~~**Рефакторинг + полный регресс**~~ | Ручной чеклист ✓ ([`MANUAL-REGRESSION.md`](../../punzh-dict-mobile/docs/MANUAL-REGRESSION.md)); hygiene ✓ (мёртвый `ArticleScreen`, shared fold/tags, mini-repo helper, MenuDrawer←session). Крупный split Home — см. «не боли» |
-| **P8** | **Релизный контур (пилот)** | **В работе.** Порядок: **RuStore → Huawei → ссылки на сайте → Play.** RuStore: на модерации. Huawei: кит `store/huawei/`. Сайт: APK на прод `…/mobile-pack/punzh-dict-latest.apk` ✓ (`publish_downloads.sh`); баннер для Android UA — эта ветка. Клиент `1.0.3+23`. Контракт — [`mobile-pack-contract.md`](mobile-pack-contract.md) |
+| **P8** | **Релизный контур (пилот)** | **В работе.** Порядок: **RuStore → Huawei → сайт → Play.** RuStore: на модерации (кнопка в баннере закомментирована). Huawei: кит `store/huawei/`. Сайт: APK `…/mobile-pack/punzh-dict-latest.apk` ✓; баннер Android UA на главной (APK; RuStore — после публикации). Клиент `1.0.3+23`. Контракт — [`mobile-pack-contract.md`](mobile-pack-contract.md) |
+| **P9** | **Страница приложения на сайте** | **Позже** (не сейчас). Убрать sticky-баннер с главной → пункт в меню сайта + отдельная страница (RuStore / Huawei / APK, кратко про офлайн). Когда магазины стабильны и баннер уже не нужен как «мягкий» пилот |
 
 ### P7+ — отложено («не боли», не блокирует P8)
 
@@ -170,7 +171,7 @@ Flutter-проект: `~/Projects/KRL/punzh-dict-mobile`. Фикстура эк�
 
 | Репозиторий | Знание / код |
 |-------------|--------------|
-| **punzh-dict** (этот) | Контракт ([`mobile-pack-contract.md`](mobile-pack-contract.md)), `export_mobile_db`, publish `/mobile-pack/` (+ `punzh-dict-latest.apk` на прод); stub [`mobile/README.md`](../../mobile/README.md); ссылки с главной — позже |
+| **punzh-dict** (этот) | Контракт ([`mobile-pack-contract.md`](mobile-pack-contract.md)), `export_mobile_db`, publish `/mobile-pack/` (+ `punzh-dict-latest.apk` на прод); stub [`mobile/README.md`](../../mobile/README.md); баннер на главной (P8); отдельная страница + пункт меню — **P9** |
 | **punzh-dict-mobile** | Flutter, APK-история, [`DICTIONARY.md`](../../punzh-dict-mobile/docs/DICTIONARY.md) |
 
 DDL в app-repo не дублировать как канон — ссылаться на контракт monorepo / `schema_version`.
