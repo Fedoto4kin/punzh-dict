@@ -11,6 +11,7 @@ from .rus_tokens import (
     query_tokens,
     token_boundary_fuzzy_regex,
     token_boundary_regex,
+    token_prefix_regex,
     tokens_for_token_or,
 )
 from .rus_word import (

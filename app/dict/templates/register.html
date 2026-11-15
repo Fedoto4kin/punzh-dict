@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Регистр{% if letter %} — {{ letter }}{% elif query %} — «{{ query }}»{% endif %} - Словарь карельского языка
+{% endblock %}
+
+{% block content %}
+<style>
+  /* Same chrome as alphabetic index; tighter letter gaps → one desktop row. */
+  .register-abc-nav .btn.px-1 {
+    padding-left: 0.05rem;
+    padding-right: 0.05rem;
+  }
+  .register-abc-nav .nav-link {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.18rem;
+    padding-right: 0.18rem;
+  }
+  @media (min-width: 992px) {
+    .register-abc-nav .navbar-nav {
+      flex-wrap: nowrap;
+    }
+  }
+  .register-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .register-toolbar h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  .register-toolbar .register-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1 1 14rem;
+    min-width: 0;
+  }
+  .register-toolbar .register-search .form-control {
+    max-width: 16rem;
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  .register-toolbar .btn {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.875rem;
+  }
+  .register-count {
+    margin: 0 0 0 0.25rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    white-space: nowrap;
+  }
+  .register-list {
+    column-count: 1;
+    column-gap: 1.5rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+  @media (min-width: 768px) {
+    .register-list { column-count: 2; }
+  }
+  @media (min-width: 1200px) {
+    .register-list { column-count: 3; }
+  }
+  .register-list li {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 0.12rem 0;
+  }
+  /* Russian headword vs Karelian article links */
+  .register-list a.register-rus {
+    font-weight: 600;
+    color: #343a40;
+  }
+  .register-list a.register-rus:hover {
+    color: #007bff;
+    text-decoration: underline;
+  }
+  .register-list a.register-krl {
+    font-weight: 400;
+    color: #6c757d;
+  }
+  .register-list a.register-krl:hover {
+    color: #007bff;
+    text-decoration: underline;
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-light register-abc-nav">
+    <div class="container d-none d-md-none d-sm-none d-lg-block">
+        <ul class="navbar-nav
+                       mt-2
+                       mx-auto
+                       justify-content-center"
+            role="group">
+            {% for l in RUS_ABC %}
+                <li class="btn px-1 {% if l == letter and not query %} active btn-light{% endif %}">
+                    <a class="nav-link text-grey" href="{% url 'register_letter' letter=l %}">{{ l }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</nav>
+
+<nav class="navbar d-block d-lg-none navbar-light register-abc-nav">
+    <div class="container">
+        <div class="navbar-collapse collapse" id="rus-abc">
+            <ul class="navbar
+                       navbar-pills
+                       mt-2
+                       mx-auto
+                       justify-content-center" role="group">
+                {% for l in RUS_ABC %}
+                    <li class="btn px-1 {% if l == letter and not query %} active btn-light{% endif %}">
+                        <a class="nav-link text-grey" href="{% url 'register_letter' letter=l %}">{{ l }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="btn-group navbar-toggler ml-n3 mr-auto">
+            <button class="btn btn-primary-outline" type="button"
+                    data-toggle="collapse"
+                    data-target="#rus-abc"
+                    aria-controls="rus-abc"
+                    aria-expanded="false"
+                    aria-label="Алфавит">
+                <span>{% if letter and not query %}{{ letter }}{% else %}А–Я{% endif %}</span>
+                <span class="btn btn-light-outline navbar-toggler-icon small"></span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="register-toolbar">
+    <h3>Регистр</h3>
+    <form method="get" action="{% url 'register' %}" class="register-search">
+        <label class="sr-only" for="register-q">Поиск в регистре</label>
+        <input type="search" class="form-control" id="register-q"
+               name="q" value="{{ query }}" placeholder="Искать в регистре" maxlength="300"
+               title="Поиск с начала каждого слова перевода"
+               autocomplete="off">
+        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        {% if query %}
+        <a href="{% url 'register' %}" class="btn btn-link btn-sm px-1">Сбросить</a>
+        {% endif %}
+    </form>
+    {% if query %}
+    <p class="register-count">«{{ query }}» · {{ page_obj.paginator.count }}</p>
+    {% elif letter %}
+    <p class="register-count">Буква {{ letter }} · {{ page_obj.paginator.count }}</p>
+    {% endif %}
+</div>
+
+{% if rows %}
+<ul class="register-list">
+    {% for row in rows %}
+    <li>
+        <a class="register-rus" href="{{ row.search_url }}">{{ row.rus_word }}</a>
+        <span class="text-muted">—</span>
+        {% for a in row.articles %}
+            <a class="register-krl" href="{{ a.search_url }}">{{ a.display }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted mb-4">Нет совпадений.</p>
+{% endif %}
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Страницы регистра">
+    <ul class="pagination pagination-sm justify-content-center flex-wrap mb-3">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            {% if query %}
+            <a class="page-link" href="{% url 'register' %}?q={{ query|urlencode }}&amp;page={{ page_obj.previous_page_number }}">&laquo;</a>
+            {% else %}
+            <a class="page-link" href="{% url 'register_letter_page' letter=letter page=page_obj.previous_page_number %}">&laquo;</a>
+            {% endif %}
+        </li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+            {% if i == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% elif i == 1 or i == page_obj.paginator.num_pages or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+            <li class="page-item">
+                {% if query %}
+                <a class="page-link" href="{% url 'register' %}?q={{ query|urlencode }}&amp;page={{ i }}">{{ i }}</a>
+                {% else %}
+                <a class="page-link" href="{% url 'register_letter_page' letter=letter page=i %}">{{ i }}</a>
+                {% endif %}
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            {% if query %}
+            <a class="page-link" href="{% url 'register' %}?q={{ query|urlencode }}&amp;page={{ page_obj.next_page_number }}">&raquo;</a>
+            {% else %}
+            <a class="page-link" href="{% url 'register_letter_page' letter=letter page=page_obj.next_page_number %}">&raquo;</a>
+            {% endif %}
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}

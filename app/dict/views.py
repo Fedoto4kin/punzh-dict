@@ -32,6 +32,11 @@ from .search import (
     tag_filters_from_request,
 )
 from .models import Article, ArticleIndexTag, SemanticField, Tag
+from .register import (
+    normalize_register_letter,
+    register_content,
+    register_letters_present,
+)
 
 SEARCH_RATE_LIMIT_PER_MINUTE = 60
 
@@ -283,6 +288,75 @@ def ontology_index(request):
         "ontology": "true",
     }
     return render(request, "ontology.html", context)
+
+
+def register(request, letter=None, page=1):
+    """Alphabetic Russian translation register (/register/)."""
+    q = _clip_search_query(request.GET.get("q", ""))
+    if q:
+        try:
+            page = int(request.GET.get("page") or page or 1)
+        except (TypeError, ValueError):
+            page = 1
+        content = register_content(letter=None, page=page, query=q)
+        context = {
+            "ABC": KRL_ABC,
+            "RUS_ABC": content.letters,
+            "register": "true",
+            "letter": None,
+            "query": content.query,
+            "page_obj": content.page_obj,
+            "rows": content.rows,
+        }
+        return render(request, "register.html", context)
+
+    letters = register_letters_present()
+    if not letter:
+        if not letters:
+            content = register_content(letter=None, page=1, query="")
+            return render(
+                request,
+                "register.html",
+                {
+                    "ABC": KRL_ABC,
+                    "RUS_ABC": "",
+                    "register": "true",
+                    "letter": None,
+                    "query": "",
+                    "page_obj": content.page_obj,
+                    "rows": [],
+                },
+            )
+        return redirect("register_letter", letter=letters[0])
+
+    norm = normalize_register_letter(letter)
+    if not norm or norm not in letters:
+        return render(
+            request,
+            "404.html",
+            {"ABC": KRL_ABC, "register": "true"},
+            status=404,
+        )
+
+    content = register_content(letter=norm, page=page, query="")
+    if page > content.page_obj.paginator.num_pages or page < 1:
+        return render(
+            request,
+            "404.html",
+            {"ABC": KRL_ABC, "register": "true"},
+            status=404,
+        )
+
+    context = {
+        "ABC": KRL_ABC,
+        "RUS_ABC": content.letters,
+        "register": "true",
+        "letter": content.letter,
+        "query": "",
+        "page_obj": content.page_obj,
+        "rows": content.rows,
+    }
+    return render(request, "register.html", context)
 
 
 def ontology_view(request, field_id, page=1):

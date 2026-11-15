@@ -85,6 +85,13 @@ urlpatterns = [
         views.ontology_view,
         name="ontology_field_page",
     ),
+    path("register/", views.register, name="register"),
+    path("register/<str:letter>/", views.register, name="register_letter"),
+    path(
+        "register/<str:letter>/<int:page>",
+        views.register,
+        name="register_letter_page",
+    ),
     path(
         "yandex_33ad64467c0b0a09.html",
         serve,

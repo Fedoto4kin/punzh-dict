@@ -124,18 +124,19 @@
                         </div>
                     </li>
                     {% endwith %}
-                    <li class="nav-item dropdown{% if letter or allTags or ontology %} active{% endif %}">
+                    <li class="nav-item dropdown{% if letter or allTags or ontology or register %} active{% endif %}">
                         <a class="nav-link dropdown-toggle small" href="#" id="navIndexes"
                            role="button" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false">Указатели</a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navIndexes">
-                            <a class="dropdown-item{% if letter %} active{% endif %}"
+                            <a class="dropdown-item{% if letter and not register %} active{% endif %}"
                                href="{% url 'index' letter='A' %}">Алфавитный указатель</a>
                             <a class="dropdown-item{% if allTags %} active{% endif %}"
                                href="{% url 'tags' %}">Предметный указатель</a>
+                            <a class="dropdown-item{% if register %} active{% endif %}"
+                               href="{% url 'register' %}">Регистр</a>
                             <a class="dropdown-item{% if ontology %} active{% endif %}"
                                href="{% url 'ontology' %}">Онтология</a>
-                            {# TODO: Регистр (алфавитный список русских переводов) #}
                         </div>
                     </li>
                     {# TODO: AI-поиск в меню (INDEX §8), когда альфа откроется #}

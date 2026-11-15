@@ -116,6 +116,15 @@ def token_boundary_regex(token):
     return _TOKEN_BOUNDARY_BEFORE + re.escape(token) + _TOKEN_BOUNDARY_AFTER
 
 
+def token_prefix_regex(token):
+    """
+    Prefix match at a token start inside rus_word (Postgres iregex).
+
+    «кош» → кошка, дикая кошка; not раскошелиться.
+    """
+    return _TOKEN_BOUNDARY_BEFORE + re.escape(token)
+
+
 def token_boundary_fuzzy_regex(token):
     """Stem = token minus last letter; matches inflection variants (корова/корове)."""
     stem = token[:-1]
