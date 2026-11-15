@@ -9,6 +9,7 @@
 | Контур | Где | Роль |
 |--------|-----|------|
 | Лексический поиск `/search/` | `app/dict/search/` (`rus`/`krl`), views | RU: ILIKE + lemma-OR (`rus_lemmas`), стопы в multi-word, `?f=`; KRL: ILIKE/варианты/`?t=` |
+| Регистр `/register/` | `app/dict/register.py`, views | алфавитный указатель `rus_word` (+ статьи); prefix по словам, `?q=`; клики → `/search/…?f=exact` / KRL |
 | Staff: переводы / отладка | админка Dict | индекс `rus_word`; explain `rus_search_core` |
 | Онтология `/ontology/` | semantic-модели, views | поля/keywords; **не** фильтровать по `from_translation` |
 | Рантайм-AI | `app/dict/ai/` | шлюз Timeweb; `/ai-search/` + `manage.py ai_query` |

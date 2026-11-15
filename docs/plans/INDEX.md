@@ -22,7 +22,6 @@
 
 | # | Статус | Задача | Где |
 |---|--------|--------|-----|
-| — | **сделано** | Публичный **Регистр** русских переводов (`/register/`, prefix по словам, А–Я) | `dict/register.py` |
 | 4 | спека | Валидатор формы: сначала В2 (автокомплит «см.»), затем В1 | `docs/SPEC_article_form_validator.md` |
 | 5 | бэклог | Поиск неразмеченных помет | `backlog.md` §3 |
 | 6 | план | Аудит индекса переводов после cleanup (read-only) | `plans/translation_index_audit.md` |
@@ -48,6 +47,8 @@
 
 ## Сделано (не трогать без регрессии)
 
+- **Регистр** `/register/` — алфавитный указатель русских переводов
+  (`dict/register.py`; prefix `?q=`; полоса только по буквам с данными).
 - Удалён устаревший `docker-compose-prod.yml` / `init-letsencrypt.sh`; из
   Dockerfile убран `COPY ./.env` (секреты только mount в compose).
 - **Стек:** Python 3.12 + Django 5.2 LTS, psycopg3, uWSGI 2.0.28.

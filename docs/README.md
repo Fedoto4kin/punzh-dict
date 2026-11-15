@@ -40,6 +40,7 @@
 | Файл | О чём |
 |------|--------|
 | [searching_upgrade.md](searching_upgrade.md) | Спека RU-поиска как в коде (леммы, стопы, `?f=`, UX); staff §0.2 |
+| Регистр `/register/` (код) | Публичный указатель `rus_word`: `dict/register.py`, меню «Указатели»; не lexical `/search/` |
 | [method-onthlogy-markup.md](method-onthlogy-markup.md) | Как строили онтологию и разметку |
 | [method-ai-search-retrieval.md](method-ai-search-retrieval.md) | Retrieval AI-поиска: схемы, эталоны, **журнал отказов** |
 

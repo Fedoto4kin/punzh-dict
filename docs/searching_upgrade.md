@@ -133,6 +133,11 @@ HTML статьи. Сортировка: по заголовку или по с�
 
 Тесты: `test_translation_browser.py`, `test_search_debug.py`.
 
+**Публичный Регистр** (`/register/`) — другой контур: browse/prefix по
+`rus_word` без lemma-OR и без staff-карточек; код `dict/register.py`,
+тесты `test_register.py`. Не путать с **Переводы** в админке и с lexical
+`/search/`.
+
 ---
 
 ## 1. Реализовано: сужающие теги — `split_by_coverage`

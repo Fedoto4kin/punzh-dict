@@ -55,6 +55,7 @@ uwsgi без hot-reload). Подробнее: `AGENTS.md`.
 - Карельский запрос → `ILIKE` по `ArticleIndexWord` (варианты заголовка); нет точных → Левенштейн (≤2) ∩ триграммы; фильтры `?t=` / `?ph=`.
 - Русский запрос → `ILIKE` по `rus_word` + **lemma-OR** по `rus_lemmas` (`rus_search_core`, pymorphy3); multi-word без стопов; expand через `ArticleLink` (см.+от); `?f=exact|all|ключ`. Эталон: `docs/searching_upgrade.md`.
 - Пометы — `/tags/` (OR внутри типа, AND между типами).
+- **Регистр** — `/register/`, `/register/<буква>/`: группы `ArticleIndexTranslate.rus_word` + заголовки статей; полоса только по буквам с данными; фильтр `?q=` — prefix любого слова (ё→е, multi-word OR). Клики: перевод → `/search/…?f=exact`, статья → карельский `/search/…`. Код: `dict/register.py` (не `search/rus.py`). Тесты: `dict/tests/test_register.py`.
 - Staff: **Переводы** + **Отладка** русского поиска — `searching_upgrade.md` §0.2.
 
 Keywords **не** подмешиваются в классический `/search/` (P4 снят). AI-поиск: `docs/ai-search.md`.
