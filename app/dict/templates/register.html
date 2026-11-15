@@ -203,6 +203,8 @@
                 <a class="page-link" href="{% url 'register_letter_page' letter=letter page=i %}">{{ i }}</a>
                 {% endif %}
             </li>
+            {% elif i == page_obj.number|add:"-3" or i == page_obj.number|add:"3" %}
+            <li class="page-item disabled" aria-hidden="true"><span class="page-link">&hellip;</span></li>
             {% endif %}
         {% endfor %}
         {% if page_obj.has_next %}

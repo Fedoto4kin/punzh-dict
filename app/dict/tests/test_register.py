@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from urllib.parse import quote, unquote
 
 from django.test import Client, TestCase
@@ -183,3 +184,16 @@ class RegisterViewTestCase(TestCase):
         self.assertEqual(content.page_obj.paginator.count, 0)
         self.assertEqual(content.letter, "Щ")
         self.assertNotIn("Щ", content.letters)
+
+    def test_pagination_ellipsis_on_gap(self):
+        # 1 existing «кошка» + 9 more → 10 pages at 1 row/page; gap → …
+        art = Article.objects.create(word="pad")
+        for i in range(9):
+            ArticleIndexTranslate.objects.create(article=art, rus_word="каша%02d" % i)
+        with patch("dict.register.ROWS_PER_PAGE", 1):
+            resp = self.c.get(reverse("register_letter", kwargs={"letter": "К"}))
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode("utf-8")
+        self.assertIn("&hellip;", html)
+        self.assertIn('aria-hidden="true"', html)
+        self.assertIn(">10</a>", html)
