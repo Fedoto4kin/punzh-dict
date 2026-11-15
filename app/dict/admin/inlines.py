@@ -57,7 +57,7 @@ class ArticleLinkReverseInline(admin.TabularInline):
 class TranslateInline(admin.TabularInline):
     extra = 0
     model = ArticleIndexTranslate
-    fields = ("rus_word", "hide_from_register")
+    fields = ("rus_word", "rus_lemmas", "hide_from_register", "search_vector")
 
 
 class ArticleAdditionInline(admin.StackedInline):
