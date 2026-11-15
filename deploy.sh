@@ -63,8 +63,20 @@ detect_container() {
   fi
 }
 
+# Public GitHub LFS works anonymously, but a failed auth attempt can stick
+# lfs.<url>.access=basic in .git/config and then every pull asks for credentials.
+clear_sticky_lfs_basic_auth() {
+  local key
+  while IFS= read -r key; do
+    [[ -n "$key" ]] || continue
+    git config --unset-all "$key" || true
+  done < <(git config --get-regexp '^lfs\..*\.access$' 2>/dev/null | awk '$2 == "basic" { print $1 }')
+}
+
 if [[ "$PULL" -eq 1 ]]; then
-  git pull --ff-only
+  clear_sticky_lfs_basic_auth
+  # Fail fast if credentials are somehow still required (no TTY on deploy).
+  GIT_TERMINAL_PROMPT=0 git pull --ff-only
 fi
 
 CONTAINER="$(detect_container)"

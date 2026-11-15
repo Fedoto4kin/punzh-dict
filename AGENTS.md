@@ -32,7 +32,9 @@ bind-mount `./.env:/.env:ro`. Код с volume/git — `git pull` + `./deploy.sh
 без рестарта админка/Python не подхватывают изменения. `deploy.sh` сам делает
 restart целевого контейнера. Статика: исходники `app/static` / `app/dict/static`,
 отдача Nginx — только `app/staticfiles` (хостовый Nginx, не контейнер из
-устаревшего compose).
+устаревшего compose). Репо публичный: LFS (`dict_seed.json`) качается без
+логина; `deploy.sh` перед pull сбрасывает залипший `lfs.*.access=basic`
+(иначе hub требует несуществующие GitHub credentials).
 
 **Агентский flow «коммит / пуш / деплой»:** перед `git push` и remote
 `./deploy.sh` **обязательно** прогнать локально в `punzh_django`
