@@ -74,7 +74,8 @@ def register_letters_present() -> str:
     Ordered as in RUS_ABC. Empty register → empty string.
     """
     raw = (
-        ArticleIndexTranslate.objects.exclude(rus_word__isnull=True)
+        ArticleIndexTranslate.objects.filter(hide_from_register=False)
+        .exclude(rus_word__isnull=True)
         .exclude(rus_word="")
         .annotate(ch=Upper(Left("rus_word", 1)))
         .values_list("ch", flat=True)
@@ -106,8 +107,10 @@ def register_prefix_filter(raw_query: str) -> Q:
 
 
 def _matching_rows_qs(letter: Optional[str], query: str):
-    qs = ArticleIndexTranslate.objects.exclude(rus_word__isnull=True).exclude(
-        rus_word=""
+    qs = (
+        ArticleIndexTranslate.objects.filter(hide_from_register=False)
+        .exclude(rus_word__isnull=True)
+        .exclude(rus_word="")
     )
     q = (query or "").strip()
     if q:

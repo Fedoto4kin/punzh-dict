@@ -197,6 +197,11 @@ class ArticleIndexTranslate(models.Model):
         blank=True,
         verbose_name="Леммы перевода",
     )
+    hide_from_register = models.BooleanField(
+        default=False,
+        verbose_name="Скрыть из регистра",
+        help_text="Не показывать этот перевод в публичном регистре /register/.",
+    )
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     search_vector = SearchVectorField(null=True, blank=True)
 

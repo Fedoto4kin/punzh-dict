@@ -109,6 +109,34 @@ class RegisterCoreTestCase(TestCase):
         # Order follows RUS_ABC
         self.assertEqual(letters, "".join(c for c in RUS_ABC if c in letters))
 
+    def test_hide_from_register_excludes_row(self):
+        ArticleIndexTranslate.objects.filter(
+            article=self.aiga, rus_word="дикая кошка"
+        ).update(hide_from_register=True)
+        rows = build_register_rows("Д", "")
+        self.assertEqual(rows, [])
+        self.assertNotIn("Д", register_letters_present())
+
+    def test_hide_from_register_keeps_other_articles(self):
+        # Hide only kaži → «кошка»; kissa remains under the same rus_word.
+        ArticleIndexTranslate.objects.filter(
+            article=self.kazi, rus_word="кошка"
+        ).update(hide_from_register=True)
+        rows = build_register_rows("К", "")
+        by_word = {r.rus_word: r for r in rows}
+        self.assertIn("кошка", by_word)
+        displays = [a.display for a in by_word["кошка"].articles]
+        self.assertEqual(displays, [normalization("kissa")])
+
+    def test_hide_from_register_prefix_filter(self):
+        ArticleIndexTranslate.objects.filter(rus_word="кошелек").update(
+            hide_from_register=True
+        )
+        words = {r.rus_word for r in build_register_rows(None, "кош")}
+        self.assertIn("кошка", words)
+        self.assertIn("дикая кошка", words)
+        self.assertNotIn("кошелек", words)
+
 
 class RegisterViewTestCase(TestCase):
     @classmethod
