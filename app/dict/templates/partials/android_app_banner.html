@@ -1,26 +1,44 @@
+{% load static %}
 {% if mobile_app_banner %}
 {# Android-only soft promo on the home page. "Позже" hides until next visit. #}
 <div id="androidAppBanner" class="android-app-banner" role="region"
      aria-label="Мобильное приложение">
   <div class="android-app-banner__inner">
     <div class="android-app-banner__text">
-      <strong>Офлайн-словарь для Android
-        <i class="fas fa-mobile-alt" aria-hidden="true"></i>
-      </strong>
-      {% if mobile_app_version %}
-      <span class="text-muted">· {{ mobile_app_version }}</span>
-      {% endif %}
+      <div class="android-app-banner__heading">
+        <strong>Офлайн-словарь для Android
+          <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+        </strong>
+        {% if mobile_app_version %}
+        <span class="text-muted">· {{ mobile_app_version }}</span>
+        {% endif %}
+        <span class="android-app-banner__tagline text-muted">Работает без Интернета</span>
+      </div>
       <span class="d-block small text-muted mt-1">
-        Работает без интернета. Установка из файла — через «Неизвестные источники».
+        {# Hidden until RuStore listing is public:
+        {% if mobile_app_rustore_url %}
+        Установите из RuStore.<br>
+        {% endif %}
+        #}
+        Установка из файла — через «Неизвестные источники».
       </span>
     </div>
     <div class="android-app-banner__actions">
+      {# Hidden until RuStore listing is public:
       {% if mobile_app_rustore_url %}
       <a class="btn btn-sm btn-primary mb-1"
          href="{{ mobile_app_rustore_url }}"
          rel="noopener"
-         target="_blank">RuStore</a>
+         target="_blank">
+        <img class="android-app-banner__rustore-icon"
+             src="{% static 'images/rustore-icon.svg' %}"
+             alt=""
+             width="16"
+             height="16"
+             aria-hidden="true"> RuStore
+      </a>
       {% endif %}
+      #}
       <a class="btn btn-sm btn-outline-primary mb-1"
          href="{{ mobile_app_apk_url }}"
          download="punzh-dict-latest.apk">
@@ -50,11 +68,31 @@
     margin: 0 auto;
     padding: 0.65rem 1rem;
   }
+  .android-app-banner__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.4rem;
+    row-gap: 0.05rem;
+  }
+  .android-app-banner__tagline {
+    font-size: 0.85em;
+    font-weight: normal;
+  }
   .android-app-banner__actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem 0.5rem;
+  }
+  .android-app-banner__rustore-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    margin-top: -0.12em;
+    vertical-align: middle;
+    border-radius: 0.2em;
+    background: #fff;
   }
 </style>
 <script>

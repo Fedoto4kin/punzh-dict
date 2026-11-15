@@ -74,9 +74,12 @@ MOBILE_APP_PROMOTE = env.bool("MOBILE_APP_PROMOTE", default=True)
 MOBILE_APP_APK_URL = env(
     "MOBILE_APP_APK_URL", default="/mobile-pack/punzh-dict-latest.apk"
 )
-# Empty while RuStore listing is not public — banner shows APK only.
-MOBILE_APP_RUSTORE_URL = env("MOBILE_APP_RUSTORE_URL", default="")
-# Optional label for the banner / dismiss key (e.g. "1.0.3").
+# Set to "" in .env to hide the RuStore button (e.g. while listing is in review).
+MOBILE_APP_RUSTORE_URL = env(
+    "MOBILE_APP_RUSTORE_URL",
+    default="https://www.rustore.ru/catalog/app/host.punzh.punzh_dict",
+)
+# Optional version label in the banner (e.g. "1.0.3").
 MOBILE_APP_VERSION = env("MOBILE_APP_VERSION", default="")
 
 # Application definition
