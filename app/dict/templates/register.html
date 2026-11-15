@@ -42,9 +42,10 @@
     flex: 1 1 14rem;
     min-width: 0;
   }
-  .register-toolbar .register-search .form-control {
-    /* Same Bootstrap .form-control size as /search/ (searchForm.html). */
+  .register-toolbar .register-search .input-group {
+    /* Same control size as /search/; width capped for the toolbar. */
     max-width: 16rem;
+    flex: 1 1 auto;
   }
   .register-count {
     margin: 0 0 0 0.25rem;
@@ -141,11 +142,17 @@
     <h3>Регистр</h3>
     <form method="get" action="{% url 'register' %}" class="register-search">
         <label class="sr-only" for="register-q">Поиск в регистре</label>
-        <input type="search" class="form-control" id="register-q"
-               name="q" value="{{ query }}" placeholder="Искать в регистре" maxlength="300"
-               title="Поиск с начала каждого слова перевода"
-               autocomplete="off">
-        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        <div class="input-group">
+            <input type="search" class="form-control" id="register-q"
+                   name="q" value="{{ query }}" placeholder="Искать в регистре" maxlength="300"
+                   title="Поиск с начала каждого слова перевода"
+                   autocomplete="off">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-outline-secondary" aria-label="Найти">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
         {% if query %}
         <a href="{% url 'register' %}" class="btn btn-link btn-sm px-1">Сбросить</a>
         {% endif %}
