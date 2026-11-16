@@ -21,7 +21,7 @@ _DICT_MODEL_ORDER = {
     "article": 0,
     "articleindextranslate": 1,
 }
-# Shown on the Dict app title («Словарь · APK ↓ N»), not as its own link.
+# Real model hidden; a plain-text badge row is injected instead (no admin_url).
 _SIDEBAR_OMIT_MODELS = frozenset({"apkdownloadstat"})
 
 _ONTOLOGY_SIDEBAR_MODELS = frozenset(
@@ -71,11 +71,23 @@ class DictSidebarAppList:
                     m["name"].lower(),
                 )
             )
-            app = {
-                **app,
-                "name": f"{app.get('name') or 'Словарь'} · APK ↓ {apk_n}",
-                "models": dict_models,
-            }
+            # Badge only (Django renders models without admin_url as plain text).
+            dict_models.append(
+                {
+                    "name": f"APK ↓ {apk_n}",
+                    "object_name": "ApkDownloadBadge",
+                    "admin_url": None,
+                    "add_url": None,
+                    "view_only": True,
+                    "perms": {
+                        "add": False,
+                        "change": False,
+                        "delete": False,
+                        "view": True,
+                    },
+                }
+            )
+            app = {**app, "models": dict_models}
             result.append(app)
             if ontology_models:
                 first_url = next(
