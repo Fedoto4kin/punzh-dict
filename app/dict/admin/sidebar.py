@@ -74,7 +74,7 @@ class DictSidebarAppList:
             # Badge only (Django renders models without admin_url as plain text).
             dict_models.append(
                 {
-                    "name": f"APK ↓ {apk_n}",
+                    "name": f"Скачивания APK: {apk_n}",
                     "object_name": "ApkDownloadBadge",
                     "admin_url": None,
                     "add_url": None,
