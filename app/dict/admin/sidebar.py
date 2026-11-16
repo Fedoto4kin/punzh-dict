@@ -1,8 +1,19 @@
 """Dict admin sidebar: model order + nested «Онтология» block."""
 
 from django.contrib import admin
+from django.db import DatabaseError
+
+from dict.models import ApkDownloadStat
 
 from .ontology import ontology_pending_count
+
+
+def _apk_download_count_label() -> str:
+    try:
+        return str(ApkDownloadStat.get_solo().count)
+    except DatabaseError:
+        return "—"
+
 
 # Sidebar under Dict: Слова, Переводы, then the rest (alpha).
 # Semantic fields + pending queue are pulled into a nested «Онтология» block.
@@ -10,6 +21,8 @@ _DICT_MODEL_ORDER = {
     "article": 0,
     "articleindextranslate": 1,
 }
+# Shown on the Dict app title («Словарь · APK ↓ N»), not as its own link.
+_SIDEBAR_OMIT_MODELS = frozenset({"apkdownloadstat"})
 
 _ONTOLOGY_SIDEBAR_MODELS = frozenset(
     {"semanticfield", "ontologyqueuearticle", "classificationsurveyresponse"}
@@ -34,8 +47,11 @@ class DictSidebarAppList:
                 continue
             ontology_models = []
             dict_models = []
+            apk_n = _apk_download_count_label()
             for model in app["models"]:
                 key = model["object_name"].lower()
+                if key in _SIDEBAR_OMIT_MODELS:
+                    continue
                 if key in _ONTOLOGY_SIDEBAR_MODELS:
                     if key == "ontologyqueuearticle":
                         # Badge = pending only; the changelist also has marked/skip.
@@ -55,7 +71,11 @@ class DictSidebarAppList:
                     m["name"].lower(),
                 )
             )
-            app = {**app, "models": dict_models}
+            app = {
+                **app,
+                "name": f"{app.get('name') or 'Словарь'} · APK ↓ {apk_n}",
+                "models": dict_models,
+            }
             result.append(app)
             if ontology_models:
                 first_url = next(
