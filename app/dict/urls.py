@@ -4,10 +4,13 @@ from django.views.static import serve
 
 from . import views
 from . import views_ai_search
+from . import views_mobile_app
 
 urlpatterns = [
     # Before <letter>/ — otherwise /robots.txt redirects to /robots.txt/ (letter page).
     path("robots.txt", views.robots_txt, name="robots_txt"),
+    # Tracked APK click → redirect to nginx /mobile-pack/… (see ApkDownloadStat).
+    path("app/apk/", views_mobile_app.apk_download, name="apk_download"),
     path(
         "about/",
         views.StaticView.as_view(template_name="staticPages/about.html"),

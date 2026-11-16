@@ -13,6 +13,7 @@ from .inlines import (  # noqa: F401
     ArticleSemanticFieldInline,
     TranslateInline,
 )
+from .mobile_app import ApkDownloadStatAdm  # noqa: F401
 from .ontology import (  # noqa: F401
     OntologyMarkupFilter,
     OntologyQueueAdm,

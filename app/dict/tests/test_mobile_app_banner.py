@@ -69,9 +69,8 @@ class MobileAppContextTests(SimpleTestCase):
             ctx = mobile_app(req)
             self.assertTrue(ctx["mobile_app_banner"])
             self.assertEqual(ctx["mobile_app_version"], "1.0.3")
-            self.assertEqual(
-                ctx["mobile_app_apk_url"], "/mobile-pack/punzh-dict-latest.apk"
-            )
+            self.assertEqual(ctx["mobile_app_apk_url"], "/app/apk/")
+
             self.assertTrue(ctx["mobile_app_rustore_url"])
 
     def test_no_banner_on_letter_index(self):

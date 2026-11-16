@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.urls import NoReverseMatch, reverse
 
 
 def classification_survey(request):
@@ -27,6 +28,18 @@ def _is_home_page(request) -> bool:
     return not match.kwargs.get("letter")
 
 
+def _tracked_apk_url() -> str:
+    """Banner link goes through Django (counter); file stays on nginx."""
+    try:
+        return reverse("apk_download")
+    except NoReverseMatch:
+        return getattr(
+            settings,
+            "MOBILE_APP_APK_URL",
+            "/mobile-pack/punzh-dict-latest.apk",
+        )
+
+
 def mobile_app(request):
     """Soft promo for Android browsers on the home page only."""
     promote = bool(getattr(settings, "MOBILE_APP_PROMOTE", False))
@@ -37,11 +50,7 @@ def mobile_app(request):
     )
     return {
         "mobile_app_banner": show,
-        "mobile_app_apk_url": getattr(
-            settings,
-            "MOBILE_APP_APK_URL",
-            "/mobile-pack/punzh-dict-latest.apk",
-        ),
+        "mobile_app_apk_url": _tracked_apk_url(),
         "mobile_app_rustore_url": (
             getattr(settings, "MOBILE_APP_RUSTORE_URL", "") or ""
         ).strip(),
