@@ -19,6 +19,11 @@ manifest.json
 dict.sqlite
 ```
 
+Рядом на том же каталоге nginx (но **вне** этого контракта) может лежать
+`app-manifest.json` + `punzh-dict-latest.apk`: их пишет только sibling
+**punzh-dict-mobile** `scripts/publish_downloads.sh`. Экспортёр /
+`publish_mobile_pack.sh` эти файлы не создают и не должны затирать.
+
 Прод URL (host nginx → `~/punzh-dict/mobile-pack/`):
 
 `https://punzhina.krc.karelia.ru/mobile-pack/manifest.json`
