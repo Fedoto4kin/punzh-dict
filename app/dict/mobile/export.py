@@ -183,15 +183,20 @@ def _write_rows(conn: sqlite3.Connection) -> None:
     _bulk_copy(
         conn,
         """
-        INSERT INTO translations(id, article_id, rus_word)
-        VALUES (?, ?, ?)
+        INSERT INTO translations(id, article_id, rus_word, hide_from_register)
+        VALUES (?, ?, ?, ?)
         """,
         (
-            (row.id, row.article_id, row.rus_word)
+            (
+                row.id,
+                row.article_id,
+                row.rus_word,
+                1 if row.hide_from_register else 0,
+            )
             for row in ArticleIndexTranslate.objects.exclude(rus_word__isnull=True)
             .exclude(rus_word="")
             .order_by("id")
-            .only("id", "article_id", "rus_word")
+            .only("id", "article_id", "rus_word", "hide_from_register")
             .iterator(chunk_size=BATCH)
         ),
     )

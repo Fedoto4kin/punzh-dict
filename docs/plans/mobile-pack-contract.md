@@ -29,7 +29,7 @@ dict.sqlite
 
 | Поле | Где | Смысл |
 |------|-----|--------|
-| `schema_version` | `schema.py`, `meta`, manifest | Ломающая схема sqlite. Сейчас **2**. |
+| `schema_version` | `schema.py`, `meta`, manifest | Ломающая схема sqlite. Сейчас **3**. |
 | `min_app` | `schema.py`, `meta`, manifest | Минимальный `versionName` клиента (`X.Y.Z`). Сейчас `"0.1.0"`. |
 | `data_version` | `meta`, manifest | Идентичность **данных**: первые 12 hex sha256 файла после таблиц + `schema_version`/`min_app`, **до** записи `built_at`/`data_version`. Одинаковые данные → тот же `data_version` (cron без правок не двигает версию). |
 | `built_at` | `meta`, manifest | UTC ISO-8601 время этой сборки; в content-hash не входит. |
@@ -44,7 +44,7 @@ dict.sqlite
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "data_version": "…",
   "built_at": "…",
   "sha256": "…",
@@ -70,7 +70,7 @@ dict.sqlite
 | `additions` | дополнительные блоки HTML статьи |
 | `links` | исходящие связи `from_article_id` → `to_article_id`, `kind` (см./от и др. как в Postgres `ArticleLink`) |
 | `words` | индексные формы для KRL-поиска (`ArticleIndexWord`) |
-| `translations` | `rus_word` для RU-поиска (`ArticleIndexTranslate`; **без** `rus_lemmas`) |
+| `translations` | `rus_word` для RU-поиска + `hide_from_register` (`0`/`1`; `1` = скрыть из регистра/списка glosses; `ArticleIndexTranslate`; **без** `rus_lemmas`) |
 | `tags` | `tag`, `name`, `type`, `sorting`, `level` |
 | `article_tags` | M2M статья↔тег |
 

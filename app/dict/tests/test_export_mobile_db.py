@@ -1,4 +1,4 @@
-"""Tests for offline mobile SQLite export (schema_version = 2)."""
+"""Tests for offline mobile SQLite export (schema_version = 3)."""
 
 import json
 import sqlite3
@@ -47,6 +47,11 @@ class ExportMobileDbTestCase(TestCase):
         if not ArticleIndexWord.objects.filter(article=self.a, word="aiga").exists():
             ArticleIndexWord.objects.create(article=self.a, word="aiga")
         ArticleIndexTranslate.objects.create(article=self.a, rus_word="время")
+        ArticleIndexTranslate.objects.create(
+            article=self.b,
+            rus_word="скрытый",
+            hide_from_register=True,
+        )
         ArticleIndexTag.objects.create(article=self.a, tag=self.tag_pos)
         ArticleAddition.objects.create(
             article=self.a, article_html="<i>add</i>", source=self.source
@@ -102,7 +107,7 @@ class ExportMobileDbTestCase(TestCase):
                 )
                 self.assertEqual(
                     conn.execute("SELECT COUNT(*) FROM translations").fetchone()[0],
-                    1,
+                    2,
                 )
                 self.assertEqual(
                     conn.execute("SELECT COUNT(*) FROM tags").fetchone()[0], 1
@@ -138,10 +143,20 @@ class ExportMobileDbTestCase(TestCase):
                 self.assertEqual(ordered, ["aiga", "boila"])
 
                 rus = conn.execute(
-                    "SELECT article_id FROM translations WHERE rus_word LIKE ?",
+                    "SELECT article_id, hide_from_register FROM translations "
+                    "WHERE rus_word LIKE ?",
                     ("%время%",),
                 ).fetchone()
                 self.assertEqual(rus[0], self.a.id)
+                self.assertEqual(rus[1], 0)
+
+                hidden = conn.execute(
+                    "SELECT article_id, hide_from_register FROM translations "
+                    "WHERE rus_word=?",
+                    ("скрытый",),
+                ).fetchone()
+                self.assertEqual(hidden[0], self.b.id)
+                self.assertEqual(hidden[1], 1)
 
                 meta = dict(conn.execute("SELECT key, value FROM meta"))
                 self.assertEqual(meta["schema_version"], str(SCHEMA_VERSION))
@@ -154,6 +169,7 @@ class ExportMobileDbTestCase(TestCase):
                     row[1] for row in conn.execute("PRAGMA table_info(translations)")
                 }
                 self.assertIn("rus_word", cols)
+                self.assertIn("hide_from_register", cols)
                 self.assertNotIn("rus_lemmas", cols)
                 self.assertNotIn("search_vector", cols)
             finally:

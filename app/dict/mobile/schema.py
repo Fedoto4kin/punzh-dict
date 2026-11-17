@@ -1,10 +1,10 @@
-"""SQLite contract for the offline mobile dictionary (schema_version = 2).
+"""SQLite contract for the offline mobile dictionary (schema_version = 3).
 
 Stable article/tag ids match the Django/Postgres source. Semantic tables,
 rus_lemmas, and FTS are intentionally omitted.
 """
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 MIN_APP = "0.1.0"
 DB_FILENAME = "dict.sqlite"
 MANIFEST_FILENAME = "manifest.json"
@@ -62,6 +62,7 @@ DDL_STATEMENTS = (
         id INTEGER PRIMARY KEY NOT NULL,
         article_id INTEGER NOT NULL,
         rus_word TEXT NOT NULL,
+        hide_from_register INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (article_id) REFERENCES articles(id)
     )
     """,
