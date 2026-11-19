@@ -1,6 +1,7 @@
 services:
   django:
     container_name: punzh_web
+    restart: unless-stopped
     build:
       context: ./
       dockerfile: images/django/Dockerfile
@@ -20,6 +21,7 @@ services:
 
   db:
     container_name: punzh_db
+    restart: unless-stopped
     # Pin: stay on PG 15 (hub data). Do not use :latest — major jumps break ./db.
     image: pgvector/pgvector:0.8.7-pg15-bookworm
     volumes:
