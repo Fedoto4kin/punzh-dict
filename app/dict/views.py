@@ -75,6 +75,18 @@ class StaticView(TemplateView):
         return self.render_to_response(context)
 
 
+class ElectronicView(TemplateView):
+    """Static page about the electronic edition (about / history / participants)."""
+
+    template_name = "staticPages/electronic.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        count = Article.objects.count()
+        context["articles_count"] = f"{count:,}".replace(",", "\u00a0")
+        return context
+
+
 def index(request, letter=None, page=1):
 
     def _get404():

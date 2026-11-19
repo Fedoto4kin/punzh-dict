@@ -80,7 +80,7 @@
 - список статей  
 - карточка слова  
 - поиск  
-- статические страницы (`about`, `dialects`, `intro`, `punzh`, `team`)  
+- статические страницы (`about`, `dialects`, `intro`, `punzh`, `electronic`; `/team/` → `#participants`)  
 - кастомизация Django Admin  
 
 ### **4.5. Административная часть (`app/admin.py`)**

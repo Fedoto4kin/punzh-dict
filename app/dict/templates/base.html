@@ -106,7 +106,7 @@
                 {# Mobile: full-width stack. Desktop: groups on the right. #}
                 <ul class="navbar-nav ml-lg-auto">
                     {% with un=request.resolver_match.url_name %}
-                    <li class="nav-item dropdown{% if un == 'intro' or un == 'about' or un == 'punzh' or un == 'dialects' or un == 'team' %} active{% endif %}">
+                    <li class="nav-item dropdown{% if un == 'intro' or un == 'about' or un == 'punzh' or un == 'dialects' or un == 'electronic' %} active{% endif %}">
                         <a class="nav-link dropdown-toggle small" href="#" id="navAbout"
                            role="button" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false">О словаре</a>
@@ -119,8 +119,9 @@
                                href="{% url 'punzh' %}">А. В. Пунжина</a>
                             <a class="dropdown-item{% if un == 'dialects' %} active{% endif %}"
                                href="{% url 'dialects' %}">Тверские диалекты</a>
-                            <a class="dropdown-item{% if un == 'team' %} active{% endif %}"
-                               href="{% url 'team' %}">Участники</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item{% if un == 'electronic' %} active{% endif %}"
+                               href="{% url 'electronic' %}">Об электронной версии</a>
                         </div>
                     </li>
                     {% endwith %}

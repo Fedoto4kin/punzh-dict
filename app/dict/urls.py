@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.urls import path
+from django.views.generic import RedirectView
 from django.views.static import serve
 
 from . import views
@@ -32,8 +33,14 @@ urlpatterns = [
         name="dialects",
     ),
     path(
+        "electronic/",
+        views.ElectronicView.as_view(),
+        name="electronic",
+    ),
+    # Old /team/ bookmarks → participants section on the electronic-edition page.
+    path(
         "team/",
-        views.StaticView.as_view(template_name="staticPages/team.html"),
+        RedirectView.as_view(url="/electronic/#participants", permanent=False),
         name="team",
     ),
     path("search", views.search_proc, name="search_proc"),
