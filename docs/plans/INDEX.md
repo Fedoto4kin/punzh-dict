@@ -30,7 +30,7 @@
 | 7 | бэклог | KRL в русской транслитерации → формальные правила → «возможно вы искали» | `docs/ai-search.md` §Перспектива (Метрика) |
 | 8 | бэклог AI | Пункт «умный поиск» в навигации; SSE/worker — по нагрузке | `plans/ai-search-async.md` |
 | 9 | **v1 клиента ✓** | Офлайн mobile: функции — `FEATURES-V1.md`; дальше — `BACKLOG.md`; контракт/экспорт здесь; витрины — в app-repo | `punzh-dict-mobile/docs/FEATURES-V1.md`, `…/BACKLOG.md`, `plans/mobile-pack-contract.md` |
-| 9a | бэклог (позже) | **Страница приложения на сайте:** убрать sticky-баннер с главной → пункт в меню + отдельная страница (офлайн-словарь, RuStore / Huawei / APK). Сейчас пилот — баннер Android UA на `/` | `partials/android_app_banner.html`; см. также `punzh-dict-mobile/docs/BACKLOG.md` («Вне этого беклога») |
+| 9a | бэклог (к публикации в RuStore) | **Страница «О приложении»** по образцу `/electronic/`: офлайн-словарь, установка (RuStore / Huawei / APK), кратко возможности; пункт в меню; убрать sticky-баннер с главной. Сейчас пилот — баннер Android UA на `/` | `staticPages/electronic.html` как образец; `partials/android_app_banner.html`; `punzh-dict-mobile/docs/BACKLOG.md` |
 
 ## Рефакторинг (техдолг)
 
