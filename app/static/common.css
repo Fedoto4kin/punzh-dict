@@ -52,32 +52,162 @@ footer {
  padding-left: 1.1em;
 }
 
-/* Home hero: book cover fills the card height (desktop) */
+/* Home hero: sm+ (576px) cover beside body — covers Galaxy landscape ~740px.
+   <sm portrait: stacked banner. No thin landscape strip (it looked broken). */
 .home-hero .home-hero-cover {
     display: block;
     width: 100%;
     height: auto;
 }
 
+.home-hero .home-hero-search {
+    /* 1.5× Bootstrap mb-3 (1rem) */
+    margin-bottom: 1.5rem !important;
+}
+
+.home-hero .home-hero-nav-primary .nav-link,
+.home-hero .home-hero-nav-secondary .nav-link {
+    /* vertical rhythm relative to each link's font-size */
+    line-height: 1.35;
+    padding-top: 0.35em;
+    padding-bottom: 0.35em;
+}
+
+.home-hero .home-hero-nav-primary .nav-link {
+    font-size: 1.15rem;
+}
+
+.home-hero .home-hero-nav-primary .nav-link h5 {
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+}
+
+.home-hero .home-hero-nav-secondary .nav-link {
+    font-size: 1rem;
+}
+
+.home-hero .home-hero-static-toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding-left: 0;
+    padding-right: 0;
+    font-size: 1.15rem;
+    line-height: 1.35;
+    box-shadow: none !important;
+}
+
+.home-hero .home-hero-static-chevron {
+    margin-left: auto;
+    font-size: 0.85em;
+    transition: transform 0.15s ease;
+}
+
+.home-hero .home-hero-static-toggle[aria-expanded="true"] .home-hero-static-chevron {
+    transform: rotate(180deg);
+}
+
+.home-hero .home-hero-nav-sep {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    margin: 0.5em 0 0.25em;
+    padding: 0;
+    list-style: none;
+}
+
 @media (min-width: 768px) {
+    /* Keep secondary list visible even if .collapse removed .show */
+    .home-hero #homeHeroStaticPages.collapse {
+        display: block !important;
+        height: auto !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .home-hero .home-hero-search {
+        width: 75%;
+        max-width: 75%;
+    }
+}
+
+@media (min-width: 576px) {
+    /* Prevent search input-group min-content from wrapping cover below */
+    .home-hero > .row {
+        flex-wrap: nowrap;
+    }
+    .home-hero .home-hero-cover-col,
+    .home-hero .home-hero-body-col {
+        min-width: 0;
+    }
     .home-hero .home-hero-cover-col {
         display: flex;
+        align-items: stretch;
     }
     .home-hero .home-hero-cover {
-        flex: 1 0 auto;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        /* full cover; if taller than the slot, pin to top (gap only below) */
+        object-fit: contain;
         object-position: center top;
     }
     .home-hero .home-hero-body-col .card-body {
-        padding-left: 3.5rem;
+        padding-left: 1.25rem;
+        /* room for corner flask button above the search row */
+        padding-right: 2.5rem;
+        padding-top: 1rem;
+    }
+    .home-hero .home-hero-search .input-group {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (min-width: 768px) {
+    .home-hero .home-hero-links > [class*="col-"] + [class*="col-"] {
+        border-left: 1px solid rgba(0, 0, 0, 0.08);
+        padding-left: 1rem;
     }
 }
 
 @media (max-width: 767.98px) {
+    .home-hero .home-hero-links > [class*="col-"] + [class*="col-"] {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Stacked cover: show title band only (not empty leather below).
+       Title glyphs end ~y=186 of 500; +pad → 220. Box H = W × 220/387. */
+    .home-hero .home-hero-cover {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        aspect-ratio: 387 / 220;
+        object-fit: cover;
+        object-position: center top;
+    }
     .home-hero .home-hero-body-col .card-body {
-        padding-top: 2rem;
+        padding-top: 1.5rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+    .home-hero .home-hero-body-col .card-body {
+        padding-top: 0.5rem;
+        padding-bottom: 0.35rem;
+    }
+    .home-hero .home-hero-search {
+        margin-bottom: 0.525rem !important; /* 1.5× 0.35rem */
+    }
+    /* only shrink type — em padding follows automatically */
+    .home-hero .home-hero-nav-primary .nav-link {
+        font-size: 1rem;
+    }
+    .home-hero .home-hero-nav-secondary .nav-link {
+        font-size: 0.9rem;
     }
 }
 
