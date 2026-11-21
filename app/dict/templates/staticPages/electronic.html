@@ -9,15 +9,18 @@
 
 {% block content %}
 
-<div class="row mt-5">
+<div class="static-page">
+<nav class="static-toc text-muted" aria-label="Разделы">
+<div class="static-toc__inner"><a class="link-secondary" href="#about">О сайте</a>
+    ·
+    <a class="link-secondary" href="#history">История</a>
+    ·
+    <a class="link-secondary" href="#participants">Участники</a></div>
+</nav>
+<div class="static-toc-spacer" aria-hidden="true"></div>
+
+<div class="row mt-3">
     <div class="col-sm-12">
-        <p class="text-muted mb-3">
-            <a class="link-secondary" href="#about">О сайте</a>
-            ·
-            <a class="link-secondary" href="#history">История</a>
-            ·
-            <a class="link-secondary" href="#participants">Участники</a>
-        </p>
         <h3>Об электронной версии</h3>
         <hr>
     </div>
@@ -162,5 +165,42 @@
         </table>
     </div>
 </div>
+</div>{# /.static-page #}
+
+
+
+
+<script>
+(function () {
+  var toc = document.querySelector('.static-toc');
+  var spacer = document.querySelector('.static-toc-spacer');
+  var nav = document.querySelector('#wrap > .navbar');
+  if (!toc || !spacer) return;
+
+  function sync() {
+    var top = 0;
+    if (nav) {
+      var nb = nav.getBoundingClientRect().bottom;
+      if (nb > 0) top = nb;
+    }
+    toc.style.top = top + 'px';
+    spacer.style.height = toc.offsetHeight + 'px';
+  }
+
+  sync();
+  window.addEventListener('scroll', sync, { passive: true });
+  window.addEventListener('resize', sync);
+  document.addEventListener('click', function (e) {
+    /* Recalc after Bootstrap collapse/dropdown toggles. */
+    if (e.target.closest && e.target.closest('#wrap > .navbar')) {
+      setTimeout(sync, 350);
+    }
+  });
+  if (window.ResizeObserver) {
+    new ResizeObserver(sync).observe(toc);
+    if (nav) new ResizeObserver(sync).observe(nav);
+  }
+})();
+</script>
 
 {% endblock %}

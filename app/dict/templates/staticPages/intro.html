@@ -8,22 +8,25 @@
 
 {% block content %}
 
-    <div class="row mt-5">
+    <div class="static-page">
+    <nav class="static-toc text-muted" aria-label="Разделы">
+<div class="static-toc__inner"><a class="link-secondary" href="#preface">Предисловие</a>
+        ·
+        <a class="link-secondary" href="#struct">О построении словаря</a>
+        ·
+        <a class="link-secondary" href="#sources">Лексикографические пособия</a>
+        ·
+        <a class="link-secondary" href="#abbr">Условные сокращения</a>
+        ·
+        <a class="link-secondary" href="#places">Населённые пункты</a>
+        ·
+        <a class="link-secondary" href="#alphabet">Алфавит и диакритика</a></div>
+</nav>
+<div class="static-toc-spacer" aria-hidden="true"></div>
+
+    <div class="row mt-3">
 
         <div class="col-sm-12" id="preface">
-            <p class="text-muted mb-3">
-                <a class="link-secondary" href="#preface">Предисловие</a>
-                ·
-                <a class="link-secondary" href="#struct">О построении словаря</a>
-                ·
-                <a class="link-secondary" href="#sources">Лексикографические пособия</a>
-                ·
-                <a class="link-secondary" href="#abbr">Условные сокращения</a>
-                ·
-                <a class="link-secondary" href="#places">Населённые пункты</a>
-                ·
-                <a class="link-secondary" href="#alphabet">Алфавит и диакритика</a>
-            </p>
             <h3>Предисловие к печатному изданию</h3>
             <hr>
 
@@ -369,5 +372,42 @@
 
         </div>
     </div>
+    </div>{# /.static-page #}
+
+
+
+
+<script>
+(function () {
+  var toc = document.querySelector('.static-toc');
+  var spacer = document.querySelector('.static-toc-spacer');
+  var nav = document.querySelector('#wrap > .navbar');
+  if (!toc || !spacer) return;
+
+  function sync() {
+    var top = 0;
+    if (nav) {
+      var nb = nav.getBoundingClientRect().bottom;
+      if (nb > 0) top = nb;
+    }
+    toc.style.top = top + 'px';
+    spacer.style.height = toc.offsetHeight + 'px';
+  }
+
+  sync();
+  window.addEventListener('scroll', sync, { passive: true });
+  window.addEventListener('resize', sync);
+  document.addEventListener('click', function (e) {
+    /* Recalc after Bootstrap collapse/dropdown toggles. */
+    if (e.target.closest && e.target.closest('#wrap > .navbar')) {
+      setTimeout(sync, 350);
+    }
+  });
+  if (window.ResizeObserver) {
+    new ResizeObserver(sync).observe(toc);
+    if (nav) new ResizeObserver(sync).observe(nav);
+  }
+})();
+</script>
 
 {%  endblock %}

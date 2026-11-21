@@ -1,5 +1,7 @@
 html, body {
-    height: 100%;
+    /* min-height: sticky/fixed keep working; height:100% breaks them in
+       Chrome device mode once scrolled past the first viewport. */
+    min-height: 100%;
 }
 
 #wrap {
@@ -312,4 +314,41 @@ footer {
         background-color: rgba(255, 255, 255, 0.18);
         color: #fff;
     }
+}
+
+/* Site navbar stays visible on long static pages (with in-page TOC). */
+body:has(.static-page) #wrap > .navbar.navbar-dark {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+/* In-page TOC sits under the sticky navbar; always fixed to the viewport. */
+.static-page {
+    margin-top: 2rem; /* was mt-5 on first content row */
+}
+.static-toc {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0; /* JS: navbar.getBoundingClientRect().bottom */
+    z-index: 1020; /* under sticky navbar (1030), above content */
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    line-height: 1.45;
+}
+.static-toc__inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0.75rem 15px 0.65rem;
+}
+.static-toc-spacer {
+    display: block;
+    width: 100%;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.static-page:has(.static-toc) [id] {
+    scroll-margin-top: 7rem;
 }
