@@ -106,7 +106,7 @@
                 {# Mobile: full-width stack. Desktop: groups on the right. #}
                 <ul class="navbar-nav ml-lg-auto">
                     {% with un=request.resolver_match.url_name %}
-                    <li class="nav-item dropdown{% if un == 'intro' or un == 'about' or un == 'punzh' or un == 'dialects' or un == 'electronic' %} active{% endif %}">
+                    <li class="nav-item dropdown{% if un == 'intro' or un == 'about' or un == 'punzh' or un == 'dialects' or un == 'electronic' or un == 'mobile_app' %} active{% endif %}">
                         <a class="nav-link dropdown-toggle small" href="#" id="navAbout"
                            role="button" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false">О словаре</a>
@@ -122,6 +122,8 @@
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item{% if un == 'electronic' %} active{% endif %}"
                                href="{% url 'electronic' %}">Электронная версия</a>
+                            <a class="dropdown-item{% if un == 'mobile_app' %} active{% endif %}"
+                               href="{% url 'mobile_app' %}">Мобильное приложение</a>
                         </div>
                     </li>
                     {% endwith %}

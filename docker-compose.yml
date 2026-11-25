@@ -7,6 +7,8 @@ services:
       - ./app:/app
       # Runtime secrets for Django (not baked into the image). runserver reloads on change.
       - ./.env:/.env:ro
+      # Optional APK/app-manifest (nginx serves the same dir on prod).
+      - ./mobile-pack:/mobile-pack:ro
     build:
       context: ./
       dockerfile: images/django/Dockerfile

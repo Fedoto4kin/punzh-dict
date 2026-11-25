@@ -61,6 +61,7 @@ class MobileAppContextTests(SimpleTestCase):
             MOBILE_APP_APK_URL="/mobile-pack/punzh-dict-latest.apk",
             MOBILE_APP_RUSTORE_URL="https://www.rustore.ru/catalog/app/x",
             MOBILE_APP_VERSION="1.0.3",
+            MOBILE_APP_MANIFEST_PATH="/nonexistent/app-manifest.json",
         ):
             req = _attach_match(
                 self.factory.get("/", HTTP_USER_AGENT=self.android_ua),

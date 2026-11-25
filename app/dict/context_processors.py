@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
+from dict.mobile_app_info import resolve_mobile_app_version
+
 
 def classification_survey(request):
     return {
@@ -54,7 +56,5 @@ def mobile_app(request):
         "mobile_app_rustore_url": (
             getattr(settings, "MOBILE_APP_RUSTORE_URL", "") or ""
         ).strip(),
-        "mobile_app_version": (
-            getattr(settings, "MOBILE_APP_VERSION", "") or ""
-        ).strip(),
+        "mobile_app_version": resolve_mobile_app_version(),
     }

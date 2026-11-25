@@ -9,7 +9,8 @@
 - экспортёр — `app/dict/mobile/`, `manage.py export_mobile_db`
 - publish данных — [`scripts/publish_mobile_pack.sh`](../scripts/publish_mobile_pack.sh) → `/mobile-pack/`
 - publish APK — sibling `punzh-dict-mobile/scripts/publish_downloads.sh` → `/mobile-pack/punzh-dict-latest.apk`
-- баннер Android на сайте (RuStore + APK) — `partials/android_app_banner.html`
+- страница «О приложении» — `/app/` (`staticPages/mobile_app.html`); версия из `app-manifest.json`
+- баннер Android на сайте (RuStore + APK + версия) — `partials/android_app_banner.html`
 - счётчик APK: клик идёт на `/app/apk/` → `ApkDownloadStat` → редирект на файл;
   админка / `manage.py set_apk_download_count`; исторические хиты —
   `scripts/count_apk_nginx_hits.sh`

@@ -13,6 +13,11 @@ urlpatterns = [
     # Tracked APK click → redirect to nginx /mobile-pack/… (see ApkDownloadStat).
     path("app/apk/", views_mobile_app.apk_download, name="apk_download"),
     path(
+        "app/",
+        views_mobile_app.MobileAppView.as_view(),
+        name="mobile_app",
+    ),
+    path(
         "about/",
         views.StaticView.as_view(template_name="staticPages/about.html"),
         name="about",

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+
+{% block title %}
+О приложении
+{% endblock %}
+
+
+{% block content %}
+
+<div class="row mt-5">
+    <div class="col-sm-12">
+        <h3>Офлайн-приложение для Android</h3>
+        <hr>
+    </div>
+
+    <div class="col-sm-12">
+        <div class="card mb-4 mobile-app-hero">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-baseline mb-2">
+                    <h4 class="mb-0 mr-2">
+                        <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+                        Словарь на телефоне
+                    </h4>
+                    {% if mobile_app_version %}
+                    <span class="text-muted">версия {{ mobile_app_version }}</span>
+                    {% endif %}
+                </div>
+                <p class="mb-3">
+                    Тот же словарь, когда нет Интернета или сайт открывать неудобно.
+                </p>
+                <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+                    {% if mobile_app_rustore_url %}
+                    <a class="btn btn-primary"
+                       href="{{ mobile_app_rustore_url }}"
+                       rel="noopener"
+                       target="_blank">
+                        <img src="{% static 'images/rustore-icon.svg' %}"
+                             alt=""
+                             width="18"
+                             height="18"
+                             class="mr-1 mobile-app-rustore-icon"
+                             aria-hidden="true"> RuStore
+                        <span class="small font-weight-normal">(рекомендуется)</span>
+                    </a>
+                    {% endif %}
+                    <a class="btn btn-outline-primary"
+                       href="{{ mobile_app_apk_url }}"
+                       download="punzh-dict-latest.apk">
+                        <i class="fas fa-download" aria-hidden="true"></i> Скачать APK
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-12" id="about">
+        <div class="mt-2 mb-4 search-help">
+            <p>
+                Офлайн-приложение это ограниченный клиент электронной версии словаря
+                для работы без доступа в Интернет: алфавитный указатель, поиск по карельскому
+                и русскому, карточки статей со ссылками «см.» / «от».
+            </p>
+            <p>
+                Расширенный поиск, онтология и актуальные обновления сайта здесь не дублируются,
+                поэтому по возможности пользуйтесь
+                <a class="link-secondary" href="{% url 'index' %}">полной веб-версией</a>.
+            </p>
+
+            <h5 class="mt-4">
+                Актуальная версия
+                {% if mobile_app_version %}
+                <span class="badge badge-primary">{{ mobile_app_version }}</span>
+                {% endif %}
+            </h5>
+            <ul class="list-group mb-3">
+                <li class="list-group-item">
+                    Версию установленного приложения можно проверить в боковом меню →
+                    <b>О приложении</b> (строка «Версия …»).
+                    <br>
+                    Если она ниже актуальной, рекомендуем обновить приложение.
+                </li>
+            </ul>
+
+            <h4 class="mt-4 mb-3" id="install">Установка</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5>RuStore <span class="text-muted small">(рекомендуется)</span></h5>
+                    <ul class="list-group mb-0">
+                        <li class="list-group-item">
+                            Установка из магазина: обновления подтягиваются автоматически,
+                            не нужно разрешать «неизвестные источники» и скачивать APK вручную.
+                            {% if mobile_app_rustore_url %}
+                            <div class="mt-2">
+                                <a class="btn btn-sm btn-primary"
+                                   href="{{ mobile_app_rustore_url }}"
+                                   rel="noopener"
+                                   target="_blank">
+                                    <img src="{% static 'images/rustore-icon.svg' %}"
+                                         alt=""
+                                         width="16"
+                                         height="16"
+                                         class="mr-1 mobile-app-rustore-icon"
+                                         aria-hidden="true"> Открыть в RuStore
+                                </a>
+                            </div>
+                            {% else %}
+                            <p class="mb-0 mt-2 text-muted small">
+                                Ссылка на витрину появится здесь после публикации в RuStore.
+                            </p>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h5>Скачать APK напрямую</h5>
+                    <ul class="list-group mb-0">
+                        <li class="list-group-item">
+                            Файл с сайта. При первой установке Android попросит разрешить установку
+                            из этого источника (браузер или «Файлы») — включите установку из
+                            неизвестных источников для выбранного приложения и подтвердите.
+                            <div class="mt-2">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   href="{{ mobile_app_apk_url }}"
+                                   download="punzh-dict-latest.apk">
+                                    <i class="fas fa-download" aria-hidden="true"></i> Скачать APK
+                                </a>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <b>Обновления приложения</b> (только установка с сайта):
+                            меню → <b>О приложении</b> → <b>Проверить обновление</b>.
+                            При новой версии&nbsp;— кнопка <b>Скачать</b> (откроется в браузере).
+                            Для установок из RuStore этот блок скрыт: магазин обновляет сам.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4 class="mt-4 mb-3" id="db-update">Обновление словаря (базы данных)</h4>
+            <p>
+                Словарная база обновляется отдельно от приложения и одинаково
+                для установок из RuStore и с сайта.
+                <br>
+                Обновления расширяют словарь или содержат исправление ошибок.
+            </p>
+            <ul class="list-group mb-2">
+                <li class="list-group-item">
+                    Откройте боковое меню → <b>Проверить и загрузить обновление БД</b>.
+                </li>
+                <li class="list-group-item">
+                    Нажмите <b>Проверить обновление</b> (нужен Интернет).
+                </li>
+                <li class="list-group-item">
+                    Если доступна новая версия данных — <b>Загрузить и установить</b>.
+                    Обновления не обязательны для работы приложения.
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+  .mobile-app-hero {
+    background: #e8f4fc;
+    border-color: #b6d4e8;
+  }
+  .mobile-app-rustore-icon {
+    vertical-align: -0.15em;
+    border-radius: 0.2em;
+    background: #fff;
+  }
+</style>
+
+{% endblock %}

@@ -79,8 +79,12 @@ MOBILE_APP_RUSTORE_URL = env(
     "MOBILE_APP_RUSTORE_URL",
     default="https://www.rustore.ru/catalog/app/host.punzh.punzh_dict",
 )
-# Optional version label in the banner (e.g. "1.0.3").
+# Optional version label fallback when app-manifest.json is missing (e.g. "1.1.1").
 MOBILE_APP_VERSION = env("MOBILE_APP_VERSION", default="")
+# Written by punzh-dict-mobile publish_downloads.sh; mounted into the container.
+MOBILE_APP_MANIFEST_PATH = env(
+    "MOBILE_APP_MANIFEST_PATH", default="/mobile-pack/app-manifest.json"
+)
 
 # Application definition
 INSTALLED_APPS = [

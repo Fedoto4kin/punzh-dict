@@ -15,16 +15,15 @@
         <span class="android-app-banner__tagline text-muted">Работает без Интернета</span>
       </div>
       <span class="d-block small text-muted mt-1">
-        {% comment %}Hidden until RuStore listing is public:
         {% if mobile_app_rustore_url %}
-        Установите из RuStore.<br>
-        {% endif %}
-        {% endcomment %}
+        Установите из RuStore или скачайте APK.
+        {% else %}
         Установка из файла — через «Неизвестные источники».
+        {% endif %}
+        <a class="link-secondary" href="{% url 'mobile_app' %}">Подробнее</a>
       </span>
     </div>
     <div class="android-app-banner__actions">
-      {% comment %}Hidden until RuStore listing is public:
       {% if mobile_app_rustore_url %}
       <a class="btn btn-sm btn-primary mb-1"
          href="{{ mobile_app_rustore_url }}"
@@ -38,7 +37,6 @@
              aria-hidden="true"> RuStore
       </a>
       {% endif %}
-      {% endcomment %}
       <a class="btn btn-sm btn-outline-primary mb-1"
          href="{{ mobile_app_apk_url }}"
          download="punzh-dict-latest.apk">

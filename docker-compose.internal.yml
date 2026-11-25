@@ -10,6 +10,8 @@ services:
       - ./app:/app
       # Runtime secrets for Django (not baked into the image). docker restart re-reads it.
       - ./.env:/.env:ro
+      # APK + app-manifest.json (same host dir nginx serves at /mobile-pack/).
+      - ./mobile-pack:/mobile-pack:ro
     expose:
       - "3000"
     ports:
