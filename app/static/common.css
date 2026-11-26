@@ -1,22 +1,21 @@
-html, body {
-    /* min-height: sticky/fixed keep working; height:100% breaks them in
-       Chrome device mode once scrolled past the first viewport. */
-    min-height: 100%;
+/* Sticky footer: flex column on body (min-vh-100 in base.html).
+   Avoid height:100% on html/body — it breaks position:sticky in Chrome. */
+body {
+    display: flex;
+    flex-direction: column;
 }
 
 #wrap {
-    min-height: 100%;
+    flex: 1 0 auto;
 }
 
 #content {
-    padding-bottom: 80px;
+    padding-bottom: 1.5rem;
 }
 
 footer {
-    position: relative;
-    margin-top: -50px; /* negative value of footer height */
+    flex-shrink: 0;
     height: 50px;
-    clear:both;
 }
 
 .navbar-dark {
