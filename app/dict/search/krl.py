@@ -10,11 +10,13 @@ from django.db.models.functions import Length
 from dict.helpers import (
     build_pagination_hints,
     fold_interior_hyphens,
+    normalization,
     strip_krl_apostrophes,
 )
 from dict.models import (
     Article,
     ArticleIndexTag,
+    ArticleIndexTranslate,
     ArticleIndexWord,
     ArticleIndexWordNormalization,
     Levenshtein,
@@ -416,34 +418,136 @@ def word_search(query: str, page: int, tag_ids=None, phrase=False):
 # ------------------------------------------------------------
 
 
-def search_possible(query: str) -> set:
+# Cap empty-hit suggestions like mobile searchKarelianSuggestions (limit=20).
+_KRL_POSSIBLE_LIMIT = 20
+
+
+def _krl_suggestion_preview(pos_tags, glosses) -> str:
+    """Mobile-style subtitle: ``s · время`` / glosses only / POS only."""
+    pos = ", ".join(pos_tags[:2])
+    parts = glosses[:3]
+    gloss = ", ".join(parts)
+    if len(glosses) > 3:
+        gloss += "…"
+    if gloss and pos:
+        return f"{pos} · {gloss}"
+    return gloss or pos
+
+
+def _enrich_krl_suggestions(words: list) -> list:
+    """
+    Attach display headword + short POS/gloss preview (mobile list row).
+
+    Each item: {"word", "display", "preview"}. ``word`` is the indexed form
+    used for /search/ links.
+    """
+    if not words:
+        return []
+
+    word_to_aid = {}
+    for w, aid in ArticleIndexWordNormalization.objects.filter(
+        word__in=words
+    ).values_list("word", "article_id"):
+        if w not in word_to_aid:
+            word_to_aid[w] = aid
+
+    aids = [word_to_aid[w] for w in words if w in word_to_aid]
+    articles = {
+        a.id: a
+        for a in Article.objects.filter(id__in=aids).only(
+            "id", "word", "word_normalized"
+        )
+    }
+
+    glosses_by = defaultdict(list)
+    for aid, rw in (
+        ArticleIndexTranslate.objects.filter(
+            article_id__in=aids, hide_from_register=False
+        )
+        .exclude(rus_word__isnull=True)
+        .exclude(rus_word="")
+        .order_by("id")
+        .values_list("article_id", "rus_word")
+    ):
+        glosses_by[aid].append(rw)
+
+    pos_by = defaultdict(list)
+    for aid, tag in (
+        ArticleIndexTag.objects.filter(article_id__in=aids, tag__type=2)
+        .order_by("tag__sorting", "tag__tag")
+        .values_list("article_id", "tag__tag")
+    ):
+        if tag not in pos_by[aid]:
+            pos_by[aid].append(tag)
+
+    out = []
+    for w in words:
+        aid = word_to_aid.get(w)
+        if aid is None:
+            continue
+        art = articles.get(aid)
+        # Same headword rule as wordCard: explicit correction, else new orthography.
+        if art and art.word_normalized:
+            display = art.word_normalized
+        elif art:
+            display = normalization(art.word)
+        else:
+            display = normalization(w)
+        out.append(
+            {
+                "word": w,
+                "display": display,
+                "preview": _krl_suggestion_preview(
+                    pos_by.get(aid, []), glosses_by.get(aid, [])
+                ),
+            }
+        )
+    return out
+
+
+def search_possible(query: str) -> list:
+    """
+    Near-miss suggestions when KRL ILIKE finds nothing.
+
+    Candidates must pass both trigram (similarity > 0.2) and Levenshtein
+    (distance ≤ 2). Unique forms, closest first (fewer edits), then shorter,
+    then alphabetical; at most _KRL_POSSIBLE_LIMIT.
+
+    Returns list of dicts: word (search key), display, preview (POS · gloss).
+    """
     # Fold like the word index; strip ?/. so they are not ILIKE wildcards here.
     folded = prepare_krl_ilike_query(re.sub(r"[?.]", "", query or "")).lower()
-
-    def search_levenshtein(q: str):
-        return (
-            ArticleIndexWordNormalization.objects.annotate(
-                lev_dist=Levenshtein(F("word"), q)
-            )
-            .filter(lev_dist__lte=2)
-            .order_by("-lev_dist", Length("word").asc())
-        )
-
-    def search_trigram(q: str):
-        return (
-            ArticleIndexWordNormalization.objects.annotate(
-                similarity=TrigramSimilarity("word", q),
-            )
-            .filter(similarity__gt=0.2)
-            .order_by("-similarity", Length("word").asc())
-        )
-
     if not folded:
-        return set()
+        return []
 
-    return set(
-        w.word for w in (set(search_trigram(folded)) & set(search_levenshtein(folded)))
+    trigram_ok = set(
+        ArticleIndexWordNormalization.objects.annotate(
+            similarity=TrigramSimilarity("word", folded),
+        )
+        .filter(similarity__gt=0.2)
+        .values_list("word", flat=True)
     )
+    if not trigram_ok:
+        return []
+
+    rows = (
+        ArticleIndexWordNormalization.objects.annotate(
+            lev_dist=Levenshtein(F("word"), folded),
+        )
+        .filter(lev_dist__lte=2, word__in=trigram_ok)
+        .order_by("lev_dist", Length("word"), "word")
+        .values_list("word", flat=True)
+    )
+    seen = set()
+    words = []
+    for word in rows:
+        if word in seen:
+            continue
+        seen.add(word)
+        words.append(word)
+        if len(words) >= _KRL_POSSIBLE_LIMIT:
+            break
+    return _enrich_krl_suggestions(words)
 
 
 # ------------------------------------------------------------

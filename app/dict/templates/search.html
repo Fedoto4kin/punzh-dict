@@ -30,6 +30,9 @@
         font-size: .733rem; /* restore +15% after refine scale-down */
         padding: .23em .46em;
     }
+    .krl-possible a:hover .krl-possible__title {
+        text-decoration: underline;
+    }
 </style>
 <div class="mt-5 mb-3 row">
     <div class="col-lg-6">
@@ -49,11 +52,20 @@
     {% if possible %}
     <hr>
     <h5>Возможно вы искали:</h5>
-    <p>
-        {% for w in possible %}
-        <a href="/search/{{ w }}" class="btn btn-link alert-link">{{ w }}</a>
+    {# 2 / 3 / 4 columns: xs–sm / md / lg+ #}
+    <div class="row krl-possible">
+        {% for item in possible %}
+        <div class="col-6 col-md-4 col-lg-3 mb-2">
+            <a href="/search/{{ item.word|urlencode }}"
+               class="d-block text-decoration-none">
+                <div class="font-weight-bold text-dark krl-possible__title">{{ item.display }}</div>
+                {% if item.preview %}
+                <small class="text-muted">{{ item.preview }}</small>
+                {% endif %}
+            </a>
+        </div>
         {% endfor %}
-    </p>
+    </div>
     {% endif %}
 </div>
 {% endif %}

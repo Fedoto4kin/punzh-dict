@@ -2,8 +2,20 @@
 
 from django.test import Client, SimpleTestCase, TestCase
 
-from ..models import Article, ArticleIndexWord, ArticleIndexWordNormalization
-from ..search import krl_article_ids, prepare_krl_ilike_query, word_search
+from ..models import (
+    Article,
+    ArticleIndexTag,
+    ArticleIndexTranslate,
+    ArticleIndexWord,
+    ArticleIndexWordNormalization,
+    Tag,
+)
+from ..search import (
+    krl_article_ids,
+    prepare_krl_ilike_query,
+    search_possible,
+    word_search,
+)
 from ..see_audit import fold_lemma, html_see_lemmas, link_see_lemmas
 
 
@@ -294,3 +306,69 @@ class WordSearchHttpTestCase(TestCase):
         page_obj, found_count, *_ = word_search("aiga", 1)
         self.assertEqual(found_count, 1)
         self.assertEqual([a.word for a in page_obj.object_list], ["aiga"])
+
+
+class SearchPossibleOrderTestCase(TestCase):
+    """Empty-hit KRL suggestions: closest Levenshtein first + list preview."""
+
+    def setUp(self):
+        # Query typo "karjalo": karjala=1 edit, korjala=2 edits.
+        self.karjala = Article.objects.create(word="karjala")
+        self.korjala = Article.objects.create(word="korjala")
+        self.pos = Tag.objects.create(
+            tag="s", name="существительное", type=2, sorting=1
+        )
+        ArticleIndexTag.objects.create(article=self.karjala, tag=self.pos)
+        ArticleIndexTranslate.objects.create(article=self.karjala, rus_word="Карелия")
+        ArticleIndexTranslate.objects.create(article=self.korjala, rus_word="кора")
+
+    def _words(self, suggestions):
+        return [s["word"] for s in suggestions]
+
+    def test_closer_edit_distance_comes_first(self):
+        suggestions = search_possible("karjalo")
+        words = self._words(suggestions)
+        self.assertIn("karjala", words)
+        self.assertIn("korjala", words)
+        self.assertLess(words.index("karjala"), words.index("korjala"))
+
+    def test_suggestion_includes_short_translation(self):
+        suggestions = search_possible("karjalo")
+        by_word = {s["word"]: s for s in suggestions}
+        self.assertIn("s · Карелия", by_word["karjala"]["preview"])
+        self.assertEqual(by_word["karjala"]["display"], "karjala")
+
+    def test_suggestion_display_uses_new_orthography(self):
+        # ü → y via normalization() (same as wordCard |clear).
+        art = Article.objects.create(word="külä")
+        ArticleIndexTranslate.objects.create(article=art, rus_word="деревня")
+        suggestions = search_possible("kylä")
+        displays = {s["word"]: s["display"] for s in suggestions}
+        self.assertEqual(displays.get("kylä"), "kylä")
+
+    def test_suggestion_display_prefers_word_normalized(self):
+        art = Article.objects.create(word="külä", word_normalized="kylä (corr)")
+        ArticleIndexTranslate.objects.create(article=art, rus_word="деревня")
+        suggestions = search_possible("kylä")
+        displays = {s["word"]: s["display"] for s in suggestions}
+        self.assertEqual(displays.get("kylä"), "kylä (corr)")
+
+    def test_empty_query_returns_empty_list(self):
+        self.assertEqual(search_possible(""), [])
+        self.assertEqual(search_possible("???"), [])
+
+    def test_suggestions_capped_at_20(self):
+        # Many near-misses for "aaaaaa" (len 6, dist ≤ 2 keeps same length ±2).
+        for i in range(25):
+            Article.objects.create(word="aaaaa" + "bcdefghijklmnopqrstuvwxyz"[i % 26])
+        suggestions = search_possible("aaaaaa")
+        self.assertLessEqual(len(suggestions), 20)
+
+    def test_empty_krl_suggestions_render_as_list_rows(self):
+        response = Client().get("/search/karjalo")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Возможно вы искали")
+        self.assertContains(response, "col-6 col-md-4 col-lg-3")
+        self.assertContains(response, "karjala")
+        self.assertContains(response, "Карелия")
+        self.assertContains(response, "s · Карелия")
