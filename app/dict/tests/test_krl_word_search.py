@@ -8,6 +8,7 @@ from ..models import (
     ArticleIndexTranslate,
     ArticleIndexWord,
     ArticleIndexWordNormalization,
+    ArticleLink,
     Tag,
 )
 from ..search import (
@@ -16,6 +17,7 @@ from ..search import (
     search_possible,
     word_search,
 )
+from ..search.krl import _enrich_krl_suggestions
 from ..see_audit import fold_lemma, html_see_lemmas, link_see_lemmas
 
 
@@ -309,10 +311,10 @@ class WordSearchHttpTestCase(TestCase):
 
 
 class SearchPossibleOrderTestCase(TestCase):
-    """Empty-hit KRL suggestions: closest Levenshtein first + list preview."""
+    """Empty-hit KRL suggestions: ranked band + list preview."""
 
     def setUp(self):
-        # Query typo "karjalo": karjala=1 edit, korjala=2 edits.
+        # Query typo "karjalo" (len 7 → max_dist 2): karjala=1, korjala=2.
         self.karjala = Article.objects.create(word="karjala")
         self.korjala = Article.objects.create(word="korjala")
         self.pos = Tag.objects.create(
@@ -325,12 +327,11 @@ class SearchPossibleOrderTestCase(TestCase):
     def _words(self, suggestions):
         return [s["word"] for s in suggestions]
 
-    def test_closer_edit_distance_comes_first(self):
+    def test_best_band_keeps_dist1_drops_dist2(self):
         suggestions = search_possible("karjalo")
         words = self._words(suggestions)
         self.assertIn("karjala", words)
-        self.assertIn("korjala", words)
-        self.assertLess(words.index("karjala"), words.index("korjala"))
+        self.assertNotIn("korjala", words)
 
     def test_suggestion_includes_short_translation(self):
         suggestions = search_possible("karjalo")
@@ -357,12 +358,50 @@ class SearchPossibleOrderTestCase(TestCase):
         self.assertEqual(search_possible(""), [])
         self.assertEqual(search_possible("???"), [])
 
-    def test_suggestions_capped_at_20(self):
-        # Many near-misses for "aaaaaa" (len 6, dist ≤ 2 keeps same length ±2).
+    def test_very_short_query_returns_no_suggestions(self):
+        Article.objects.create(word="ka")
+        Article.objects.create(word="kai")
+        self.assertEqual(search_possible("ka"), [])
+        self.assertEqual(search_possible("ab"), [])
+
+    def test_sibilant_typo_kasi_suggests_kaksi(self):
+        # Typed without bird: kasi ≈ kakši (fold š→s → kaksi, dist 1).
+        Article.objects.create(word="kakši")
+        words = self._words(search_possible("kasi"))
+        self.assertIn("kakši", words)
+
+    def test_suggestion_inherits_gloss_from_see_target(self):
+        # Mobile list: empty own glosses + см. → show target translations.
+        target = Article.objects.create(word="boila")
+        ArticleIndexTranslate.objects.create(article=target, rus_word="масло")
+        stub = Article.objects.create(word="bojla")
+        ArticleLink.objects.create(
+            from_article=stub, to_article=target, kind=ArticleLink.KIND_SEE
+        )
+        items = {s["word"]: s for s in _enrich_krl_suggestions(["bojla"])}
+        self.assertIn("bojla", items)
+        self.assertIn("см. boila", items["bojla"]["preview"])
+        self.assertIn("масло", items["bojla"]["preview"])
+
+    def test_suggestions_capped_at_10(self):
+        # Many near-misses for "aaaaaa" (len 6, dist ≤ 2).
         for i in range(25):
             Article.objects.create(word="aaaaa" + "bcdefghijklmnopqrstuvwxyz"[i % 26])
         suggestions = search_possible("aaaaaa")
-        self.assertLessEqual(len(suggestions), 20)
+        self.assertLessEqual(len(suggestions), 10)
+
+    def test_same_dist_prefers_closer_length(self):
+        # Query "kalax" (len 5 → max_dist 1): kala and kalaxx both dist 1;
+        # |5-4|=1 vs |5-6|=1 — tie on delta; shorter first among equal delta.
+        # Use kalat (len 5, dist 1) vs ka (len 2) — ka is dist>1 from kalax.
+        Article.objects.create(word="kalat")  # len 5, one edit from kalax
+        Article.objects.create(word="kala")  # len 4, one edit (delete x)
+        suggestions = search_possible("kalax")
+        words = self._words(suggestions)
+        self.assertIn("kalat", words)
+        self.assertIn("kala", words)
+        # |5-5|=0 before |5-4|=1
+        self.assertLess(words.index("kalat"), words.index("kala"))
 
     def test_empty_krl_suggestions_render_as_list_rows(self):
         response = Client().get("/search/karjalo")
@@ -372,3 +411,4 @@ class SearchPossibleOrderTestCase(TestCase):
         self.assertContains(response, "karjala")
         self.assertContains(response, "Карелия")
         self.assertContains(response, "s · Карелия")
+        self.assertNotContains(response, "korjala")

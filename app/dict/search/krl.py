@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 
 from django.contrib.postgres.search import TrigramSimilarity
-from django.db.models import Count, F, Q
+from django.db.models import Count, Q
 from django.db.models.functions import Length
 
 from dict.helpers import (
@@ -19,7 +19,7 @@ from dict.models import (
     ArticleIndexTranslate,
     ArticleIndexWord,
     ArticleIndexWordNormalization,
-    Levenshtein,
+    ArticleLink,
     Tag,
 )
 
@@ -418,20 +418,87 @@ def word_search(query: str, page: int, tag_ids=None, phrase=False):
 # ------------------------------------------------------------
 
 
-# Cap empty-hit suggestions like mobile searchKarelianSuggestions (limit=20).
-_KRL_POSSIBLE_LIMIT = 20
+# Fewer, tighter suggestions than mobile's limit=20 (web-only ranking pass).
+_KRL_POSSIBLE_LIMIT = 10
 
 
-def _krl_suggestion_preview(pos_tags, glosses) -> str:
-    """Mobile-style subtitle: ``s · время`` / glosses only / POS only."""
+def _krl_possible_max_dist(folded: str):
+    """Max Levenshtein by query length; None = do not suggest."""
+    n = len(folded)
+    if n < 3:
+        return None
+    if n <= 5:
+        return 1
+    return 2
+
+
+def _fold_krl_fuzzy_form(text: str) -> str:
+    """Same letter fold as ILIKE search; strip wildcard syntax."""
+    return prepare_krl_ilike_query(re.sub(r"[?.]", "", text or "")).lower()
+
+
+def _levenshtein(a: str, b: str) -> int:
+    """Plain edit distance on already-folded strings."""
+    if a == b:
+        return 0
+    if not a:
+        return len(b)
+    if not b:
+        return len(a)
+    if len(a) < len(b):
+        a, b = b, a
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(
+                min(
+                    cur[j - 1] + 1,
+                    prev[j] + 1,
+                    prev[j - 1] + (ca != cb),
+                )
+            )
+        prev = cur
+    return prev[-1]
+
+
+def _krl_suggestion_preview(pos_tags, glosses, see_targets=None, inherited=None) -> str:
+    """
+    Mobile-style subtitle (ArticleSummary.previewLine):
+
+    own glosses → ``s · масло``;
+    else see/cf → ``см. boila · масло`` (inherited from first target).
+    """
     pos = ", ".join(pos_tags[:2])
-    parts = glosses[:3]
-    gloss = ", ".join(parts)
-    if len(glosses) > 3:
-        gloss += "…"
-    if gloss and pos:
-        return f"{pos} · {gloss}"
-    return gloss or pos
+
+    def _gloss_line(items):
+        if not items:
+            return ""
+        line = ", ".join(items[:3])
+        if len(items) > 3:
+            line += "…"
+        return line
+
+    own = _gloss_line(glosses)
+    if own:
+        return f"{pos} · {own}" if pos else own
+
+    see_targets = see_targets or []
+    inherited = inherited or []
+    if see_targets:
+        see = "см. " + ", ".join(see_targets[:2])
+        if len(see_targets) > 2:
+            see += "…"
+        inh = _gloss_line(inherited)
+        if pos and inh:
+            return f"{pos} · {see} · {inh}"
+        if pos:
+            return f"{pos} · {see}"
+        if inh:
+            return f"{see} · {inh}"
+        return see
+
+    return pos
 
 
 def _enrich_krl_suggestions(words: list) -> list:
@@ -439,7 +506,7 @@ def _enrich_krl_suggestions(words: list) -> list:
     Attach display headword + short POS/gloss preview (mobile list row).
 
     Each item: {"word", "display", "preview"}. ``word`` is the indexed form
-    used for /search/ links.
+    used for /search/ links. Empty own glosses + see/cf → inherit target glosses.
     """
     if not words:
         return []
@@ -480,6 +547,49 @@ def _enrich_krl_suggestions(words: list) -> list:
         if tag not in pos_by[aid]:
             pos_by[aid].append(tag)
 
+    # Outgoing см./ср.: display labels + first target for gloss inheritance.
+    see_by = defaultdict(list)
+    inherit_from = {}
+    for from_id, to_id, tw, twn in (
+        ArticleLink.objects.filter(
+            from_article_id__in=aids,
+            kind__in=ArticleLink.KINDS_CROSSREF,
+        )
+        .order_by("id")
+        .values_list(
+            "from_article_id",
+            "to_article_id",
+            "to_article__word",
+            "to_article__word_normalized",
+        )
+    ):
+        label = twn if twn else (normalization(tw) if tw else "")
+        if not label:
+            continue
+        see_by[from_id].append(label)
+        inherit_from.setdefault(from_id, to_id)
+
+    need_inherit = set()
+    for aid in aids:
+        if glosses_by.get(aid):
+            continue
+        to_id = inherit_from.get(aid)
+        if to_id is not None:
+            need_inherit.add(to_id)
+
+    inherited_by_target = defaultdict(list)
+    if need_inherit:
+        for tid, rw in (
+            ArticleIndexTranslate.objects.filter(
+                article_id__in=need_inherit, hide_from_register=False
+            )
+            .exclude(rus_word__isnull=True)
+            .exclude(rus_word="")
+            .order_by("id")
+            .values_list("article_id", "rus_word")
+        ):
+            inherited_by_target[tid].append(rw)
+
     out = []
     for w in words:
         aid = word_to_aid.get(w)
@@ -493,12 +603,21 @@ def _enrich_krl_suggestions(words: list) -> list:
             display = normalization(art.word)
         else:
             display = normalization(w)
+        own = glosses_by.get(aid, [])
+        inherited = []
+        if not own:
+            to_id = inherit_from.get(aid)
+            if to_id is not None:
+                inherited = inherited_by_target.get(to_id, [])
         out.append(
             {
                 "word": w,
                 "display": display,
                 "preview": _krl_suggestion_preview(
-                    pos_by.get(aid, []), glosses_by.get(aid, [])
+                    pos_by.get(aid, []),
+                    own,
+                    see_by.get(aid, []),
+                    inherited,
                 ),
             }
         )
@@ -509,15 +628,15 @@ def search_possible(query: str) -> list:
     """
     Near-miss suggestions when KRL ILIKE finds nothing.
 
-    Candidates must pass both trigram (similarity > 0.2) and Levenshtein
-    (distance ≤ 2). Unique forms, closest first (fewer edits), then shorter,
-    then alphabetical; at most _KRL_POSSIBLE_LIMIT.
+    Candidates: trigram (similarity > 0.2) prefilter, then Levenshtein on
+    forms folded like ILIKE (š→s, …) with ≤ max_dist(len). Only the best
+    distance band; sorted by dist, |len−q|, length, word; ≤ limit.
 
     Returns list of dicts: word (search key), display, preview (POS · gloss).
     """
-    # Fold like the word index; strip ?/. so they are not ILIKE wildcards here.
-    folded = prepare_krl_ilike_query(re.sub(r"[?.]", "", query or "")).lower()
-    if not folded:
+    folded = _fold_krl_fuzzy_form(query)
+    max_dist = _krl_possible_max_dist(folded)
+    if max_dist is None:
         return []
 
     trigram_ok = set(
@@ -530,23 +649,28 @@ def search_possible(query: str) -> list:
     if not trigram_ok:
         return []
 
-    rows = (
-        ArticleIndexWordNormalization.objects.annotate(
-            lev_dist=Levenshtein(F("word"), folded),
-        )
-        .filter(lev_dist__lte=2, word__in=trigram_ok)
-        .order_by("lev_dist", Length("word"), "word")
-        .values_list("word", flat=True)
-    )
+    q_len = len(folded)
     seen = set()
-    words = []
-    for word in rows:
+    candidates = []
+    for word in trigram_ok:
         if word in seen:
             continue
         seen.add(word)
-        words.append(word)
-        if len(words) >= _KRL_POSSIBLE_LIMIT:
-            break
+        fw = _fold_krl_fuzzy_form(word)
+        if not fw:
+            continue
+        dist = _levenshtein(folded, fw)
+        if dist > max_dist:
+            continue
+        candidates.append((dist, abs(len(fw) - q_len), len(fw), word))
+
+    if not candidates:
+        return []
+
+    best = min(c[0] for c in candidates)
+    band = [c for c in candidates if c[0] == best]
+    band.sort()
+    words = [word for _d, _ld, _lw, word in band[:_KRL_POSSIBLE_LIMIT]]
     return _enrich_krl_suggestions(words)
 
 
